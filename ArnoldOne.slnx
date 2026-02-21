@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ArnoldOne/Client/ArnoldOne.Client.csproj" />
+  <Project Path="ArnoldOne/Server/ArnoldOne.Server.csproj" />
+  <Project Path="ArnoldOne/Shared/ArnoldOne.Shared.csproj" />
+</Solution>
