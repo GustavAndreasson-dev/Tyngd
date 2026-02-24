@@ -37,12 +37,12 @@ namespace ArnoldOne.Client.Pages.Traningsprogram
 
         private class Dag1Weights
         {
-            public int? Bankpress { get; set; }
-            public int? Militarpress { get; set; }
-            public int? Lutadbänk { get; set; }
-            public int? Axelpress { get; set; }
-            public int? TricepsExtension { get; set; }
-            public int? TricepsPushdown { get; set; }
+            public decimal? Bankpress { get; set; }
+            public decimal? Militarpress { get; set; }
+            public decimal? Lutadbänk { get; set; }
+            public decimal? Axelpress { get; set; }
+            public decimal? TricepsExtension { get; set; }
+            public decimal? TricepsPushdown { get; set; }
         }
     }
 }

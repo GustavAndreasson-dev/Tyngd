@@ -6,46 +6,46 @@
 <MudText Typo="Typo.h4" Class="mb-4">Split</MudText>
 
 <MudCarousel Class="mud-width-full" Style="height:200px;" ShowArrows="true" ShowBullets="false" EnableSwipeGesture="true" AutoCycle="false" TData="object">
-    <MudCarouselItem Transition="transition" Color="@Color.Tertiary">
+    <MudCarouselItem Transition="transition" Color="@Color.Secondary">
         <div class="d-flex flex-column justify-start align-center" style="height:100%">
             <MudText Typo="Typo.h5" Class="mb-2"> Bänkpress</MudText>
             <MudText Typo="Typo.h6" Class="mb-2"> 4x6-8</MudText>
-            <MudNumericField T="int?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.Bankpress" OnBlur="OnWeightChanged" />
+            <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.Bankpress" OnBlur="OnWeightChanged" />
         </div>
     </MudCarouselItem>
-    <MudCarouselItem Transition="transition" Color="@Color.Tertiary">
+    <MudCarouselItem Transition="transition" Color="@Color.Secondary">
         <div class="d-flex flex-column justify-start align-center" style="height:100%">
             <MudText Typo="Typo.h5" Class="mb-2"> Militärpress</MudText>
             <MudText Typo="Typo.h6" Class="mb-2"> 4x6-8</MudText>
-            <MudNumericField T="int?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.Militarpress" OnBlur="OnWeightChanged" />
+            <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.Militarpress" OnBlur="OnWeightChanged" />
         </div>
     </MudCarouselItem>
-    <MudCarouselItem Transition="transition" Color="@Color.Tertiary">
+    <MudCarouselItem Transition="transition" Color="@Color.Secondary">
         <div class="d-flex flex-column justify-start align-center" style="height:100%">
             <MudText Typo="Typo.h5" Class="mb-2"> Lutad bänk/hantel-press</MudText>
             <MudText Typo="Typo.h6" Class="mb-2"> 3x10</MudText>
-            <MudNumericField T="int?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.Lutadbänk" OnBlur="OnWeightChanged" />
+            <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.Lutadbänk" OnBlur="OnWeightChanged" />
         </div>
     </MudCarouselItem>
-    <MudCarouselItem Transition="transition" Color="@Color.Tertiary">
+    <MudCarouselItem Transition="transition" Color="@Color.Secondary">
         <div class="d-flex flex-column justify-start align-center" style="height:100%">
             <MudText Typo="Typo.h5" Class="mb-2"> Axelpress</MudText>
             <MudText Typo="Typo.h6" Class="mb-2"> 3x10</MudText>
-            <MudNumericField T="int?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.Axelpress" OnBlur="OnWeightChanged" />
+            <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.Axelpress" OnBlur="OnWeightChanged" />
         </div>
     </MudCarouselItem>
-    <MudCarouselItem Transition="transition" Color="@Color.Tertiary">
+    <MudCarouselItem Transition="transition" Color="@Color.Secondary">
         <div class="d-flex flex-column justify-start align-center" style="height:100%">
             <MudText Typo="Typo.h5" Class="mb-2"> Triceps extension</MudText>
             <MudText Typo="Typo.h6" Class="mb-2"> 3x10</MudText>
-            <MudNumericField T="int?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.TricepsExtension" OnBlur="OnWeightChanged" />
+            <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.TricepsExtension" OnBlur="OnWeightChanged" />
         </div>
     </MudCarouselItem>
-    <MudCarouselItem Transition="transition" Color="@Color.Tertiary">
+    <MudCarouselItem Transition="transition" Color="@Color.Secondary">
         <div class="d-flex flex-column justify-start align-center" style="height:100%">
             <MudText Typo="Typo.h5" Class="mb-2"> Triceps pushdown</MudText>
             <MudText Typo="Typo.h6" Class="mb-2"> 3x10</MudText>
-            <MudNumericField T="int?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.TricepsPushdown" OnBlur="OnWeightChanged" />
+            <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.TricepsPushdown" OnBlur="OnWeightChanged" />
         </div>
     </MudCarouselItem>
 </MudCarousel>

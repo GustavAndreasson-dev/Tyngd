@@ -1,6 +1,6 @@
 ﻿@namespace ArnoldOne.Shared
 @inherits LayoutComponentBase
-<MudThemeProvider />
+<MudThemeProvider Theme="@_theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -22,3 +22,17 @@
         @Body
     </MudMainContent>
 </MudLayout>
+
+@code {
+    private MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Secondary = "#FF0000" // röd
+        },
+        PaletteDark = new PaletteDark
+        {
+            Secondary = "#FF0000" // röd
+        }
+    };
+}
