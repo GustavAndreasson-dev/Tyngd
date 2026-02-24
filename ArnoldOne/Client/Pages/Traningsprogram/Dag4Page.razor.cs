@@ -7,7 +7,7 @@ namespace ArnoldOne.Client.Pages.Traningsprogram
 {
     public partial class Dag4Page : ComponentBase
     {
-        private Transition transition = Transition.Slide;
+        private Transition transition = Transition.None;
 
         private Dag4Weights weights = new();
 
