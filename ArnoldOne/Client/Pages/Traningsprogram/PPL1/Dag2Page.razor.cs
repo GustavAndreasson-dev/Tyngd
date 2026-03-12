@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
-namespace ArnoldOne.Client.Pages.Traningsprogram
+namespace ArnoldOne.Client.Pages.Traningsprogram.PPL1
 {
     public partial class Dag2Page : ComponentBase
     {
