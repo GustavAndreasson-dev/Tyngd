@@ -9,7 +9,6 @@
 <MudCard Class="mb-4">
     <MudCardContent>
         <MudText Typo="Typo.h5">@template.SplitName</MudText>
-        <MudText Typo="Typo.subtitle2">Ägare: @template.UserId</MudText>
     </MudCardContent>
 </MudCard>
 
@@ -17,10 +16,10 @@
     @foreach (var pass in template.Passes)
     {
         <MudExpansionPanel Text="@pass.PassName" DisableRipple="true">
-            <MudList Dense="true" T="TrainingExercise">
+            <MudList Dense="true" T="TrainingExerciseTemplate">
                 @foreach (var exercise in pass.Exercises)
                 {
-                    <MudListItem T="TrainingExercise">
+                    <MudListItem T="TrainingExerciseTemplate">
                         <MudText Typo="Typo.subtitle1">@exercise.ExerciseName</MudText>
                         <MudText Typo="Typo.caption">@FormatDefault(exercise)</MudText>
                     </MudListItem>

@@ -1,10 +1,8 @@
-using System;
-
 namespace ArnoldOne.Shared.TrainingPrograms;
 
 public class TrainingExerciseData
 {
-    public string ExerciseId { get; set; } = string.Empty;
+    public int ExerciseId { get; set; }
     public int Sets { get; set; }
     public int RepsMin { get; set; }
     public int RepsMax { get; set; }

@@ -5,9 +5,9 @@ namespace ArnoldOne.Client.Pages.Traningsprogram;
 
 public partial class SplitTemplates : ComponentBase
 {
-    private readonly TrainingSplit template = new TrainingSplitTemplates().CreatePpl();
+    private readonly TrainingSplitTemplate template = new TrainingSplitTemplateGenerator().CreatePpl();
 
-    private static string FormatDefault(TrainingExercise exercise)
+    private static string FormatDefault(TrainingExerciseTemplate exercise)
     {
         var reps = exercise.DefaultRepsMin == exercise.DefaultRepsMax
             ? exercise.DefaultRepsMin.ToString()
