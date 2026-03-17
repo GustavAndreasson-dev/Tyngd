@@ -5,9 +5,9 @@
 
 <MudText Typo="Typo.h4" Class="mb-4">Split</MudText>
 
-<MudCarousel Class="mud-width-full" Style="height:200px;" ShowArrows="true" ShowBullets="false" EnableSwipeGesture="true" AutoCycle="false" TData="object">
+<MudCarousel Class="mud-width-full" Style="height:400px; overflow-y:auto;" ShowArrows="true" ShowBullets="false" EnableSwipeGesture="true" AutoCycle="false" TData="object" @bind-SelectedIndex="activeIndex">
     <MudCarouselItem Transition="transition" Color="@Color.Secondary">
-        <div class="d-flex flex-column justify-start align-center" style="height:100%">
+        <div class="d-flex flex-column justify-start align-center" style="min-height:100%; gap:8px;">
             <MudText Typo="Typo.h5" Class="mb-2"> Bänkpress</MudText>
             <MudText Typo="Typo.h6" Class="mb-2"> 4x6-8</MudText>
             <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" @bind-Value="weights.Bankpress" OnBlur="OnWeightChanged" />
@@ -49,5 +49,51 @@
         </div>
     </MudCarouselItem>
 </MudCarousel>
+
+@switch (activeIndex)
+{
+    case 0:
+        <div class="slider-wrapper" style="margin-top:16px;">
+            <MudSlider @bind-Value="weights.ValueBankpress1" Min="1" Max="15" Step="1">Reps: @weights.ValueBankpress1</MudSlider>
+            <MudSlider @bind-Value="weights.ValueBankpress2" Min="1" Max="15" Step="1">Reps: @weights.ValueBankpress2</MudSlider>
+            <MudSlider @bind-Value="weights.ValueBankpress3" Min="1" Max="15" Step="1">Reps: @weights.ValueBankpress3</MudSlider>
+        </div>
+        break;
+    case 1:
+        <div class="slider-wrapper" style="margin-top:16px;">
+            <MudSlider @bind-Value="weights.ValueMilitarpress1" Min="1" Max="15" Step="1">Reps: @weights.ValueMilitarpress1</MudSlider>
+            <MudSlider @bind-Value="weights.ValueMilitarpress2" Min="1" Max="15" Step="1">Reps: @weights.ValueMilitarpress2</MudSlider>
+            <MudSlider @bind-Value="weights.ValueMilitarpress3" Min="1" Max="15" Step="1">Reps: @weights.ValueMilitarpress3</MudSlider>
+        </div>
+        break;
+    case 2:
+        <div class="slider-wrapper" style="margin-top:16px;">
+            <MudSlider @bind-Value="weights.ValueLutadbänk1" Min="1" Max="15" Step="1">Reps: @weights.ValueLutadbänk1</MudSlider>
+            <MudSlider @bind-Value="weights.ValueLutadbänk2" Min="1" Max="15" Step="1">Reps: @weights.ValueLutadbänk2</MudSlider>
+            <MudSlider @bind-Value="weights.ValueLutadbänk3" Min="1" Max="15" Step="1">Reps: @weights.ValueLutadbänk3</MudSlider>
+        </div>
+        break;
+    case 3:
+        <div class="slider-wrapper" style="margin-top:16px;">
+            <MudSlider @bind-Value="weights.ValueAxelpress1" Min="1" Max="15" Step="1">Reps: @weights.ValueAxelpress1</MudSlider>
+            <MudSlider @bind-Value="weights.ValueAxelpress2" Min="1" Max="15" Step="1">Reps: @weights.ValueAxelpress2</MudSlider>
+            <MudSlider @bind-Value="weights.ValueAxelpress3" Min="1" Max="15" Step="1">Reps: @weights.ValueAxelpress3</MudSlider>
+        </div>
+        break;
+    case 4:
+        <div class="slider-wrapper" style="margin-top:16px;">
+            <MudSlider @bind-Value="weights.ValueTricepsExtension1" Min="1" Max="15" Step="1">Reps: @weights.ValueTricepsExtension1</MudSlider>
+            <MudSlider @bind-Value="weights.ValueTricepsExtension2" Min="1" Max="15" Step="1">Reps: @weights.ValueTricepsExtension2</MudSlider>
+            <MudSlider @bind-Value="weights.ValueTricepsExtension3" Min="1" Max="15" Step="1">Reps: @weights.ValueTricepsExtension3</MudSlider>
+        </div>
+        break;
+    case 5:
+        <div class="slider-wrapper" style="margin-top:16px;">
+            <MudSlider @bind-Value="weights.ValueTricepsPushdown1" Min="1" Max="15" Step="1">Reps: @weights.ValueTricepsPushdown1</MudSlider>
+            <MudSlider @bind-Value="weights.ValueTricepsPushdown2" Min="1" Max="15" Step="1">Reps: @weights.ValueTricepsPushdown2</MudSlider>
+            <MudSlider @bind-Value="weights.ValueTricepsPushdown3" Min="1" Max="15" Step="1">Reps: @weights.ValueTricepsPushdown3</MudSlider>
+        </div>
+        break;
+}
 
 

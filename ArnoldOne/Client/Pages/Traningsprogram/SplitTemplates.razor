@@ -1,0 +1,30 @@
+@page "/TP/templates"
+@layout MainLayout
+@using ArnoldOne.Shared.TrainingPrograms
+
+<PageTitle>Split Templates</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Split Templates</MudText>
+
+<MudCard Class="mb-4">
+    <MudCardContent>
+        <MudText Typo="Typo.h5">@template.SplitName</MudText>
+    </MudCardContent>
+</MudCard>
+
+<MudExpansionPanels Elevation="0">
+    @foreach (var pass in template.Passes)
+    {
+        <MudExpansionPanel Text="@pass.PassName" DisableRipple="true">
+            <MudList Dense="true" T="TrainingExerciseTemplate">
+                @foreach (var exercise in pass.Exercises)
+                {
+                    <MudListItem T="TrainingExerciseTemplate">
+                        <MudText Typo="Typo.subtitle1">@exercise.ExerciseName</MudText>
+                        <MudText Typo="Typo.caption">@FormatDefault(exercise)</MudText>
+                    </MudListItem>
+                }
+            </MudList>
+        </MudExpansionPanel>
+    }
+</MudExpansionPanels>
