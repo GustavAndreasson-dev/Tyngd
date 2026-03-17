@@ -5,6 +5,9 @@ using MudBlazor;
 
 namespace ArnoldOne.Client.Pages.Traningsprogram.PPL1
 {
+    /// <summary>
+    /// Sida för dag 1 i PPL1-programmet (Push). Sparar användarens vikter och reps i LocalStorage.
+    /// </summary>
     public partial class Dag1Page : ComponentBase
     {
         private Transition transition = Transition.None;
@@ -13,11 +16,13 @@ namespace ArnoldOne.Client.Pages.Traningsprogram.PPL1
 
         private int activeIndex;
 
+        /// <summary>Tjänst för att läsa och skriva användardata i webbläsarens LocalStorage.</summary>
         [Inject]
         private ILocalStorageService LocalStorage { get; set; } = default!;
 
         private const string StorageKey = "dag1-weights";
 
+        /// <summary>Läser sparade vikter från LocalStorage vid första renderingen.</summary>
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
@@ -32,11 +37,16 @@ namespace ArnoldOne.Client.Pages.Traningsprogram.PPL1
             }
         }
 
+        /// <summary>Sparar vikter till LocalStorage när användaren lämnar ett fält.</summary>
         private async Task OnWeightChanged(FocusEventArgs _)
         {
             await LocalStorage.SetItemAsync(StorageKey, weights);
         }
 
+        /// <summary>
+        /// Användarens sparade vikter och reps för dag 1.
+        /// Serialiseras till och från LocalStorage.
+        /// </summary>
         private class Dag1Weights
         {
             public decimal? Bankpress { get; set; }

@@ -7,9 +7,9 @@
     <MudNavLink Href="TP/Dag4" Icon="@Icons.Material.Filled.Backup">Dag 4</MudNavLink>
 </MudNavGroup>
 
-<MudNavGroup Title="PPL 2" Expanded="true" Icon="@Icons.Material.Filled.AdsClick">
-    <MudNavLink Href="TP/push" Icon="@Icons.Material.Filled.Backup">Push</MudNavLink>
-    <MudNavLink Href="TP/pull" Icon="@Icons.Material.Filled.Backup">Pull</MudNavLink>
-    <MudNavLink Href="TP/legs" Icon="@Icons.Material.Filled.Backup">Legs</MudNavLink>
-    <MudNavLink Href="TP/armar" Icon="@Icons.Material.Filled.Backup">Armar</MudNavLink>
+<MudNavGroup Title="@pplTemplate.SplitName" Expanded="true" Icon="@Icons.Material.Filled.AdsClick">
+    @foreach (var pass in pplTemplate.Passes)
+    {
+        <MudNavLink Href="@($"TP/pass/{pass.PassId}")" Icon="@Icons.Material.Filled.Backup">@pass.PassName</MudNavLink>
+    }
 </MudNavGroup>

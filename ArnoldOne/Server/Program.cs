@@ -3,6 +3,7 @@ using ArnoldOne.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Registrera MVC, Razor Pages och Blazor WebAssembly-komponenter
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddRazorComponents()
@@ -29,6 +30,8 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorPages();
 app.MapControllers();
+
+// Registrera Blazor-komponenterna och lägg till Client-assembly för routing
 app.MapRazorComponents<App>()
 .AddInteractiveWebAssemblyRenderMode()
 .AddAdditionalAssemblies(typeof(ArnoldOne.Client.Routes).Assembly);

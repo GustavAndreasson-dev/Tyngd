@@ -1,7 +1,14 @@
 namespace ArnoldOne.Shared.TrainingPrograms;
 
+/// <summary>
+/// Skapar fördefinierade <see cref="TrainingSplitTemplate"/>-objekt i minnet.
+/// Används tills mallar lagras i databas.
+/// </summary>
 public class TrainingSplitTemplateGenerator
 {
+    /// <summary>
+    /// Skapar en Push/Pull/Legs-splitmall med fyra pass och tillhörande övningar.
+    /// </summary>
     public TrainingSplitTemplate CreatePpl()
     {
         return new TrainingSplitTemplate
@@ -18,6 +25,7 @@ public class TrainingSplitTemplateGenerator
         };
     }
 
+    /// <summary>Skapar övningsmallar för Push-passet (bröst, triceps).</summary>
     private List<TrainingExerciseTemplate> CreatePushExercises() =>
         new()
         {
@@ -30,6 +38,7 @@ public class TrainingSplitTemplateGenerator
             Ex(7, "Cable extension", 3, 8, 12, 15m)
         };
 
+    /// <summary>Skapar övningsmallar för Pull-passet (rygg, biceps).</summary>
     private List<TrainingExerciseTemplate> CreatePullExercises() =>
         new()
         {
@@ -43,6 +52,7 @@ public class TrainingSplitTemplateGenerator
             Ex(15, "Sittande lutad hantelcurl", 3, 10, 12, 12m)
         };
 
+    /// <summary>Skapar övningsmallar för Legs-passet (quadriceps, hamstrings, vader).</summary>
     private List<TrainingExerciseTemplate> CreateLegExercises() =>
         new()
         {
@@ -54,6 +64,7 @@ public class TrainingSplitTemplateGenerator
             Ex(21, "Tåhävningar", 3, 10, 15, 60m)
         };
 
+    /// <summary>Skapar övningsmallar för Axel/underarmar-passet (axlar, underarmar).</summary>
     private List<TrainingExerciseTemplate> CreateArmsExercises() =>
         new()
         {
@@ -66,6 +77,7 @@ public class TrainingSplitTemplateGenerator
             Ex(28, "Stång static hold - 5 min", 1, 1, 1, 60m)
         };
 
+    /// <summary>Hjälpmetod för att skapa en övningsmall med defaultvärden.</summary>
     private TrainingExerciseTemplate Ex(int id, string name, int sets, int repsMin, int repsMax, decimal weight) =>
         new()
         {

@@ -1,0 +1,39 @@
+@page "/TP/pass/{PassId:int}"
+@layout MainLayout
+@using ArnoldOne.Shared.TrainingPrograms
+
+<PageTitle>@pass?.PassName</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@pass?.PassName</MudText>
+
+@if (pass is not null)
+{
+    <MudCarousel Class="mud-width-full" Style="height:400px; overflow-y:auto;" ShowArrows="true" ShowBullets="false" EnableSwipeGesture="true" AutoCycle="false" TData="object" @bind-SelectedIndex="activeIndex">
+        @foreach (var exercise in pass.Exercises)
+        {
+            <MudCarouselItem Transition="transition" Color="@Color.Secondary">
+                <div class="d-flex flex-column justify-start align-center" style="min-height:100%; gap:8px;">
+                    <MudText Typo="Typo.h5" Class="mb-2">@exercise.ExerciseName</MudText>
+                    <MudText Typo="Typo.h6" Class="mb-2">@FormatSetsReps(exercise)</MudText>
+                    <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" Value="GetWeight(exercise.ExerciseId)" ValueChanged="v => SetWeight(exercise.ExerciseId, v)" OnBlur="OnWeightChanged" />
+                </div>
+            </MudCarouselItem>
+        }
+    </MudCarousel>
+
+    @if (activeIndex >= 0 && activeIndex < pass.Exercises.Count)
+    {
+        var exercise = pass.Exercises[activeIndex];
+        <div class="slider-wrapper" style="margin-top:16px;">
+            @for (int s = 0; s < exercise.DefaultSets; s++)
+            {
+                var setIndex = s;
+                <MudSlider T="double" Value="GetReps(exercise.ExerciseId, setIndex)" ValueChanged="v => SetReps(exercise.ExerciseId, setIndex, v)" Min="1" Max="20" Step="1">Reps: @GetReps(exercise.ExerciseId, setIndex)</MudSlider>
+            }
+        </div>
+    }
+}
+else
+{
+    <MudText>Passet hittades inte.</MudText>
+}
