@@ -1,6 +1,7 @@
 ﻿@namespace ArnoldOne.Shared
+@using ArnoldOne.Client.Services
 @inherits LayoutComponentBase
-<MudThemeProvider Theme="@_theme" />
+<MudThemeProvider Theme="@_theme" IsDarkMode="@ThemeState.IsDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -11,7 +12,9 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">Arnold</MudText>
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End">
+            <MudMenuItem Href="/installningar" Icon="@Icons.Material.Filled.Settings">Inställningar</MudMenuItem>
+        </MudMenu>
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
          <MudNavMenu>

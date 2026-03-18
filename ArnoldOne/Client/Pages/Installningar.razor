@@ -1,0 +1,14 @@
+@page "/installningar"
+@namespace ArnoldOne.Client.Pages
+
+<PageTitle>Inställningar</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6">Inställningar</MudText>
+
+<MudPaper Class="pa-4" Elevation="2">
+    <MudSwitch T="bool"
+               Value="@ThemeState.IsDarkMode"
+               ValueChanged="OnDarkModeChanged"
+               Color="Color.Primary"
+               Label="Mörkt läge" />
+</MudPaper>

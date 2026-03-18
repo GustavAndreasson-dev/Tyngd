@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Blazored.LocalStorage;
 using MudBlazor.Services;
+using ArnoldOne.Client.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -15,4 +16,8 @@ builder.Services.AddMudServices();
 
 // LocalStorage för att spara vikter och reps mellan sessioner
 builder.Services.AddBlazoredLocalStorage();
+
+// Singleton för att dela temainställningar (dark mode) globalt
+builder.Services.AddSingleton<ThemeState>();
+
 await builder.Build().RunAsync();
