@@ -8,8 +8,8 @@ namespace ArnoldOne.Client.Pages.Traningsprogram;
 /// </summary>
 public partial class SplitTemplates : ComponentBase
 {
-    // PPL-mallen hämtas från generatorn och används enbart för visning
-    private readonly TrainingSplitTemplate template = new TrainingSplitTemplateGenerator().CreatePpl();
+    // Alla tillgängliga mallar hämtas från generatorn och används enbart för visning
+    private readonly IReadOnlyList<TrainingSplitTemplate> templates = new TrainingSplitTemplateGenerator().GetAllTemplates();
 
     /// <summary>Formaterar defaultvärden för en övningsmall som läsbar text.</summary>
     private static string FormatDefault(TrainingExerciseTemplate exercise)

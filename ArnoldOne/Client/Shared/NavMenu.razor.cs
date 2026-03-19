@@ -8,7 +8,7 @@ namespace ArnoldOne.Shared
     /// </summary>
     public partial class NavMenu : ComponentBase
     {
-        // PPL-mallen genereras vid uppstart och används för att bygga navmenyn dynamiskt
         private readonly TrainingSplitTemplate pplTemplate = new TrainingSplitTemplateGenerator().CreatePpl();
+        private readonly TrainingSplitTemplate ppl1Template = new TrainingSplitTemplateGenerator().CreatePpl1();
     }
 }

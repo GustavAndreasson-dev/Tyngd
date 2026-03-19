@@ -77,6 +77,90 @@ public class TrainingSplitTemplateGenerator
             Ex(28, "Stång static hold - 5 min", 1, 1, 1, 60m)
         };
 
+    /// <summary>
+    /// Skapar en PPL1-splitmall med fyra pass och tillhörande övningar.
+    /// Övningar som delas med PPL2 återanvänder samma ExerciseId för viktsynkronisering.
+    /// PPL1 använder PassId 101–104 och ExerciseId 101–117 för unika övningar.
+    /// </summary>
+    public TrainingSplitTemplate CreatePpl1()
+    {
+        return new TrainingSplitTemplate
+        {
+            SplitId = 2,
+            SplitName = "PPL1",
+            Passes = new List<TrainingPassTemplate>
+            {
+                new() { PassId = 101, PassName = "Push", Exercises = CreatePpl1PushExercises() },
+                new() { PassId = 102, PassName = "Pull", Exercises = CreatePpl1PullExercises() },
+                new() { PassId = 103, PassName = "Legs", Exercises = CreatePpl1LegExercises() },
+                new() { PassId = 104, PassName = "Axel/underarmar", Exercises = CreatePpl1ArmsExercises() }
+            }
+        };
+    }
+
+    /// <summary>
+    /// Returnerar alla tillgängliga träningssplitmallar.
+    /// </summary>
+    public IReadOnlyList<TrainingSplitTemplate> GetAllTemplates() =>
+        new[] { CreatePpl(), CreatePpl1() };
+
+    /// <summary>
+    /// Söker ett pass
+    /// Returnerar null om inget pass hittas.
+    /// </summary>
+    public TrainingPassTemplate? FindPass(int passId) =>
+        new[] { CreatePpl(), CreatePpl1() }
+            .SelectMany(t => t.Passes)
+            .FirstOrDefault(p => p.PassId == passId);
+
+    /// <summary>Skapar övningsmallar för PPL1 Push-passet (bröst, axlar, triceps).</summary>
+    private List<TrainingExerciseTemplate> CreatePpl1PushExercises() =>
+        new()
+        {
+            Ex(1,   "Bänkpress",              4, 6,  8,  60m),
+            Ex(22,  "Militärpress",           4, 6,  8,  40m),
+            Ex(101, "Lutad bänk/hantelpress", 3, 10, 10, 0m),
+            Ex(102, "Axelpress",              3, 10, 10, 0m),
+            Ex(103, "Triceps extension",      3, 10, 10, 0m),
+            Ex(104, "Triceps pushdown",       3, 10, 10, 0m)
+        };
+
+    /// <summary>Skapar övningsmallar för PPL1 Pull-passet (rygg, biceps).</summary>
+    private List<TrainingExerciseTemplate> CreatePpl1PullExercises() =>
+        new()
+        {
+            Ex(8,   "Marklyft",        4, 5,  5,  100m),
+            Ex(9,   "Stångrodd",       4, 6,  8,  60m),
+            Ex(11,  "Latsdrag",        3, 10, 12, 50m),
+            Ex(105, "Stångcurl",       4, 10, 12, 0m),
+            Ex(106, "Hammercurls",     4, 10, 12, 0m),
+            Ex(107, "Omvända flyes",   3, 15, 15, 0m)
+        };
+
+    /// <summary>Skapar övningsmallar för PPL1 Legs-passet (quadriceps, hamstrings, vader).</summary>
+    private List<TrainingExerciseTemplate> CreatePpl1LegExercises() =>
+        new()
+        {
+            Ex(16,  "Knäböj",              5, 6,  8,  80m),
+            Ex(108, "Rumänska marklyft",   5, 6,  8,  0m),
+            Ex(109, "Lårcurl",             3, 10, 10, 0m),
+            Ex(18,  "Benspark",            3, 10, 10, 40m),
+            Ex(110, "Vadpress",            4, 10, 12, 0m),
+            Ex(111, "Crunches",            4, 10, 12, 0m)
+        };
+
+    /// <summary>Skapar övningsmallar för PPL1 Axel/underarmar-passet.</summary>
+    private List<TrainingExerciseTemplate> CreatePpl1ArmsExercises() =>
+        new()
+        {
+            Ex(112, "Smalbänk",                    3, 10, 12, 0m),
+            Ex(113, "Stångrodd omvänt grepp",      3, 10, 10, 0m),
+            Ex(114, "Tricep extension hantel",     3, 10, 10, 0m),
+            Ex(115, "Skullcrushers",               3, 10, 12, 0m),
+            Ex(116, "Biceps cable stående",        3, 10, 12, 0m),
+            Ex(117, "Sittande bicep curl",         3, 10, 12, 0m)
+        };
+
     /// <summary>Hjälpmetod för att skapa en övningsmall med defaultvärden.</summary>
     private TrainingExerciseTemplate Ex(int id, string name, int sets, int repsMin, int repsMax, decimal weight) =>
         new()

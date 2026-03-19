@@ -15,7 +15,7 @@
                 <div class="d-flex flex-column justify-start align-center" style="min-height:100%; gap:8px;">
                     <MudText Typo="Typo.h5" Class="mb-2">@exercise.ExerciseName</MudText>
                     <MudText Typo="Typo.h6" Class="mb-2">@FormatSetsReps(exercise)</MudText>
-                    <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" Value="GetWeight(exercise.ExerciseId)" ValueChanged="v => SetWeight(exercise.ExerciseId, v)" OnBlur="OnWeightChanged" />
+                    <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" Value="GetWeight(exercise.ExerciseId)" ValueChanged="v => SetWeight(exercise.ExerciseId, v)" OnBlur="OnWeightChanged" Class="weight-field" />
                 </div>
             </MudCarouselItem>
         }
@@ -31,6 +31,14 @@
                 <MudSlider T="double" Value="GetReps(exercise.ExerciseId, setIndex)" ValueChanged="v => SetReps(exercise.ExerciseId, setIndex, v)" Min="1" Max="20" Step="1">Reps: @GetReps(exercise.ExerciseId, setIndex)</MudSlider>
             }
         </div>
+        <MudTextField T="string"
+                      Label="Anteckningar"
+                      Lines="3"
+                      Variant="Variant.Outlined"
+                      Value="@GetNote(exercise.ExerciseId)"
+                      ValueChanged="v => SetNote(exercise.ExerciseId, v)"
+                      OnBlur="OnNoteChanged"
+                      Class="mt-4 note-field" />
     }
 }
 else

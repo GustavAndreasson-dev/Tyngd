@@ -1,10 +1,10 @@
 ﻿@namespace ArnoldOne.Shared
 <MudNavLink Href="" Icon="@Icons.Material.Filled.Backup">Översikt</MudNavLink>
-<MudNavGroup Title="PPL" Expanded="true" Icon="@Icons.Material.Filled.AdsClick">
-    <MudNavLink Href="TP/Dag1" Icon="@Icons.Material.Filled.Backup">Dag 1</MudNavLink>
-    <MudNavLink Href="TP/Dag2" Icon="@Icons.Material.Filled.Backup">Dag 2</MudNavLink>
-    <MudNavLink Href="TP/Dag3" Icon="@Icons.Material.Filled.Backup">Dag 3</MudNavLink>
-    <MudNavLink Href="TP/Dag4" Icon="@Icons.Material.Filled.Backup">Dag 4</MudNavLink>
+<MudNavGroup Title="@ppl1Template.SplitName" Expanded="true" Icon="@Icons.Material.Filled.AdsClick">
+    @foreach (var pass in ppl1Template.Passes)
+    {
+        <MudNavLink Href="@($"TP/pass/{pass.PassId}")" Icon="@Icons.Material.Filled.Backup">@pass.PassName</MudNavLink>
+    }
 </MudNavGroup>
 
 <MudNavGroup Title="@pplTemplate.SplitName" Expanded="true" Icon="@Icons.Material.Filled.AdsClick">
