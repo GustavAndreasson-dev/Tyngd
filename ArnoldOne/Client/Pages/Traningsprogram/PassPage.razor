@@ -8,6 +8,8 @@
 
 @if (pass is not null)
 {
+    <div class="pass-layout">
+    <div class="pass-content">
     <MudCarousel Class="mud-width-full" Style="height:400px; overflow-y:auto;" ShowArrows="true" ShowBullets="false" EnableSwipeGesture="true" AutoCycle="false" TData="object" @bind-SelectedIndex="activeIndex">
         @foreach (var exercise in pass.Exercises)
         {
@@ -28,7 +30,13 @@
             @for (int s = 0; s < exercise.DefaultSets; s++)
             {
                 var setIndex = s;
-                <MudSlider T="double" Value="GetReps(exercise.ExerciseId, setIndex)" ValueChanged="v => SetReps(exercise.ExerciseId, setIndex, v)" Min="1" Max="20" Step="1">Reps: @GetReps(exercise.ExerciseId, setIndex)</MudSlider>
+                <div class="d-flex align-center justify-space-between" style="gap:8px; margin-bottom:8px;">
+                    <MudText Style="min-width:48px;">Set @(setIndex + 1)</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="() => AdjustReps(exercise.ExerciseId, setIndex, -1)" />
+                    <MudText Style="min-width:32px; text-align:center;">@((int)GetReps(exercise.ExerciseId, setIndex))</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="() => AdjustReps(exercise.ExerciseId, setIndex, 1)" />
+                    <MudText Style="min-width:32px;">reps</MudText>
+                </div>
             }
         </div>
         <MudTextField T="string"
@@ -40,6 +48,25 @@
                       OnBlur="OnNoteChanged"
                       Class="mt-4 note-field" />
     }
+    </div>
+    <div class="@NavClass">
+        <MudText Typo="Typo.subtitle2" Class="mb-3 px-1">Övningar</MudText>
+        @for (int i = 0; i < pass.Exercises.Count; i++)
+        {
+            var idx = i;
+            var ex = pass.Exercises[i];
+            <div class="@StepClass(idx)" @onclick="() => NavigateToExercise(idx)">
+                <div class="pass-step-circle">@(idx + 1)</div>
+                <MudText Class="pass-step-label" Typo="Typo.body2">@ex.ExerciseName</MudText>
+            </div>
+        }
+    </div>
+    </div>
+    <div class="pass-nav-toggle">
+        <MudFab Color="Color.Secondary"
+                StartIcon="@(_navOpen ? Icons.Material.Filled.Close : Icons.Material.Filled.List)"
+                Size="Size.Small" OnClick="ToggleNav" />
+    </div>
 }
 else
 {

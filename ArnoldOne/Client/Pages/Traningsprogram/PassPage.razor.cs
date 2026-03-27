@@ -42,6 +42,7 @@ public partial class PassPage : ComponentBase
     // Används för att detektera PassId-byte vid navigering
     private bool _isInitialized;
     private int _lastPassId = -1;
+    private bool _navOpen;
 
     /// <summary>
     /// Körs när <see cref="PassId"/> ändras. Hämtar rätt passmall och
@@ -121,6 +122,13 @@ public partial class PassPage : ComponentBase
         return 1;
     }
 
+    /// <summary>Justerar reps för ett specifikt set med ett steg upp eller ned (min 1, max 20).</summary>
+    private void AdjustReps(int exerciseId, int setIndex, int delta)
+    {
+        var current = GetReps(exerciseId, setIndex);
+        SetReps(exerciseId, setIndex, Math.Clamp(current + delta, 1, 20));
+    }
+
     /// <summary>Uppdaterar antalet reps för ett specifikt set.</summary>
     private void SetReps(int exerciseId, int setIndex, double value)
     {
@@ -156,6 +164,18 @@ public partial class PassPage : ComponentBase
             : $"{exercise.DefaultRepsMin}-{exercise.DefaultRepsMax}";
 
         return $"{exercise.DefaultSets}x{reps}";
+    }
+
+    private string NavClass => _navOpen ? "pass-nav pass-nav--open" : "pass-nav";
+
+    private string StepClass(int idx) => activeIndex == idx ? "pass-step pass-step--active" : "pass-step";
+
+    private void ToggleNav() => _navOpen = !_navOpen;
+
+    private void NavigateToExercise(int idx)
+    {
+        activeIndex = idx;
+        _navOpen = false;
     }
 
     /// <summary>

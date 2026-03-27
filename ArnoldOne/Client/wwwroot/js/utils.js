@@ -23,6 +23,9 @@ window.arnoldOne.attachNoteKeyHandler = function () {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     t.blur();
+                    document.body.setAttribute('tabindex', '-1');
+                    document.body.focus();
+                    document.body.removeAttribute('tabindex');
                 }
             });
         }
