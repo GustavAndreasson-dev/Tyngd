@@ -106,6 +106,17 @@ h1:focus {
     display: none;
 }
 
+/* Karusellpilar - större och i tertiärfärgen */
+.mud-carousel .mud-icon-button {
+    width: 72px !important;
+    height: 72px !important;
+}
+
+.mud-carousel .mud-icon-button .mud-icon-root {
+    font-size: 3.5rem !important;
+    color: var(--mud-palette-tertiary) !important;
+}
+
 /* Mobil: nav som overlay från höger */
 @media (max-width: 959.95px) {
     .pass-nav {
