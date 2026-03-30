@@ -3,13 +3,13 @@
 <MudNavGroup Title="@ppl1Template.SplitName" Expanded="true" Icon="@Icons.Material.Filled.AdsClick">
     @foreach (var pass in ppl1Template.Passes)
     {
-        <MudNavLink Href="@($"TP/pass/{pass.PassId}")" Icon="@Icons.Material.Filled.Backup">@pass.PassName</MudNavLink>
+        <MudNavLink Href="@($"TP/split/{ppl1Template.SplitId}/pass/{pass.PassId}")" Icon="@Icons.Material.Filled.Backup">@pass.PassName</MudNavLink>
     }
 </MudNavGroup>
 
 <MudNavGroup Title="@pplTemplate.SplitName" Expanded="true" Icon="@Icons.Material.Filled.AdsClick">
     @foreach (var pass in pplTemplate.Passes)
     {
-        <MudNavLink Href="@($"TP/pass/{pass.PassId}")" Icon="@Icons.Material.Filled.Backup">@pass.PassName</MudNavLink>
+        <MudNavLink Href="@($"TP/split/{pplTemplate.SplitId}/pass/{pass.PassId}")" Icon="@Icons.Material.Filled.Backup">@pass.PassName</MudNavLink>
     }
 </MudNavGroup>

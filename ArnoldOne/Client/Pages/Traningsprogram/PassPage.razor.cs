@@ -15,6 +15,10 @@ namespace ArnoldOne.Client.Pages.Traningsprogram;
 /// </summary>
 public partial class PassPage : ComponentBase
 {
+    /// <summary>Id för den valda splitten, hämtas från route-parametern.</summary>
+    [Parameter]
+    public int SplitId { get; set; }
+
     /// <summary>Id för det valda passet, hämtas från route-parametern.</summary>
     [Parameter]
     public int PassId { get; set; }
@@ -35,9 +39,9 @@ public partial class PassPage : ComponentBase
     private Dictionary<int, decimal> _weights = new();
     private const string WeightsKey = "exercise-weights";
 
-    // Reps och anteckningar sparas per pass via "pass-{PassId}"
+    // Reps och anteckningar sparas per pass via "pass-{SplitId}-{PassId}"
     private PassData data = new();
-    private string PassKey => $"pass-{PassId}";
+    private string PassKey => $"pass-{SplitId}-{PassId}";
 
     // Används för att detektera PassId-byte vid navigering
     private bool _isInitialized;
@@ -50,7 +54,7 @@ public partial class PassPage : ComponentBase
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {
-        pass = new TrainingSplitTemplateGenerator().FindPass(PassId);
+        pass = new TrainingSplitTemplateGenerator().FindPass(SplitId, PassId);
 
         if (pass is not null)
         {

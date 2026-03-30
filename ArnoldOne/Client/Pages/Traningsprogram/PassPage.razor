@@ -1,4 +1,4 @@
-@page "/TP/pass/{PassId:int}"
+@page "/TP/split/{SplitId:int}/pass/{PassId:int}"
 @layout MainLayout
 @using ArnoldOne.Shared.TrainingPrograms
 
@@ -23,19 +23,25 @@
         }
     </MudCarousel>
 
-    @if (activeIndex >= 0 && activeIndex < pass.Exercises.Count)
+    @if (activeIndex >= 0 && activeIndex < pass!.Exercises.Count)
     {
         var exercise = pass.Exercises[activeIndex];
         <div class="slider-wrapper" style="margin-top:16px;">
             @for (int s = 0; s < exercise.DefaultSets; s++)
             {
                 var setIndex = s;
-                <div class="d-flex align-center justify-space-between" style="gap:8px; margin-bottom:8px;">
-                    <MudText Style="min-width:48px;">Set @(setIndex + 1)</MudText>
-                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="() => AdjustReps(exercise.ExerciseId, setIndex, -1)" />
-                    <MudText Style="min-width:32px; text-align:center;">@((int)GetReps(exercise.ExerciseId, setIndex))</MudText>
-                    <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="() => AdjustReps(exercise.ExerciseId, setIndex, 1)" />
-                    <MudText Style="min-width:32px;">reps</MudText>
+                var currentExercise = exercise;
+                <div class="d-flex align-center" style="margin-bottom:8px; gap:8px;">
+                    <div class="d-flex align-center justify-space-between" style="width:75%; gap:8px;">
+                        <MudText Style="min-width:48px;">Set @(setIndex + 1)</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="() => AdjustReps(currentExercise.ExerciseId, setIndex, -1)" />
+                        <MudText Style="min-width:32px; text-align:center;">@((int)GetReps(currentExercise.ExerciseId, setIndex))</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="() => AdjustReps(currentExercise.ExerciseId, setIndex, 1)" />
+                        <MudText Style="min-width:32px;">reps</MudText>
+                    </div>
+                    <div style="width:25%; display:flex; justify-content:center;">
+                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Medium" Color="Color.Success" OnClick="() => { }" />
+                    </div>
                 </div>
             }
         </div>

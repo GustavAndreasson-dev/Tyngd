@@ -90,10 +90,10 @@ public class TrainingSplitTemplateGenerator
             SplitName = "PPL1",
             Passes = new List<TrainingPassTemplate>
             {
-                new() { PassId = 101, PassName = "Push", Exercises = CreatePpl1PushExercises() },
-                new() { PassId = 102, PassName = "Pull", Exercises = CreatePpl1PullExercises() },
-                new() { PassId = 103, PassName = "Legs", Exercises = CreatePpl1LegExercises() },
-                new() { PassId = 104, PassName = "Axel/underarmar", Exercises = CreatePpl1ArmsExercises() }
+                new() { PassId = 1, PassName = "Push", Exercises = CreatePpl1PushExercises() },
+                new() { PassId = 2, PassName = "Pull", Exercises = CreatePpl1PullExercises() },
+                new() { PassId = 3, PassName = "Legs", Exercises = CreatePpl1LegExercises() },
+                new() { PassId = 4, PassName = "Axel/underarmar", Exercises = CreatePpl1ArmsExercises() }
             }
         };
     }
@@ -105,13 +105,13 @@ public class TrainingSplitTemplateGenerator
         new[] { CreatePpl(), CreatePpl1() };
 
     /// <summary>
-    /// Söker ett pass
+    /// Söker ett pass via split-id och pass-id.
     /// Returnerar null om inget pass hittas.
     /// </summary>
-    public TrainingPassTemplate? FindPass(int passId) =>
+    public TrainingPassTemplate? FindPass(int splitId, int passId) =>
         new[] { CreatePpl(), CreatePpl1() }
-            .SelectMany(t => t.Passes)
-            .FirstOrDefault(p => p.PassId == passId);
+            .FirstOrDefault(t => t.SplitId == splitId)
+            ?.Passes.FirstOrDefault(p => p.PassId == passId);
 
     /// <summary>Skapar övningsmallar för PPL1 Push-passet (bröst, axlar, triceps).</summary>
     private List<TrainingExerciseTemplate> CreatePpl1PushExercises() =>
