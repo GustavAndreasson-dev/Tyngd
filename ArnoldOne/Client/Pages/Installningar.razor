@@ -5,10 +5,28 @@
 
 <MudText Typo="Typo.h4" Class="mb-6">Inställningar</MudText>
 
-<MudPaper Class="pa-4" Elevation="2">
+<MudPaper Class="pa-4 mb-4" Elevation="2">
     <MudSwitch T="bool"
                Value="@ThemeState.IsDarkMode"
                ValueChanged="OnDarkModeChanged"
                Color="Color.Primary"
                Label="Mörkt läge" />
+</MudPaper>
+
+<MudPaper Class="pa-4" Elevation="2">
+    <MudText Typo="Typo.subtitle1" Class="mb-3">Vilotimer</MudText>
+    <MudSwitch T="bool"
+               Value="@RestTimer.IsEnabled"
+               ValueChanged="OnRestTimerEnabledChanged"
+               Color="Color.Primary"
+               Label="Aktivera vilotimer" />
+    <MudNumericField T="int"
+                     Label="Vilotid (minuter)"
+                     Value="@_restTimerMinutes"
+                     ValueChanged="OnRestTimerMinutesChanged"
+                     Min="1" Max="10"
+                     Disabled="@(!RestTimer.IsEnabled)"
+                     Variant="Variant.Filled"
+                     Class="mt-2"
+                     Style="max-width:180px;" />
 </MudPaper>

@@ -12,9 +12,14 @@ namespace ArnoldOne.Shared;
 public partial class MainLayout : IDisposable
 {
     private const string DarkModeKey = "darkmode";
+    private const string RestTimerEnabledKey = "resttimer-enabled";
+    private const string RestTimerSecondsKey = "resttimer-seconds";
 
     [Inject]
     private ThemeState ThemeState { get; set; } = default!;
+
+    [Inject]
+    private RestTimerState RestTimer { get; set; } = default!;
 
     [Inject]
     private ILocalStorageService LocalStorage { get; set; } = default!;
@@ -45,6 +50,14 @@ public partial class MainLayout : IDisposable
                 "eval", "window.matchMedia('(prefers-color-scheme: dark)').matches");
             ThemeState.SetDarkMode(systemDark);
         }
+
+        var storedRestEnabled = await LocalStorage.GetItemAsync<bool?>(RestTimerEnabledKey);
+        if (storedRestEnabled.HasValue)
+            RestTimer.SetEnabled(storedRestEnabled.Value);
+
+        var storedRestSeconds = await LocalStorage.GetItemAsync<int?>(RestTimerSecondsKey);
+        if (storedRestSeconds.HasValue)
+            RestTimer.SetSeconds(storedRestSeconds.Value);
     }
 
     /// <summary>Växlar navigeringslådans öppna/stängda tillstånd.</summary>

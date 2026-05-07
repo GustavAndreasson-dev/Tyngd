@@ -20,4 +20,7 @@ builder.Services.AddBlazoredLocalStorage();
 // Singleton för att dela temainställningar (dark mode) globalt
 builder.Services.AddSingleton<ThemeState>();
 
+// Singleton för vilotimer-inställningar (aktiverad/sekunder)
+builder.Services.AddSingleton<RestTimerState>();
+
 await builder.Build().RunAsync();
