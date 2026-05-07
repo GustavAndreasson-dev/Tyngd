@@ -1,3 +1,4 @@
+using ArnoldOne.Client.Services;
 using ArnoldOne.Shared.TrainingPrograms;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
@@ -13,7 +14,7 @@ namespace ArnoldOne.Client.Pages.Traningsprogram;
 /// Vikter lagras globalt per ExerciseId i <c>exercise-weights</c> för synkronisering mellan program.
 /// Reps och anteckningar lagras per pass i <c>pass-{PassId}</c>.
 /// </summary>
-public partial class PassPage : ComponentBase
+public partial class PassPage : ComponentBase, IDisposable
 {
     /// <summary>Id för den valda splitten, hämtas från route-parametern.</summary>
     [Parameter]
@@ -31,6 +32,10 @@ public partial class PassPage : ComponentBase
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
+    /// <summary>Tjänst som håller vilotimer-inställningarna globalt.</summary>
+    [Inject]
+    private RestTimerState RestTimer { get; set; } = default!;
+
     private TrainingPassTemplate? pass;
     private Transition transition = Transition.None;
     private int activeIndex;
@@ -47,6 +52,11 @@ public partial class PassPage : ComponentBase
     private bool _isInitialized;
     private int _lastPassId = -1;
     private bool _navOpen;
+
+    // Vilotimer
+    private CancellationTokenSource? _restTimerCts;
+    private bool _restTimerRunning;
+    private int _restTimerRemaining;
 
     /// <summary>
     /// Körs när <see cref="PassId"/> ändras. Hämtar rätt passmall och
@@ -140,6 +150,69 @@ public partial class PassPage : ComponentBase
             sets[setIndex] = value;
     }
 
+    /// <summary>Returnerar om ett specifikt set är markerat som klart.</summary>
+    private bool IsSetDone(int exerciseId, int setIndex)
+    {
+        if (data.CompletedSets.TryGetValue(exerciseId, out var sets) && setIndex < sets.Length)
+            return sets[setIndex];
+        return false;
+    }
+
+    /// <summary>Togglar om ett set är klart och sparar till LocalStorage. Startar vilotimer om aktiverad.</summary>
+    private async Task ToggleSet(int exerciseId, int setIndex)
+    {
+        if (!data.CompletedSets.ContainsKey(exerciseId))
+        {
+            var count = pass!.Exercises.First(e => e.ExerciseId == exerciseId).DefaultSets;
+            data.CompletedSets[exerciseId] = new bool[count];
+        }
+
+        data.CompletedSets[exerciseId][setIndex] = !data.CompletedSets[exerciseId][setIndex];
+        await LocalStorage.SetItemAsync(PassKey, data);
+
+        if (data.CompletedSets[exerciseId][setIndex] && RestTimer.IsEnabled)
+            StartRestTimer();
+        else
+            CancelRestTimer();
+    }
+
+    /// <summary>Startar vilotimern med nedräkning. Avbryter eventuell pågående timer först.</summary>
+    private void StartRestTimer()
+    {
+        CancelRestTimer();
+        _restTimerCts = new CancellationTokenSource();
+        var token = _restTimerCts.Token;
+        _restTimerRemaining = RestTimer.Seconds;
+        _restTimerRunning = true;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (_restTimerRemaining > 0)
+                {
+                    await Task.Delay(1000, token);
+                    _restTimerRemaining--;
+                    await InvokeAsync(StateHasChanged);
+                }
+
+                _restTimerRunning = false;
+                await InvokeAsync(StateHasChanged);
+                await JSRuntime.InvokeVoidAsync("arnoldOne.flashScreen", token);
+            }
+            catch (OperationCanceledException) { }
+        }, token);
+    }
+
+    /// <summary>Avbryter pågående vilotimer.</summary>
+    private void CancelRestTimer()
+    {
+        _restTimerCts?.Cancel();
+        _restTimerCts?.Dispose();
+        _restTimerCts = null;
+        _restTimerRunning = false;
+    }
+
     /// <summary>Sparar vikter till LocalStorage när användaren lämnar ett viktfält.</summary>
     private async Task OnWeightChanged(FocusEventArgs _)
     {
@@ -186,9 +259,16 @@ public partial class PassPage : ComponentBase
     /// Användarens sparade data per pass: reps och anteckningar per övning.
     /// Serialiseras till och från LocalStorage.
     /// </summary>
+    /// <summary>Avbryter timern när komponenten avmonteras.</summary>
+    public void Dispose()
+    {
+        CancelRestTimer();
+    }
+
     private class PassData
     {
         public Dictionary<int, double[]> Reps { get; set; } = new();
         public Dictionary<int, string> Notes { get; set; } = new();
+        public Dictionary<int, bool[]> CompletedSets { get; set; } = new();
     }
 }

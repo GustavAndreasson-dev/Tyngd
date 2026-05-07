@@ -40,7 +40,10 @@
                         <MudText Style="min-width:32px;">reps</MudText>
                     </div>
                     <div style="width:25%; display:flex; justify-content:center;">
-                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Medium" Color="Color.Success" OnClick="() => { }" />
+                        <MudIconButton Icon="@(IsSetDone(currentExercise.ExerciseId, setIndex) ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.RadioButtonUnchecked)"
+                                       Size="Size.Medium"
+                                       Color="@(IsSetDone(currentExercise.ExerciseId, setIndex) ? Color.Success : Color.Default)"
+                                       OnClick="() => ToggleSet(currentExercise.ExerciseId, setIndex)" />
                     </div>
                 </div>
             }
