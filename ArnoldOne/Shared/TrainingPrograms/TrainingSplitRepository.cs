@@ -1,10 +1,10 @@
 namespace ArnoldOne.Shared.TrainingPrograms;
 
 /// <summary>
-/// In-memory lagring av användares träningssplits.
-/// Ersätts med databasanrop när backend finns på plats.
+/// In-memory implementering av <see cref="ITrainingSplitRepository"/>.
+/// Ersätts med en EF Core-implementering när databasen är på plats.
 /// </summary>
-public class TrainingSplitRepository
+public class TrainingSplitRepository : ITrainingSplitRepository
 {
     private readonly List<TrainingSplit> _splits = new();
 
@@ -23,7 +23,7 @@ public class TrainingSplitRepository
     /// <see cref="TrainingSplit"/> med tillhörande pass och övningar, kopplade till <paramref name="userId"/>.
     /// Den nya splitten sparas automatiskt i lagret.
     /// </summary>
-    public TrainingSplit CopyForUser(TrainingSplitTemplate template, int userId)
+    public TrainingSplit CopyForUser(TrainingSplitTemplate template, string userId)
     {
         // Kopiera hela trädstukturen: split -> pass -> övningar
         var copy = new TrainingSplit
@@ -34,11 +34,12 @@ public class TrainingSplitRepository
             Passes = template.Passes.Select(p => new TrainingPass
             {
                 PassId = p.PassId,
+                SplitId = p.SplitId,
                 PassName = p.PassName,
                 Exercises = p.Exercises.Select(e => new TrainingExercise
                 {
                     ExerciseId = e.ExerciseId,
-                    ExerciseName = e.ExerciseName,
+                    Exercise = e.Exercise,
                     DefaultSets = e.DefaultSets,
                     DefaultRepsMin = e.DefaultRepsMin,
                     DefaultRepsMax = e.DefaultRepsMax,

@@ -1,3 +1,4 @@
+using ArnoldOne.Client.Services;
 using ArnoldOne.Shared.TrainingPrograms;
 using Microsoft.AspNetCore.Components;
 
@@ -5,11 +6,48 @@ namespace ArnoldOne.Client.Pages.Traningsprogram;
 
 /// <summary>
 /// Sida som visar alla tillgängliga träningssplitmallar med övningar och defaultvärden.
+/// Inloggade användare kan aktivera/avaktivera splits.
 /// </summary>
 public partial class SplitTemplates : ComponentBase
 {
+    [Inject]
+    private LoginState LoginState { get; set; } = default!;
+
+    [Inject]
+    private UserSplitsService UserSplitsService { get; set; } = default!;
+
     // Alla tillgängliga mallar hämtas från generatorn och används enbart för visning
     private readonly IReadOnlyList<TrainingSplitTemplate> templates = new TrainingSplitTemplateGenerator().GetAllTemplates();
+
+    private HashSet<int> activeSplits = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (LoginState.IsLoggedIn)
+            activeSplits = await UserSplitsService.GetActiveSplitsAsync(LoginState.CurrentUser!.Id);
+    }
+
+    /// <summary>Aktiverar en split för den inloggade användaren.</summary>
+    private async Task ActivateSplit(int splitId)
+    {
+        if (!LoginState.IsLoggedIn)
+            return;
+
+        await UserSplitsService.ActivateSplitAsync(LoginState.CurrentUser!.Id, splitId);
+        activeSplits.Add(splitId);
+        StateHasChanged();
+    }
+
+    /// <summary>Avaktiverar en split för den inloggade användaren.</summary>
+    private async Task DeactivateSplit(int splitId)
+    {
+        if (!LoginState.IsLoggedIn)
+            return;
+
+        await UserSplitsService.DeactivateSplitAsync(LoginState.CurrentUser!.Id, splitId);
+        activeSplits.Remove(splitId);
+        StateHasChanged();
+    }
 
     /// <summary>Formaterar defaultvärden för en övningsmall som läsbar text.</summary>
     private static string FormatDefault(TrainingExerciseTemplate exercise)

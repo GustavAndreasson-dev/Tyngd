@@ -15,7 +15,7 @@
         {
             <MudCarouselItem Transition="transition" Color="@Color.Secondary">
                 <div class="d-flex flex-column justify-start align-center" style="min-height:100%; gap:8px;">
-                    <MudText Typo="Typo.h5" Class="mb-2">@exercise.ExerciseName</MudText>
+                    <MudText Typo="Typo.h5" Class="mb-2">@exercise.Exercise.ExerciseName</MudText>
                     <MudText Typo="Typo.h6" Class="mb-2">@FormatSetsReps(exercise)</MudText>
                     <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" Value="GetWeight(exercise.ExerciseId)" ValueChanged="v => SetWeight(exercise.ExerciseId, v)" OnBlur="OnWeightChanged" Class="weight-field" />
                 </div>
@@ -66,7 +66,7 @@
             var ex = pass.Exercises[i];
             <div class="@StepClass(idx)" @onclick="() => NavigateToExercise(idx)">
                 <div class="pass-step-circle">@(idx + 1)</div>
-                <MudText Class="pass-step-label" Typo="Typo.body2">@ex.ExerciseName</MudText>
+                <MudText Class="pass-step-label" Typo="Typo.body2">@ex.Exercise.ExerciseName</MudText>
             </div>
         }
     </div>
@@ -76,6 +76,14 @@
                 StartIcon="@(_navOpen ? Icons.Material.Filled.Close : Icons.Material.Filled.List)"
                 Size="Size.Small" OnClick="ToggleNav" />
     </div>
+    @if (AllSetsDone())
+    {
+        <div class="d-flex justify-center mt-6 mb-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Success"
+                       StartIcon="@Icons.Material.Filled.CheckCircle"
+                       Size="Size.Large" OnClick="EndPass">Avsluta pass</MudButton>
+        </div>
+    }
 }
 else
 {

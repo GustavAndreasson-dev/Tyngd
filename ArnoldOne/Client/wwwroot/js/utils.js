@@ -1,5 +1,36 @@
 window.arnoldOne = window.arnoldOne || {};
 
+// Håller en referens till aktiv wake lock för att kunna släppa den senare.
+window.arnoldOne._wakeLock = null;
+
+// Begär wake lock för att förhindra att skärmen stängs av under ett pass.
+window.arnoldOne.requestWakeLock = async function () {
+    if (!('wakeLock' in navigator)) return;
+    try {
+        window.arnoldOne._wakeLock = await navigator.wakeLock.request('screen');
+        // Återaktivera automatiskt om sidan blir synlig igen (t.ex. efter skärmtimeout)
+        document.addEventListener('visibilitychange', window.arnoldOne._onVisibilityChange);
+    } catch (e) { }
+};
+
+// Frigör wake lock när passet är avslutat.
+window.arnoldOne.releaseWakeLock = async function () {
+    document.removeEventListener('visibilitychange', window.arnoldOne._onVisibilityChange);
+    if (window.arnoldOne._wakeLock) {
+        await window.arnoldOne._wakeLock.release();
+        window.arnoldOne._wakeLock = null;
+    }
+};
+
+// Återaktiverar wake lock om sidan becomes visible igen (webbläsaren släpper den automatiskt vid bakgrundskörning).
+window.arnoldOne._onVisibilityChange = async function () {
+    if (document.visibilityState === 'visible' && window.arnoldOne._wakeLock === null) {
+        try {
+            window.arnoldOne._wakeLock = await navigator.wakeLock.request('screen');
+        } catch (e) { }
+    }
+};
+
 // Flashar skärmen vitt två gånger för att signalera att vilotiden är slut.
 window.arnoldOne.flashScreen = function () {
     const overlay = document.createElement('div');

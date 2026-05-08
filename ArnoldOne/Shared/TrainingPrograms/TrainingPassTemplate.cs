@@ -8,6 +8,9 @@ public class TrainingPassTemplate
     /// <summary>Unikt id för passmallen.</summary>
     public int PassId { get; set; }
 
+    /// <summary>FK till splitmallen.</summary>
+    public int SplitId { get; set; }
+
     /// <summary>Passens namn, t.ex. Push eller Pull.</summary>
     public string PassName { get; set; } = string.Empty;
 

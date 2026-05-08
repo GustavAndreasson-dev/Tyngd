@@ -1,8 +1,19 @@
 @page "/TP/templates"
 @layout MainLayout
 @using ArnoldOne.Shared.TrainingPrograms
+@using ArnoldOne.Client.Services
 
 <PageTitle>Split Templates</PageTitle>
+
+@if (!LoginState.IsLoggedIn)
+{
+    <div class="d-flex flex-column align-center mt-12" style="gap:16px;">
+        <MudIcon Icon="@Icons.Material.Filled.Lock" Style="font-size:4rem;" Color="Color.Error" />
+        <MudText Typo="Typo.h5" Align="Align.Center">Åtkomst nekad</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary">Du måste vara inloggad för att aktivera splits.</MudText>
+    </div>
+    return;
+}
 
 <MudText Typo="Typo.h4" Class="mb-4">Split Templates</MudText>
 
@@ -10,7 +21,29 @@
 {
     <MudCard Class="mb-4">
         <MudCardContent>
-            <MudText Typo="Typo.h5">@template.SplitName</MudText>
+            <div class="d-flex justify-space-between align-center">
+                <MudText Typo="Typo.h5">@template.SplitName</MudText>
+                @if (activeSplits.Contains(template.SplitId))
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Error"
+                               StartIcon="@Icons.Material.Filled.CheckCircle"
+                               Size="Size.Small"
+                               OnClick="@(async () => await DeactivateSplit(template.SplitId))">
+                        Aktiverad
+                    </MudButton>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.AddCircleOutline"
+                               Size="Size.Small"
+                               OnClick="@(async () => await ActivateSplit(template.SplitId))">
+                        Aktivera
+                    </MudButton>
+                }
+            </div>
         </MudCardContent>
     </MudCard>
 
@@ -22,7 +55,7 @@
                     @foreach (var exercise in pass.Exercises)
                     {
                         <MudListItem T="TrainingExerciseTemplate">
-                            <MudText Typo="Typo.subtitle1">@exercise.ExerciseName</MudText>
+                            <MudText Typo="Typo.subtitle1">@exercise.Exercise.ExerciseName</MudText>
                             <MudText Typo="Typo.caption">@FormatDefault(exercise)</MudText>
                         </MudListItem>
                     }

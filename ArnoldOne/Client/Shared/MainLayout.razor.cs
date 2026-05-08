@@ -1,8 +1,11 @@
 
 using ArnoldOne.Client.Services;
+using ArnoldOne.Client.Shared;
+using ArnoldOne.Shared.Users;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using MudBlazor;
 
 namespace ArnoldOne.Shared;
 
@@ -24,28 +27,37 @@ public partial class MainLayout : IDisposable
     [Inject]
     private ILocalStorageService LocalStorage { get; set; } = default!;
 
-    /// <summary>Används för att läsa webbläsarens systempreferens via JS.</summary>
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
+    [Inject]
+    private LoginState LoginState { get; set; } = default!;
+
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!;
+
+    [Inject]
+    private LocalStorageMigrationService MigrationService { get; set; } = default!;
+
     /// <summary>Styr om navigeringslådan är öppen eller stängd.</summary>
     bool _drawerOpen = true;
+    MudMenu _menu = default!;
 
     protected override async Task OnInitializedAsync()
     {
-        // Prenumerera på temaändringar så layouten ritas om vid byte
+        await MigrationService.MigrateAsync();
+
         ThemeState.OnChange += StateHasChanged;
+        LoginState.OnChange += StateHasChanged;
 
         var stored = await LocalStorage.GetItemAsync<bool?>(DarkModeKey);
 
         if (stored.HasValue)
         {
-            // Använd användarens sparade val
             ThemeState.SetDarkMode(stored.Value);
         }
         else
         {
-            // Inget sparat val – läs webbläsarens/OS:ets preferens via JS
             var systemDark = await JSRuntime.InvokeAsync<bool>(
                 "eval", "window.matchMedia('(prefers-color-scheme: dark)').matches");
             ThemeState.SetDarkMode(systemDark);
@@ -60,15 +72,47 @@ public partial class MainLayout : IDisposable
             RestTimer.SetSeconds(storedRestSeconds.Value);
     }
 
+    /// <summary>Öppnar inloggningsdialogen och loggar in om lyckad.</summary>
+    private async Task OpenLoginDialog()
+    {
+        var dialog = await DialogService.ShowAsync<LoginDialog>("Logga in");
+        var result = await dialog.Result;
+
+        await _menu.CloseMenuAsync();
+
+        if (!result.Canceled && result.Data is UserInfo user)
+            LoginState.Login(user);
+    }
+
+    /// <summary>Öppnar registreringsdialogen och loggar in direkt om lyckad.</summary>
+    private async Task OpenRegisterDialog()
+    {
+        var dialog = await DialogService.ShowAsync<RegisterDialog>("Skapa konto");
+        var result = await dialog.Result;
+
+        await _menu.CloseMenuAsync();
+
+        if (!result.Canceled && result.Data is UserInfo user)
+            LoginState.Login(user);
+    }
+
+    /// <summary>Loggar ut den inloggade användaren.</summary>
+    private async Task Logout()
+    {
+        await _menu.CloseMenuAsync();
+        LoginState.Logout();
+    }
+
     /// <summary>Växlar navigeringslådans öppna/stängda tillstånd.</summary>
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
 
-    /// <summary>Avslutar prenumerationen på temaändringar.</summary>
+    /// <summary>Avslutar prenumerationerna.</summary>
     public void Dispose()
     {
         ThemeState.OnChange -= StateHasChanged;
+        LoginState.OnChange -= StateHasChanged;
     }
 }

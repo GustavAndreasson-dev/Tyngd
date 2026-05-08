@@ -11,8 +11,8 @@ public class TrainingSplit
     /// <summary>Splittens namn, t.ex. Push, Pull, Legs.</summary>
     public string SplitName { get; set; } = string.Empty;
 
-    /// <summary>Id för användaren som äger splitten.</summary>
-    public int UserId { get; set; }
+    /// <summary>FK till användaren (IdentityUser GUID).</summary>
+    public string UserId { get; set; } = string.Empty;
 
     /// <summary>Pass som ingår i splitten.</summary>
     public List<TrainingPass> Passes { get; set; } = new();

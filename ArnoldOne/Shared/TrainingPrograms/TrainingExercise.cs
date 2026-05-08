@@ -5,11 +5,14 @@ namespace ArnoldOne.Shared.TrainingPrograms;
 /// </summary>
 public class TrainingExercise
 {
-    /// <summary>Unikt id för övningen.</summary>
+    /// <summary>FK till passet som övningen tillhör.</summary>
+    public int PassId { get; set; }
+
+    /// <summary>FK till övningen i exercisekatalogen.</summary>
     public int ExerciseId { get; set; }
 
-    /// <summary>Övningens namn.</summary>
-    public string ExerciseName { get; set; } = string.Empty;
+    /// <summary>Navigeringsegenskap till övningen.</summary>
+    public Exercise Exercise { get; set; } = new();
 
     /// <summary>Rekommenderat antal set.</summary>
     public int DefaultSets { get; set; }

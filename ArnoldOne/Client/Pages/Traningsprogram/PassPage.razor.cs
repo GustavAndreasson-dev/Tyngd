@@ -24,6 +24,10 @@ public partial class PassPage : ComponentBase, IDisposable
     [Parameter]
     public int PassId { get; set; }
 
+    /// <summary>Sätts till 1 när användaren navigerar från startsidan, vilket startar en ny session.</summary>
+    [SupplyParameterFromQuery(Name = "new")]
+    public int NewSession { get; set; }
+
     /// <summary>Tjänst för att läsa och skriva användardata i webbläsarens LocalStorage.</summary>
     [Inject]
     private ILocalStorageService LocalStorage { get; set; } = default!;
@@ -35,6 +39,14 @@ public partial class PassPage : ComponentBase, IDisposable
     /// <summary>Tjänst som håller vilotimer-inställningarna globalt.</summary>
     [Inject]
     private RestTimerState RestTimer { get; set; } = default!;
+
+    /// <summary>Tjänst som håller pågående pass-session globalt.</summary>
+    [Inject]
+    private SessionState Session { get; set; } = default!;
+
+    /// <summary>Används för att navigera tillbaka till startsidan efter avslutat pass.</summary>
+    [Inject]
+    private NavigationManager Nav { get; set; } = default!;
 
     private TrainingPassTemplate? pass;
     private Transition transition = Transition.None;
@@ -71,6 +83,7 @@ public partial class PassPage : ComponentBase, IDisposable
             if (_isInitialized && _lastPassId != PassId)
             {
                 _lastPassId = PassId;
+                activeIndex = FirstIncompleteExerciseIndex();
                 var stored = await LocalStorage.GetItemAsync<PassData>(PassKey);
                 data = stored ?? new PassData();
             }
@@ -97,6 +110,10 @@ public partial class PassPage : ComponentBase, IDisposable
 
             _isInitialized = true;
             _lastPassId = PassId;
+            if (NewSession == 1 || !Session.IsActive)
+                StartSession();
+            else
+                activeIndex = FirstIncompleteExerciseIndex();
             StateHasChanged();
         }
 
@@ -120,6 +137,30 @@ public partial class PassPage : ComponentBase, IDisposable
         }
     }
 
+    /// <summary>
+    /// Returnerar index för den första övningen som har minst ett oikryssat set,
+    /// förutsatt att passet är aktivt i sessionen. Annars returneras 0.
+    /// </summary>
+    private int FirstIncompleteExerciseIndex()
+    {
+        if (pass is null || Session.ActiveSplitId != SplitId || Session.ActivePassId != PassId)
+            return 0;
+
+        for (int i = 0; i < pass.Exercises.Count; i++)
+        {
+            var exerciseId = pass.Exercises[i].ExerciseId;
+            var sets = pass.Exercises[i].DefaultSets;
+
+            if (!Session.CompletedSets.TryGetValue(exerciseId, out var done))
+                return i;
+
+            if (done.Take(sets).Any(s => !s))
+                return i;
+        }
+
+        return 0;
+    }
+
     /// <summary>Returnerar sparad vikt för en övning, eller null om ingen finns.</summary>
     private decimal? GetWeight(int exerciseId) =>
         _weights.TryGetValue(exerciseId, out var w) ? w : null;
@@ -140,7 +181,7 @@ public partial class PassPage : ComponentBase, IDisposable
     private void AdjustReps(int exerciseId, int setIndex, int delta)
     {
         var current = GetReps(exerciseId, setIndex);
-        SetReps(exerciseId, setIndex, Math.Clamp(current + delta, 1, 20));
+        SetReps(exerciseId, setIndex, Math.Clamp(current + delta, 1, 1000));
     }
 
     /// <summary>Uppdaterar antalet reps för ett specifikt set.</summary>
@@ -151,29 +192,49 @@ public partial class PassPage : ComponentBase, IDisposable
     }
 
     /// <summary>Returnerar om ett specifikt set är markerat som klart.</summary>
-    private bool IsSetDone(int exerciseId, int setIndex)
-    {
-        if (data.CompletedSets.TryGetValue(exerciseId, out var sets) && setIndex < sets.Length)
-            return sets[setIndex];
-        return false;
-    }
+    private bool IsSetDone(int exerciseId, int setIndex) => Session.IsSetDone(exerciseId, setIndex);
 
-    /// <summary>Togglar om ett set är klart och sparar till LocalStorage. Startar vilotimer om aktiverad.</summary>
+    /// <summary>Togglar om ett set är klart. Startar vilotimer om aktiverad, men inte efter sista setet i passet.</summary>
     private async Task ToggleSet(int exerciseId, int setIndex)
     {
-        if (!data.CompletedSets.ContainsKey(exerciseId))
-        {
-            var count = pass!.Exercises.First(e => e.ExerciseId == exerciseId).DefaultSets;
-            data.CompletedSets[exerciseId] = new bool[count];
-        }
+        var count = pass!.Exercises.First(e => e.ExerciseId == exerciseId).DefaultSets;
+        var isDone = Session.ToggleSet(exerciseId, count, setIndex);
 
-        data.CompletedSets[exerciseId][setIndex] = !data.CompletedSets[exerciseId][setIndex];
-        await LocalStorage.SetItemAsync(PassKey, data);
-
-        if (data.CompletedSets[exerciseId][setIndex] && RestTimer.IsEnabled)
+        if (isDone && RestTimer.IsEnabled && !AllSetsDone())
             StartRestTimer();
         else
             CancelRestTimer();
+    }
+
+    /// <summary>Returnerar sant om alla sets för alla övningar är markerade som klara.</summary>
+    private bool AllSetsDone()
+    {
+        if (pass is null) return false;
+        foreach (var ex in pass.Exercises)
+        {
+            if (!Session.CompletedSets.TryGetValue(ex.ExerciseId, out var sets))
+                return false;
+            if (sets.Any(s => !s))
+                return false;
+        }
+        return true;
+    }
+
+    /// <summary>Startar ett nytt pass via SessionState och aktiverar wake lock.</summary>
+    private void StartSession()
+    {
+        Session.StartPass(SplitId, PassId);
+        CancelRestTimer();
+        _ = JSRuntime.InvokeVoidAsync("arnoldOne.requestWakeLock");
+    }
+
+    /// <summary>Avslutar passet: tömmer sessionen, stoppar timer, frigör wake lock och navigerar till startsidan.</summary>
+    private void EndPass()
+    {
+        Session.EndSession();
+        CancelRestTimer();
+        _ = JSRuntime.InvokeVoidAsync("arnoldOne.releaseWakeLock");
+        Nav.NavigateTo("/");
     }
 
     /// <summary>Startar vilotimern med nedräkning. Avbryter eventuell pågående timer först.</summary>
@@ -259,16 +320,16 @@ public partial class PassPage : ComponentBase, IDisposable
     /// Användarens sparade data per pass: reps och anteckningar per övning.
     /// Serialiseras till och från LocalStorage.
     /// </summary>
-    /// <summary>Avbryter timern när komponenten avmonteras.</summary>
+    /// <summary>Avbryter timern och frigör wake lock när komponenten avmonteras.</summary>
     public void Dispose()
     {
         CancelRestTimer();
+        _ = JSRuntime.InvokeVoidAsync("arnoldOne.releaseWakeLock");
     }
 
     private class PassData
     {
         public Dictionary<int, double[]> Reps { get; set; } = new();
         public Dictionary<int, string> Notes { get; set; } = new();
-        public Dictionary<int, bool[]> CompletedSets { get; set; } = new();
     }
 }

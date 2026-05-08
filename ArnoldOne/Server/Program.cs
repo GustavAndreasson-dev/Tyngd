@@ -27,6 +27,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAntiforgery();
 
+app.UseStaticFiles();
 app.MapStaticAssets();
 app.MapRazorPages();
 app.MapControllers();
