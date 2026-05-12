@@ -331,5 +331,6 @@ public partial class PassPage : ComponentBase, IDisposable
     {
         public Dictionary<int, double[]> Reps { get; set; } = new();
         public Dictionary<int, string> Notes { get; set; } = new();
+        public Dictionary<int, bool[]> CompletedSets { get; set; } = new();
     }
 }
