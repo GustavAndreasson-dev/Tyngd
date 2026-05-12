@@ -10,8 +10,5 @@ public class Split
 
     /// <summary>FK till användaren (IdentityUser GUID).</summary>
     public string UserId { get; set; } = string.Empty;
-
-    ///<summary>Om Splitten ska vara synlig för användaren eller inte.</summary>
-    public bool Visability { get; set; } = false;
 }
 

@@ -11,14 +11,14 @@ public class Exercise
     public string ExerciseName { get; set; } = string.Empty;
 
     /// <summary>Rekommenderat antal set.</summary>
-    public int DefaultSets { get; set; }
+    public int? DefaultSets { get; set; }
 
     /// <summary>Lägsta rekommenderade antal reps per set.</summary>
-    public int DefaultRepsMin { get; set; }
+    public int? DefaultRepsMin { get; set; }
 
     /// <summary>Högsta rekommenderade antal reps per set.</summary>
-    public int DefaultRepsMax { get; set; }
+    public int? DefaultRepsMax { get; set; }
 
     /// <summary>Rekommenderad startvikt i kg.</summary>
-    public decimal DefaultWeight { get; set; }
+    public decimal? DefaultWeight { get; set; }
 }

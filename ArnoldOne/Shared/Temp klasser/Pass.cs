@@ -13,6 +13,4 @@ public class Pass
 
     /// <summary>Passens namn, t.ex. Push eller Pull.</summary>
     public string PassName { get; set; } = string.Empty;
-    ///<summary>Om passet ska vara synlig för användaren eller inte.</summary>
-    public bool Visability { get; set; } = false;
 }

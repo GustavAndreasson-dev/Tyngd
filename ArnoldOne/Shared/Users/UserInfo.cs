@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ArnoldOne.Shared.Users;
 
 /// <summary>
@@ -8,7 +10,7 @@ namespace ArnoldOne.Shared.Users;
 public class UserInfo
 {
     /// <summary>Användarens GUID-id (ärvs från IdentityUser).</summary>
-    public string Id { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
 
     /// <summary>Användarnamn.</summary>
     public string UserName { get; set; } = string.Empty;
@@ -26,5 +28,6 @@ public class UserInfo
     public List<string> Roles { get; set; } = new();
 
     /// <summary>Anger om användaren har rollen "Admin".</summary>
+    [JsonIgnore]
     public bool IsAdmin => Roles.Contains(AppRoles.Admin);
 }

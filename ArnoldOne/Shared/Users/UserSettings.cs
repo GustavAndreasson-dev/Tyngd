@@ -8,9 +8,6 @@ namespace ArnoldOne.Shared.Users;
 /// </summary>
 public class UserSettings
 {
-    /// <summary>Unikt id för raden.</summary>
-    public int Id { get; set; }
-
     /// <summary>FK till användaren (IdentityUser GUID).</summary>
     public string UserId { get; set; } = string.Empty;
 
@@ -19,7 +16,7 @@ public class UserSettings
 
     /// <summary>Anger om vilotimern är aktiverad.</summary>
     public bool IsRestTimerEnabled { get; set; }
-
+    
     /// <summary>Vilotimerens längd i sekunder.</summary>
     public int RestTimerSeconds { get; set; } = 120;
 }

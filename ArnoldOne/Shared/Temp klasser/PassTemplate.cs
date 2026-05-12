@@ -10,4 +10,7 @@ public class PassTemplate
 
     /// <summary>Passens namn, t.ex. Push eller Pull.</summary>
     public string PassTemplateName { get; set; } = string.Empty;
+
+    ///<summary>Om Pass ska vara synlig för användaren eller inte.</summary>
+    public bool Visability { get; set; } = false;
 }
