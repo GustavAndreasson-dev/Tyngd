@@ -1,4 +1,8 @@
 <Solution>
+  <Project Path="ArnoldDB/ArnoldOneDB.sqlproj" Id="55116089-d696-40f7-84e2-75384d9e7bd3">
+    <Build />
+    <Deploy />
+  </Project>
   <Project Path="ArnoldOne/Client/ArnoldOne.Client.csproj" />
   <Project Path="ArnoldOne/Server/ArnoldOne.Server.csproj" />
   <Project Path="ArnoldOne/Shared/ArnoldOne.Shared.csproj" />

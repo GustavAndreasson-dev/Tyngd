@@ -1,15 +1,16 @@
 namespace ArnoldOne.Shared.TrainingPrograms;
 
 /// <summary>
-/// Mall för en övning utan användaranknytning. Lagras som databas-mall och kopieras till <see cref="TrainingExercise"/> vid val.
+/// Kopplingstabell mellan ett pass och en övning i mallen.
+/// Lagrar defaults (set/reps/vikt) specifika för just det passet.
 /// </summary>
 public class TrainingExerciseTemplate
 {
-    /// <summary>Unikt id för övningsmallen.</summary>
+    /// <summary>FK till övningen i exercisekatalogen.</summary>
     public int ExerciseId { get; set; }
 
-    /// <summary>Övningens namn.</summary>
-    public string ExerciseName { get; set; } = string.Empty;
+    /// <summary>Navigeringsegenskap till övningen.</summary>
+    public Exercise Exercise { get; set; } = new();
 
     /// <summary>Rekommenderat antal set.</summary>
     public int DefaultSets { get; set; }

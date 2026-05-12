@@ -1,0 +1,38 @@
+@page "/admin"
+@namespace ArnoldOne.Client.Pages
+@using ArnoldOne.Client.Services
+@using System.Reflection
+
+<PageTitle>Admin – Översikt</PageTitle>
+
+@if (!LoginState.IsLoggedIn || !LoginState.CurrentUser!.IsAdmin)
+{
+    <div class="d-flex flex-column align-center mt-12" style="gap:16px;">
+        <MudIcon Icon="@Icons.Material.Filled.Lock" Style="font-size:4rem;" Color="Color.Error" />
+        <MudText Typo="Typo.h5" Align="Align.Center">Åtkomst nekad</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary">Du måste vara inloggad som admin.</MudText>
+    </div>
+    return;
+}
+
+<MudText Typo="Typo.h4" Class="mb-6">Admin – Dataöversikt</MudText>
+
+@foreach (var table in _tables)
+{
+    <MudText Typo="Typo.h6" Class="mb-2">@table.ClassName</MudText>
+
+    <MudTable Items="@table.Items" Dense="true" Hover="true" Striped="true" Elevation="2" Class="mb-8">
+        <HeaderContent>
+            @foreach (var prop in table.Properties)
+            {
+                <MudTh>@prop.Name</MudTh>
+            }
+        </HeaderContent>
+        <RowTemplate>
+            @foreach (var prop in table.Properties)
+            {
+                <MudTd>@(prop.GetValue(context)?.ToString() ?? "-")</MudTd>
+            }
+        </RowTemplate>
+    </MudTable>
+}

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Blazored.LocalStorage;
 using MudBlazor.Services;
 using ArnoldOne.Client.Services;
+using ArnoldOne.Shared.TrainingPrograms;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -22,5 +23,20 @@ builder.Services.AddSingleton<ThemeState>();
 
 // Singleton för vilotimer-inställningar (aktiverad/sekunder)
 builder.Services.AddSingleton<RestTimerState>();
+
+// Singleton för att hålla pågående pass-session vid navigering
+builder.Services.AddSingleton<SessionState>();
+
+// Singleton för inloggningsstatus
+builder.Services.AddSingleton<LoginState>();
+
+// Repository för träningssplits – in-memory tills databasen är på plats
+builder.Services.AddScoped<ITrainingSplitRepository, TrainingSplitRepository>();
+
+// Service för användarens aktiverade splits
+builder.Services.AddScoped<UserSplitsService>();
+
+// Scoped för localStorage-migrering
+builder.Services.AddScoped<LocalStorageMigrationService>();
 
 await builder.Build().RunAsync();
