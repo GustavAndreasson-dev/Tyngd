@@ -7,7 +7,9 @@ using ArnoldOne.Shared.TrainingPrograms;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 // Registrera namngiven HttpClient som pekar mot server-API:t
-builder.Services.AddHttpClient("ArnoldOne.ServerAPI", client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
+builder.Services.AddScoped<AuthTokenHandler>();
+builder.Services.AddHttpClient("ArnoldOne.ServerAPI", client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
+    .AddHttpMessageHandler<AuthTokenHandler>();
 
 // Supply HttpClient instances that include access tokens when making requests to the server project
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("ArnoldOne.ServerAPI"));
@@ -28,13 +30,19 @@ builder.Services.AddSingleton<RestTimerState>();
 builder.Services.AddSingleton<SessionState>();
 
 // Singleton för inloggningsstatus
-builder.Services.AddSingleton<LoginState>();
-
-// Repository för träningssplits – in-memory tills databasen är på plats
-builder.Services.AddScoped<ITrainingSplitRepository, TrainingSplitRepository>();
+builder.Services.AddScoped<LoginState>();
 
 // Service för användarens aktiverade splits
 builder.Services.AddScoped<UserSplitsService>();
+
+// Service för autentisering mot API
+builder.Services.AddScoped<AuthService>();
+
+// Service för passmallars övningsantal från API
+builder.Services.AddScoped<PassTemplateService>();
+
+// Service för splitmallar och pass från API
+builder.Services.AddScoped<SplitTemplateService>();
 
 // Scoped för localStorage-migrering
 builder.Services.AddScoped<LocalStorageMigrationService>();

@@ -1,9 +1,10 @@
 @page "/TP/templates"
 @layout MainLayout
-@using ArnoldOne.Shared.TrainingPrograms
-@using ArnoldOne.Client.Services
+@inherits PageComponentBase
 
 <PageTitle>Split Templates</PageTitle>
+
+<ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
 
 @if (!LoginState.IsLoggedIn)
 {

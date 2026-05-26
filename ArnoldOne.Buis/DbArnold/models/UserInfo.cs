@@ -17,5 +17,7 @@ public partial class UserInfo
 
     public string Roles { get; set; }
 
+    public string PasswordHash { get; set; }
+
     public virtual ICollection<Split> Split { get; set; } = new List<Split>();
 }

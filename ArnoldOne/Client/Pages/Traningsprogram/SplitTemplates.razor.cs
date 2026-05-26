@@ -1,14 +1,11 @@
 using ArnoldOne.Client.Services;
+using ArnoldOne.Client.Shared;
 using ArnoldOne.Shared.TrainingPrograms;
 using Microsoft.AspNetCore.Components;
 
 namespace ArnoldOne.Client.Pages.Traningsprogram;
 
-/// <summary>
-/// Sida som visar alla tillgängliga träningssplitmallar med övningar och defaultvärden.
-/// Inloggade användare kan aktivera/avaktivera splits.
-/// </summary>
-public partial class SplitTemplates : ComponentBase
+public partial class SplitTemplates : IDisposable
 {
     [Inject]
     private LoginState LoginState { get; set; } = default!;
@@ -16,37 +13,67 @@ public partial class SplitTemplates : ComponentBase
     [Inject]
     private UserSplitsService UserSplitsService { get; set; } = default!;
 
-    // Alla tillgängliga mallar hämtas från generatorn och används enbart för visning
-    private readonly IReadOnlyList<TrainingSplitTemplate> templates = new TrainingSplitTemplateGenerator().GetAllTemplates();
+    [Inject]
+    private SplitTemplateService SplitTemplateService { get; set; } = default!;
+
+    private IReadOnlyList<TrainingSplitTemplate> templates = new List<TrainingSplitTemplate>();
 
     private HashSet<int> activeSplits = new();
 
     protected override async Task OnInitializedAsync()
     {
-        if (LoginState.IsLoggedIn)
-            activeSplits = await UserSplitsService.GetActiveSplitsAsync(LoginState.CurrentUser!.Id);
+        LoginState.OnChange += OnLoginStateChanged;
+        await TryAsync(async () =>
+        {
+            templates = await SplitTemplateService.GetAllAsync();
+            await LoadActiveSplitsAsync();
+        }, "Kunde inte ladda splitmallar");
     }
 
-    /// <summary>Aktiverar en split för den inloggade användaren.</summary>
+    private async void OnLoginStateChanged()
+    {
+        try
+        {
+            await LoadActiveSplitsAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch { }
+    }
+
+    private async Task LoadActiveSplitsAsync()
+    {
+        if (!LoginState.IsLoggedIn)
+        {
+            activeSplits = new HashSet<int>();
+            return;
+        }
+        try
+        {
+            activeSplits = await UserSplitsService.GetActiveSplitsAsync(LoginState.CurrentUser!.UserId);
+        }
+        catch { }
+    }
+
+    public void Dispose() => LoginState.OnChange -= OnLoginStateChanged;
+
     private async Task ActivateSplit(int splitId)
     {
-        if (!LoginState.IsLoggedIn)
-            return;
-
-        await UserSplitsService.ActivateSplitAsync(LoginState.CurrentUser!.Id, splitId);
-        activeSplits.Add(splitId);
-        StateHasChanged();
+        if (!LoginState.IsLoggedIn) return;
+        await TryAsync(async () =>
+        {
+            await UserSplitsService.ActivateSplitAsync(LoginState.CurrentUser!.UserId, splitId);
+            activeSplits.Add(splitId);
+        }, "Kunde inte aktivera split");
     }
 
-    /// <summary>Avaktiverar en split för den inloggade användaren.</summary>
     private async Task DeactivateSplit(int splitId)
     {
-        if (!LoginState.IsLoggedIn)
-            return;
-
-        await UserSplitsService.DeactivateSplitAsync(LoginState.CurrentUser!.Id, splitId);
-        activeSplits.Remove(splitId);
-        StateHasChanged();
+        if (!LoginState.IsLoggedIn) return;
+        await TryAsync(async () =>
+        {
+            await UserSplitsService.DeactivateSplitAsync(LoginState.CurrentUser!.UserId, splitId);
+            activeSplits.Remove(splitId);
+        }, "Kunde inte avaktivera split");
     }
 
     /// <summary>Formaterar defaultvärden för en övningsmall som läsbar text.</summary>

@@ -46,6 +46,7 @@ public partial class MainLayout : IDisposable
     protected override async Task OnInitializedAsync()
     {
         await MigrationService.MigrateAsync();
+        await LoginState.InitializeAsync();
 
         ThemeState.OnChange += StateHasChanged;
         LoginState.OnChange += StateHasChanged;
@@ -81,7 +82,7 @@ public partial class MainLayout : IDisposable
         await _menu.CloseMenuAsync();
 
         if (!result.Canceled && result.Data is UserInfo user)
-            LoginState.Login(user);
+            StateHasChanged();
     }
 
     /// <summary>Öppnar registreringsdialogen och loggar in direkt om lyckad.</summary>
@@ -93,14 +94,14 @@ public partial class MainLayout : IDisposable
         await _menu.CloseMenuAsync();
 
         if (!result.Canceled && result.Data is UserInfo user)
-            LoginState.Login(user);
+            StateHasChanged();
     }
 
     /// <summary>Loggar ut den inloggade användaren.</summary>
     private async Task Logout()
     {
         await _menu.CloseMenuAsync();
-        LoginState.Logout();
+        await LoginState.LogoutAsync();
     }
 
     /// <summary>Växlar navigeringslådans öppna/stängda tillstånd.</summary>

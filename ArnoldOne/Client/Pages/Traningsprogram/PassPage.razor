@@ -1,8 +1,10 @@
 @page "/TP/split/{SplitId:int}/pass/{PassId:int}"
 @layout MainLayout
-@using ArnoldOne.Shared.TrainingPrograms
+@inherits PageComponentBase
 
 <PageTitle>@pass?.PassName</PageTitle>
+
+<ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
 
 <MudText Typo="Typo.h4" Class="mb-4">@pass?.PassName</MudText>
 

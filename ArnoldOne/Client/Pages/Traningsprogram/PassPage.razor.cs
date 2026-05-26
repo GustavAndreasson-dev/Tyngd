@@ -1,4 +1,5 @@
 using ArnoldOne.Client.Services;
+using ArnoldOne.Client.Shared;
 using ArnoldOne.Shared.TrainingPrograms;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
@@ -14,7 +15,7 @@ namespace ArnoldOne.Client.Pages.Traningsprogram;
 /// Vikter lagras globalt per ExerciseId i <c>exercise-weights</c> för synkronisering mellan program.
 /// Reps och anteckningar lagras per pass i <c>pass-{PassId}</c>.
 /// </summary>
-public partial class PassPage : ComponentBase, IDisposable
+public partial class PassPage : IDisposable
 {
     /// <summary>Id för den valda splitten, hämtas från route-parametern.</summary>
     [Parameter]
@@ -48,6 +49,9 @@ public partial class PassPage : ComponentBase, IDisposable
     [Inject]
     private NavigationManager Nav { get; set; } = default!;
 
+    [Inject]
+    private SplitTemplateService SplitTemplateService { get; set; } = default!;
+
     private TrainingPassTemplate? pass;
     private Transition transition = Transition.None;
     private int activeIndex;
@@ -76,7 +80,10 @@ public partial class PassPage : ComponentBase, IDisposable
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {
-        pass = new TrainingSplitTemplateGenerator().FindPass(SplitId, PassId);
+        await TryAsync(async () =>
+        {
+            pass = await SplitTemplateService.GetPassAsync(SplitId, PassId);
+        }, "Kunde inte ladda passet");
 
         if (pass is not null)
         {

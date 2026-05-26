@@ -1,18 +1,18 @@
-using ArnoldOne.Shared.Users;
+using ArnoldOne.Client.Services;
+using ArnoldOne.Shared.DTOs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace ArnoldOne.Client.Shared;
 
-/// <summary>
-/// Registreringsdialog. Utför för närvarande en mock-registrering.
-/// Ersätt <see cref="MockRegisterAsync"/> med ett riktigt API-anrop mot /api/auth/register när backend är redo.
-/// </summary>
 public partial class RegisterDialog : ComponentBase
 {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Inject]
+    private AuthService AuthService { get; set; } = default!;
 
     private string _username        = string.Empty;
     private string _email           = string.Empty;
@@ -37,21 +37,9 @@ public partial class RegisterDialog : ComponentBase
             return;
         }
 
-        if (LoginDialog.MockUsers.ContainsKey(_username.Trim()))
-        {
-            _errorMessage = "Användarnamnet är redan taget.";
-            return;
-        }
-
         if (!IsValidEmail(_email.Trim()))
         {
             _errorMessage = "Ange en giltig e-postadress.";
-            return;
-        }
-
-        if (LoginDialog.MockUsers.Values.Any(u => u.Email.Equals(_email.Trim(), StringComparison.OrdinalIgnoreCase)))
-        {
-            _errorMessage = "E-postadressen är redan registrerad.";
             return;
         }
 
@@ -67,7 +55,19 @@ public partial class RegisterDialog : ComponentBase
             return;
         }
 
-        var user = await MockRegisterAsync(_username.Trim(), _email.Trim());
+        var (user, error) = await AuthService.RegisterAsync(new RegisterRequest
+        {
+            UserName = _username.Trim(),
+            Email    = _email.Trim(),
+            Password = _password,
+        });
+
+        if (user is null)
+        {
+            _errorMessage = error ?? "Registreringen misslyckades.";
+            return;
+        }
+
         MudDialog.Close(DialogResult.Ok(user));
     }
 
@@ -85,21 +85,5 @@ public partial class RegisterDialog : ComponentBase
     {
         if (e.Key == "Enter")
             await Submit();
-    }
-
-    /// <summary>
-    /// Mock-registrering – skapar alltid ett nytt konto med rollen User.
-    /// Ersätts med HttpClient-anrop mot /api/auth/register när backend finns.
-    /// </summary>
-    private static Task<UserInfo> MockRegisterAsync(string username, string email)
-    {
-        return Task.FromResult(new UserInfo
-        {
-            Id        = Guid.NewGuid().ToString(),
-            UserName  = username,
-            Email     = email,
-            CreatedAt = DateTime.UtcNow,
-            Roles     = [AppRoles.User],
-        });
     }
 }

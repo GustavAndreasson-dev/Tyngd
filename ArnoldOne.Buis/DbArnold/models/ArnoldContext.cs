@@ -173,6 +173,10 @@ public partial class ArnoldContext : DbContext
                 .IsRequired()
                 .HasMaxLength(500)
                 .IsUnicode(false);
+            entity.Property(e => e.PasswordHash)
+                .IsRequired()
+                .HasMaxLength(256)
+                .IsUnicode(false);
             entity.Property(e => e.UserName)
                 .IsRequired()
                 .HasMaxLength(50)

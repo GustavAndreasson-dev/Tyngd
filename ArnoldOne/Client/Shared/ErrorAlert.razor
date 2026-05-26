@@ -1,0 +1,11 @@
+@if (!string.IsNullOrEmpty(Message))
+{
+    <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="OnClose" Class="mb-4">
+        @Message
+    </MudAlert>
+}
+
+@code {
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+}

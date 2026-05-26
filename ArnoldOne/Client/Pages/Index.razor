@@ -1,4 +1,7 @@
 ﻿@page "/"
+@inherits PageComponentBase
+
+<ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
 
 <MudText Typo="Typo.h1">Arnold</MudText>
 <MudText Typo="Typo.h3">PPL 1</MudText>
@@ -15,3 +18,13 @@
 
 <MudText Typo="Typo.h3">Templates</MudText>
 <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Href="/TP/templates">Split template</MudButton>
+
+<MudText Typo="Typo.h3">Övningar per passtemplate</MudText>
+@foreach (var split in exerciseCounts.GroupBy(e => e.SplitTemplateName))
+{
+    <MudText Typo="Typo.h5">@split.Key</MudText>
+    @foreach (var pass in split)
+    {
+        <MudText>@pass.PassTemplateName: @pass.ExerciseCount övningar</MudText>
+    }
+}
