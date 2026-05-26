@@ -11,7 +11,7 @@
    "OutputPath": "DbArnold\/models",
    "PluralRules": null,
    "PreserveCasingWithRegex": true,
-   "ProjectRootNamespace": "",
+   "ProjectRootNamespace": "DbArnold",
    "Schemas": null,
    "SelectedHandlebarsLanguage": 2,
    "SelectedToBeGenerated": 0,

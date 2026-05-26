@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace .DbArnold.models;
+namespace DbArnold.DbArnold.models;
 
 public partial class PassTemplate
 {
@@ -14,6 +14,8 @@ public partial class PassTemplate
     public string PassTemplateName { get; set; }
 
     public bool Visability { get; set; }
+
+    public int Ordning { get; set; }
 
     public virtual SplitTemplate SplitTemplate { get; set; }
 }

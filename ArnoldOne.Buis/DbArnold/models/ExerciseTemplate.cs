@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace .DbArnold.models;
+namespace DbArnold.DbArnold.models;
 
 public partial class ExerciseTemplate
 {
@@ -22,6 +22,8 @@ public partial class ExerciseTemplate
     public int? DefaultWeight { get; set; }
 
     public bool Visability { get; set; }
+
+    public int Ordning { get; set; }
 
     public virtual PassTemplate PassTemplate { get; set; }
 }

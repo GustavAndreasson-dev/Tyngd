@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace .DbArnold.models;
+namespace DbArnold.DbArnold.models;
 
 public partial class Exercise
 {
@@ -20,6 +20,8 @@ public partial class Exercise
     public int? DefaultRepsMax { get; set; }
 
     public decimal? DefaultWeight { get; set; }
+
+    public int Ordning { get; set; }
 
     public virtual ICollection<ExerciseLog> ExerciseLog { get; set; } = new List<ExerciseLog>();
 

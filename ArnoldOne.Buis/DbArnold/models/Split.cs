@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace .DbArnold.models;
+namespace DbArnold.DbArnold.models;
 
 public partial class Split
 {
@@ -12,6 +12,8 @@ public partial class Split
     public string SplitName { get; set; }
 
     public Guid UserId { get; set; }
+
+    public bool Visability { get; set; }
 
     public virtual ICollection<Pass> Pass { get; set; } = new List<Pass>();
 

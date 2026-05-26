@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace .DbArnold.models;
+namespace DbArnold.DbArnold.models;
 
 public partial class SetLog
 {

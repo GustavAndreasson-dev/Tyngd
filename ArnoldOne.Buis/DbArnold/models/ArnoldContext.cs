@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace .DbArnold.models;
+namespace DbArnold.DbArnold.models;
 
 public partial class ArnoldContext : DbContext
 {
@@ -35,6 +35,8 @@ public partial class ArnoldContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.UseCollation("Latin1_General_CI_AS");
+
         modelBuilder.Entity<Exercise>(entity =>
         {
             entity.Property(e => e.DefaultWeight).HasColumnType("decimal(10, 2)");
@@ -42,6 +44,7 @@ public partial class ArnoldContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.Ordning).HasDefaultValue(1, "DF_Exercise_Ordning");
 
             entity.HasOne(d => d.Pass).WithMany(p => p.Exercise)
                 .HasForeignKey(d => d.PassId)
@@ -78,6 +81,7 @@ public partial class ArnoldContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.Ordning).HasDefaultValue(1, "DF_ExerciseTemplate_Ordning");
 
             entity.HasOne(d => d.PassTemplate).WithMany()
                 .HasForeignKey(d => d.PassTemplateId)
@@ -87,6 +91,7 @@ public partial class ArnoldContext : DbContext
 
         modelBuilder.Entity<Pass>(entity =>
         {
+            entity.Property(e => e.Ordning).HasDefaultValue(1, "DF_Pass_Ordning");
             entity.Property(e => e.PassName)
                 .IsRequired()
                 .HasMaxLength(50)
@@ -100,6 +105,7 @@ public partial class ArnoldContext : DbContext
 
         modelBuilder.Entity<PassTemplate>(entity =>
         {
+            entity.Property(e => e.Ordning).HasDefaultValue(1, "DF_PassTemplate_Ordning");
             entity.Property(e => e.PassTemplateName)
                 .IsRequired()
                 .HasMaxLength(50)
@@ -137,6 +143,7 @@ public partial class ArnoldContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.Visability).HasDefaultValue(true, "DF_Split_Visability");
 
             entity.HasOne(d => d.User).WithMany(p => p.Split)
                 .HasForeignKey(d => d.UserId)
