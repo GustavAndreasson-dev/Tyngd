@@ -3,6 +3,7 @@
     <Build />
     <Deploy />
   </Project>
+  <Project Path="ArnoldOne.Buis/ArnoldOne.Buis.csproj" Id="a9999eb1-63d9-435d-896b-5ab9fef27a57" />
   <Project Path="ArnoldOne/Client/ArnoldOne.Client.csproj" />
   <Project Path="ArnoldOne/Server/ArnoldOne.Server.csproj" />
   <Project Path="ArnoldOne/Shared/ArnoldOne.Shared.csproj" />
