@@ -9,6 +9,8 @@ public partial class Split
 {
     public int SplitId { get; set; }
 
+    public int? SplitTemplateId { get; set; }
+
     public string SplitName { get; set; }
 
     public Guid UserId { get; set; }

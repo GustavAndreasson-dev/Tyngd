@@ -41,7 +41,10 @@
           </MudNavMenu>
     </MudDrawer>
     <MudMainContent>
-        @Body
+        @if (_ready)
+        {
+            @Body
+        }
     </MudMainContent>
 </MudLayout>
 
@@ -51,12 +54,12 @@
         PaletteLight = new PaletteLight
         {
             Secondary = "#7B1F3A",
-            Tertiary = "#C4933F"
+            Tertiary  = "#C4933F",
         },
         PaletteDark = new PaletteDark
         {
             Secondary = "#A0294E",
-            Tertiary = "#D4A84B"
+            Tertiary  = "#D4A84B"
         }
     };
 }

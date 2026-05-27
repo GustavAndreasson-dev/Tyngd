@@ -1,5 +1,5 @@
 using ArnoldOne.Client.Services;
-using Blazored.LocalStorage;
+using ArnoldOne.Shared.Users;
 using Microsoft.AspNetCore.Components;
 
 namespace ArnoldOne.Client.Pages;
@@ -9,10 +9,6 @@ namespace ArnoldOne.Client.Pages;
 /// </summary>
 public partial class Installningar : ComponentBase, IDisposable
 {
-    private const string DarkModeKey = "darkmode";
-    private const string RestTimerEnabledKey = "resttimer-enabled";
-    private const string RestTimerSecondsKey = "resttimer-seconds";
-
     /// <summary>Tjänst som håller temainställningarna globalt.</summary>
     [Inject]
     private ThemeState ThemeState { get; set; } = default!;
@@ -21,46 +17,52 @@ public partial class Installningar : ComponentBase, IDisposable
     [Inject]
     private RestTimerState RestTimer { get; set; } = default!;
 
-    /// <summary>Tjänst för att spara inställningar i webbläsarens LocalStorage.</summary>
+    /// <summary>Tjänst för att spara och läsa inställningar från API.</summary>
     [Inject]
-    private ILocalStorageService LocalStorage { get; set; } = default!;
+    private UserSettingsService UserSettingsService { get; set; } = default!;
 
     private int _restTimerMinutes;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         ThemeState.OnChange += StateHasChanged;
-
-        var storedEnabled = await LocalStorage.GetItemAsync<bool?>(RestTimerEnabledKey);
-        if (storedEnabled.HasValue)
-            RestTimer.SetEnabled(storedEnabled.Value);
-
-        var storedSeconds = await LocalStorage.GetItemAsync<int?>(RestTimerSecondsKey);
-        RestTimer.SetSeconds(storedSeconds ?? 120);
-
         _restTimerMinutes = RestTimer.Seconds / 60;
     }
 
-    /// <summary>Togglar mörkt läge och sparar valet i LocalStorage.</summary>
+    /// <summary>Togglar mörkt läge och sparar till API.</summary>
     private async Task OnDarkModeChanged(bool value)
     {
         ThemeState.SetDarkMode(value);
-        await LocalStorage.SetItemAsync(DarkModeKey, value);
+        await PersistSettingsAsync();
     }
 
-    /// <summary>Togglar vilotimern och sparar valet i LocalStorage.</summary>
+    /// <summary>Togglar vilotimern och sparar till API.</summary>
     private async Task OnRestTimerEnabledChanged(bool value)
     {
         RestTimer.SetEnabled(value);
-        await LocalStorage.SetItemAsync(RestTimerEnabledKey, value);
+        await PersistSettingsAsync();
     }
 
-    /// <summary>Uppdaterar vilotiden och sparar till LocalStorage.</summary>
+    /// <summary>Uppdaterar vilotiden och sparar till API.</summary>
     private async Task OnRestTimerMinutesChanged(int value)
     {
         _restTimerMinutes = value;
         RestTimer.SetSeconds(value * 60);
-        await LocalStorage.SetItemAsync(RestTimerSecondsKey, value * 60);
+        await PersistSettingsAsync();
+    }
+
+    private async Task PersistSettingsAsync()
+    {
+        try
+        {
+            await UserSettingsService.SaveSettingsAsync(new UserSettings
+            {
+                IsDarkMode         = ThemeState.IsDarkMode,
+                IsRestTimerEnabled = RestTimer.IsEnabled,
+                RestTimerSeconds   = RestTimer.Seconds,
+            });
+        }
+        catch { }
     }
 
     /// <summary>Avslutar prenumerationen på temaändringar.</summary>

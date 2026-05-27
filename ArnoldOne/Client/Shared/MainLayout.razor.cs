@@ -2,7 +2,6 @@
 using ArnoldOne.Client.Services;
 using ArnoldOne.Client.Shared;
 using ArnoldOne.Shared.Users;
-using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
@@ -14,18 +13,11 @@ namespace ArnoldOne.Shared;
 /// </summary>
 public partial class MainLayout : IDisposable
 {
-    private const string DarkModeKey = "darkmode";
-    private const string RestTimerEnabledKey = "resttimer-enabled";
-    private const string RestTimerSecondsKey = "resttimer-seconds";
-
     [Inject]
     private ThemeState ThemeState { get; set; } = default!;
 
     [Inject]
     private RestTimerState RestTimer { get; set; } = default!;
-
-    [Inject]
-    private ILocalStorageService LocalStorage { get; set; } = default!;
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
@@ -34,13 +26,20 @@ public partial class MainLayout : IDisposable
     private LoginState LoginState { get; set; } = default!;
 
     [Inject]
+    private NavigationManager Nav { get; set; } = default!;
+
+    [Inject]
     private IDialogService DialogService { get; set; } = default!;
 
     [Inject]
     private LocalStorageMigrationService MigrationService { get; set; } = default!;
 
+    [Inject]
+    private UserSettingsService UserSettingsService { get; set; } = default!;
+
     /// <summary>Styr om navigeringslådan är öppen eller stängd.</summary>
     bool _drawerOpen = true;
+    bool _ready = false;
     MudMenu _menu = default!;
 
     protected override async Task OnInitializedAsync()
@@ -49,28 +48,30 @@ public partial class MainLayout : IDisposable
         await LoginState.InitializeAsync();
 
         ThemeState.OnChange += StateHasChanged;
-        LoginState.OnChange += StateHasChanged;
+        LoginState.OnChange += OnLoginChanged;
 
-        var stored = await LocalStorage.GetItemAsync<bool?>(DarkModeKey);
-
-        if (stored.HasValue)
+        if (LoginState.IsLoggedIn)
         {
-            ThemeState.SetDarkMode(stored.Value);
-        }
-        else
-        {
-            var systemDark = await JSRuntime.InvokeAsync<bool>(
-                "eval", "window.matchMedia('(prefers-color-scheme: dark)').matches");
-            ThemeState.SetDarkMode(systemDark);
+            try
+            {
+                var settings = await UserSettingsService.GetSettingsAsync();
+                if (settings is not null)
+                {
+                    ThemeState.SetDarkMode(settings.IsDarkMode);
+                    RestTimer.SetEnabled(settings.IsRestTimerEnabled);
+                    RestTimer.SetSeconds(settings.RestTimerSeconds);
+                    _ready = true;
+                    return;
+                }
+            }
+            catch { }
         }
 
-        var storedRestEnabled = await LocalStorage.GetItemAsync<bool?>(RestTimerEnabledKey);
-        if (storedRestEnabled.HasValue)
-            RestTimer.SetEnabled(storedRestEnabled.Value);
-
-        var storedRestSeconds = await LocalStorage.GetItemAsync<int?>(RestTimerSecondsKey);
-        if (storedRestSeconds.HasValue)
-            RestTimer.SetSeconds(storedRestSeconds.Value);
+        // Fallback: systemets mörkt-läge-inställning
+        var systemDark = await JSRuntime.InvokeAsync<bool>(
+            "eval", "window.matchMedia('(prefers-color-scheme: dark)').matches");
+        ThemeState.SetDarkMode(systemDark);
+        _ready = true;
     }
 
     /// <summary>Öppnar inloggningsdialogen och loggar in om lyckad.</summary>
@@ -102,6 +103,7 @@ public partial class MainLayout : IDisposable
     {
         await _menu.CloseMenuAsync();
         await LoginState.LogoutAsync();
+        Nav.NavigateTo("/", forceLoad: false);
     }
 
     /// <summary>Växlar navigeringslådans öppna/stängda tillstånd.</summary>
@@ -114,6 +116,28 @@ public partial class MainLayout : IDisposable
     public void Dispose()
     {
         ThemeState.OnChange -= StateHasChanged;
-        LoginState.OnChange -= StateHasChanged;
+        LoginState.OnChange -= OnLoginChanged;
+    }
+
+    private void OnLoginChanged()
+    {
+        StateHasChanged();
+        if (LoginState.IsLoggedIn)
+            _ = LoadUserSettingsAsync();
+    }
+
+    private async Task LoadUserSettingsAsync()
+    {
+        try
+        {
+            var settings = await UserSettingsService.GetSettingsAsync();
+            if (settings is not null)
+            {
+                ThemeState.SetDarkMode(settings.IsDarkMode);
+                RestTimer.SetEnabled(settings.IsRestTimerEnabled);
+                RestTimer.SetSeconds(settings.RestTimerSeconds);
+            }
+        }
+        catch { }
     }
 }

@@ -50,7 +50,10 @@ public partial class PassPage : IDisposable
     private NavigationManager Nav { get; set; } = default!;
 
     [Inject]
-    private SplitTemplateService SplitTemplateService { get; set; } = default!;
+    private UserSplitsService UserSplitsService { get; set; } = default!;
+
+    [Inject]
+    private PassLogService PassLogService { get; set; } = default!;
 
     private TrainingPassTemplate? pass;
     private Transition transition = Transition.None;
@@ -82,7 +85,7 @@ public partial class PassPage : IDisposable
     {
         await TryAsync(async () =>
         {
-            pass = await SplitTemplateService.GetPassAsync(SplitId, PassId);
+            pass = await UserSplitsService.GetPassAsync(PassId);
         }, "Kunde inte ladda passet");
 
         if (pass is not null)
@@ -100,20 +103,50 @@ public partial class PassPage : IDisposable
     }
 
     /// <summary>
-    /// Läser sparad data från LocalStorage vid första renderingen.
-    /// Vikter och passdata laddas separat.
+    /// Läser sparad data från API vid första renderingen.
+    /// Vikter och passdata laddas från senaste session.
     /// </summary>
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            var storedWeights = await LocalStorage.GetItemAsync<Dictionary<int, decimal>>(WeightsKey);
-            if (storedWeights is not null)
-                _weights = storedWeights;
+            var lastSession = await PassLogService.GetLastSessionAsync(PassId);
+            if (lastSession is not null)
+            {
+                foreach (var ex in lastSession.Exercises)
+                {
+                    _weights[ex.ExerciseId] = ex.Weight;
 
-            var storedData = await LocalStorage.GetItemAsync<PassData>(PassKey);
-            if (storedData is not null)
-                data = storedData;
+                    if (ex.Sets.Count > 0)
+                    {
+                        data.Reps[ex.ExerciseId] = ex.Sets
+                            .OrderBy(s => s.SetIndex)
+                            .Select(s => (double)s.Reps)
+                            .ToArray();
+                    }
+
+                    if (!string.IsNullOrEmpty(ex.NoteText))
+                        data.Notes[ex.ExerciseId] = ex.NoteText;
+                }
+
+                // Återställ SessionState om sessionen är från idag (t.ex. efter page refresh)
+                if (lastSession.Date == DateOnly.FromDateTime(DateTime.Today))
+                {
+                    Session.StartPass(SplitId, PassId);
+                    foreach (var ex in lastSession.Exercises)
+                    {
+                        if (ex.Sets.Count > 0)
+                        {
+                            var setCount = pass?.Exercises.FirstOrDefault(e => e.ExerciseId == ex.ExerciseId)?.DefaultSets ?? ex.Sets.Count;
+                            var doneSets = new bool[setCount];
+                            foreach (var s in ex.Sets)
+                                if (s.SetIndex < setCount)
+                                    doneSets[s.SetIndex] = true;
+                            Session.RestoreSets(ex.ExerciseId, doneSets);
+                        }
+                    }
+                }
+            }
 
             _isInitialized = true;
             _lastPassId = PassId;
@@ -235,9 +268,40 @@ public partial class PassPage : IDisposable
         _ = JSRuntime.InvokeVoidAsync("arnoldOne.requestWakeLock");
     }
 
-    /// <summary>Avslutar passet: tömmer sessionen, stoppar timer, frigör wake lock och navigerar till startsidan.</summary>
-    private void EndPass()
+    /// <summary>Avslutar passet: sparar till DB, tömmer sessionen, stoppar timer, frigör wake lock och navigerar till startsidan.</summary>
+    private async Task EndPass()
     {
+        if (pass is not null)
+        {
+            var request = new ArnoldOne.Shared.DTOs.SaveSessionRequest
+            {
+                PassId = PassId,
+                Date   = DateOnly.FromDateTime(DateTime.Today),
+                Exercises = pass.Exercises.Select(ex => new ArnoldOne.Shared.DTOs.SaveSessionExerciseDto
+                {
+                    ExerciseId = ex.ExerciseId,
+                    NoteText   = GetNote(ex.ExerciseId),
+                    Weight     = GetWeight(ex.ExerciseId) ?? 0,
+                    Sets       = Enumerable.Range(0, ex.DefaultSets).Select(i => new ArnoldOne.Shared.DTOs.SaveSessionSetDto
+                    {
+                        SetIndex = i,
+                        Reps     = (int)GetReps(ex.ExerciseId, i),
+                        IsDone   = IsSetDone(ex.ExerciseId, i),
+                        Weight   = GetWeight(ex.ExerciseId) ?? 0,
+                    }).ToList(),
+                }).ToList(),
+            };
+
+            var saved = false;
+            await TryAsync(async () =>
+            {
+                await PassLogService.SaveSessionAsync(request);
+                saved = true;
+            }, "Kunde inte spara passet");
+
+            if (!saved) return;
+        }
+
         Session.EndSession();
         CancelRestTimer();
         _ = JSRuntime.InvokeVoidAsync("arnoldOne.releaseWakeLock");
@@ -281,11 +345,8 @@ public partial class PassPage : IDisposable
         _restTimerRunning = false;
     }
 
-    /// <summary>Sparar vikter till LocalStorage när användaren lämnar ett viktfält.</summary>
-    private async Task OnWeightChanged(FocusEventArgs _)
-    {
-        await LocalStorage.SetItemAsync(WeightsKey, _weights);
-    }
+    /// <summary>Tom – vikter sparas nu till DB vid övningsbyte och avslutat pass.</summary>
+    private Task OnWeightChanged(FocusEventArgs _) => Task.CompletedTask;
 
     /// <summary>Returnerar anteckningen för en övning, eller tom sträng om ingen finns.</summary>
     private string GetNote(int exerciseId) =>
@@ -295,10 +356,33 @@ public partial class PassPage : IDisposable
     private void SetNote(int exerciseId, string value) =>
         data.Notes[exerciseId] = value;
 
-    /// <summary>Sparar passdata till LocalStorage när användaren lämnar anteckningsfältet.</summary>
-    private async Task OnNoteChanged(FocusEventArgs _)
+    /// <summary>Tom – anteckningar sparas nu till DB vid övningsbyte och avslutat pass.</summary>
+    private Task OnNoteChanged(FocusEventArgs _) => Task.CompletedTask;
+
+    /// <summary>Sparar en enskild övnings data till DB (anropas vid övningsbyte och vid avslutat pass).</summary>
+    private async Task SaveCurrentExerciseAsync(int exerciseId)
     {
-        await LocalStorage.SetItemAsync(PassKey, data);
+        if (pass is null) return;
+        var ex = pass.Exercises.FirstOrDefault(e => e.ExerciseId == exerciseId);
+        if (ex is null) return;
+
+        var request = new ArnoldOne.Shared.DTOs.UpsertExerciseRequest
+        {
+            PassId     = PassId,
+            Date       = DateOnly.FromDateTime(DateTime.Today),
+            ExerciseId = exerciseId,
+            NoteText   = GetNote(exerciseId),
+            Weight     = GetWeight(exerciseId) ?? 0,
+            Sets       = Enumerable.Range(0, ex.DefaultSets).Select(i => new ArnoldOne.Shared.DTOs.SaveSessionSetDto
+            {
+                SetIndex = i,
+                Reps     = (int)GetReps(exerciseId, i),
+                IsDone   = IsSetDone(exerciseId, i),
+                Weight   = GetWeight(exerciseId) ?? 0,
+            }).ToList(),
+        };
+
+        await PassLogService.UpsertExerciseAsync(request);
     }
 
     /// <summary>Formaterar set och reps från en övningsmall som text, t.ex. "3x8-12".</summary>
@@ -317,8 +401,17 @@ public partial class PassPage : IDisposable
 
     private void ToggleNav() => _navOpen = !_navOpen;
 
-    private void NavigateToExercise(int idx)
+    private async Task OnCarouselIndexChanged(int idx)
     {
+        if (pass is not null && activeIndex >= 0 && activeIndex < pass.Exercises.Count && idx != activeIndex)
+            await TryAsync(() => SaveCurrentExerciseAsync(pass.Exercises[activeIndex].ExerciseId), "Kunde inte spara övningen");
+        activeIndex = idx;
+    }
+
+    private async Task NavigateToExercise(int idx)
+    {
+        if (pass is not null && activeIndex >= 0 && activeIndex < pass.Exercises.Count && idx != activeIndex)
+            await TryAsync(() => SaveCurrentExerciseAsync(pass.Exercises[activeIndex].ExerciseId), "Kunde inte spara övningen");
         activeIndex = idx;
         _navOpen = false;
     }

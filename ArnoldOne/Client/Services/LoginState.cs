@@ -1,5 +1,6 @@
 using ArnoldOne.Shared.Users;
 using Blazored.LocalStorage;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ArnoldOne.Client.Services;
 
@@ -11,11 +12,13 @@ public class LoginState
 {
     private const string UserKey  = "current-user";
     private const string TokenKey = "current-token";
-    private readonly ILocalStorageService _localStorage;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly SessionState _sessionState;
 
-    public LoginState(ILocalStorageService localStorage)
+    public LoginState(IServiceScopeFactory scopeFactory, SessionState sessionState)
     {
-        _localStorage = localStorage;
+        _scopeFactory = scopeFactory;
+        _sessionState = sessionState;
     }
 
     public UserInfo? CurrentUser { get; private set; }
@@ -27,8 +30,10 @@ public class LoginState
     /// <summary>Läser inloggad användare och token från localStorage vid app-start.</summary>
     public async Task InitializeAsync()
     {
-        CurrentUser = await _localStorage.GetItemAsync<UserInfo>(UserKey);
-        Token       = await _localStorage.GetItemAsync<string>(TokenKey);
+        using var scope = _scopeFactory.CreateScope();
+        var localStorage = scope.ServiceProvider.GetRequiredService<ILocalStorageService>();
+        CurrentUser = await localStorage.GetItemAsync<UserInfo>(UserKey);
+        Token       = await localStorage.GetItemAsync<string>(TokenKey);
         OnChange?.Invoke();
     }
 
@@ -37,8 +42,10 @@ public class LoginState
     {
         CurrentUser = user;
         Token       = token;
-        await _localStorage.SetItemAsync(UserKey,  user);
-        await _localStorage.SetItemAsync(TokenKey, token);
+        using var scope = _scopeFactory.CreateScope();
+        var localStorage = scope.ServiceProvider.GetRequiredService<ILocalStorageService>();
+        await localStorage.SetItemAsync(UserKey,  user);
+        await localStorage.SetItemAsync(TokenKey, token);
         OnChange?.Invoke();
     }
 
@@ -47,8 +54,21 @@ public class LoginState
     {
         CurrentUser = null;
         Token       = null;
-        await _localStorage.RemoveItemAsync(UserKey);
-        await _localStorage.RemoveItemAsync(TokenKey);
+        _sessionState.EndSession();
+        using var scope = _scopeFactory.CreateScope();
+        var localStorage = scope.ServiceProvider.GetRequiredService<ILocalStorageService>();
+        await localStorage.RemoveItemAsync(UserKey);
+        await localStorage.RemoveItemAsync(TokenKey);
+        await localStorage.RemoveItemAsync("exercise-weights");
+        await ClearPassDataAsync(localStorage);
         OnChange?.Invoke();
+    }
+
+    /// <summary>Tar bort alla pass-{SplitId}-{PassId}-nycklar från localStorage.</summary>
+    private static async Task ClearPassDataAsync(ILocalStorageService localStorage)
+    {
+        var keys = await localStorage.KeysAsync();
+        foreach (var key in keys.Where(k => k.StartsWith("pass-")))
+            await localStorage.RemoveItemAsync(key);
     }
 }

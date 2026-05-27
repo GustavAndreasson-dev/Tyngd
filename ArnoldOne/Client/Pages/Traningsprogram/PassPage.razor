@@ -12,7 +12,7 @@
 {
     <div class="pass-layout">
     <div class="pass-content">
-    <MudCarousel Class="mud-width-full" Style="height:400px; overflow-y:auto;" ShowArrows="true" ShowBullets="false" EnableSwipeGesture="true" AutoCycle="false" TData="object" @bind-SelectedIndex="activeIndex">
+    <MudCarousel Class="mud-width-full" Style="height:400px; overflow-y:auto;" ShowArrows="true" ShowBullets="false" EnableSwipeGesture="true" AutoCycle="false" TData="object" SelectedIndex="@activeIndex" SelectedIndexChanged="OnCarouselIndexChanged">
         @foreach (var exercise in pass.Exercises)
         {
             <MudCarouselItem Transition="transition" Color="@Color.Secondary">

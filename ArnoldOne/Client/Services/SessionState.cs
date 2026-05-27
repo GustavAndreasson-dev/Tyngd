@@ -51,6 +51,12 @@ public class SessionState
         return false;
     }
 
+    /// <summary>Återställer sets för en övning från sparad data (t.ex. efter page refresh).</summary>
+    public void RestoreSets(int exerciseId, bool[] doneSets)
+    {
+        CompletedSets[exerciseId] = doneSets;
+    }
+
     /// <summary>Avslutar sessionen och nollställer all data.</summary>
     public void EndSession()
     {

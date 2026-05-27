@@ -1,0 +1,62 @@
+@page "/TP/my-splits"
+@layout MainLayout
+@inherits PageComponentBase
+
+<PageTitle>Mina splits</PageTitle>
+
+<ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
+
+@if (!LoginState.IsLoggedIn)
+{
+    <div class="d-flex flex-column align-center mt-12" style="gap:16px;">
+        <MudIcon Icon="@Icons.Material.Filled.Lock" Style="font-size:4rem;" Color="Color.Error" />
+        <MudText Typo="Typo.h5" Align="Align.Center">Åtkomst nekad</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary">Du måste vara inloggad för att se dina splits.</MudText>
+    </div>
+    return;
+}
+
+<MudText Typo="Typo.h4" Class="mb-4">Mina splits</MudText>
+
+@if (IsLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+}
+else if (!splits.Any())
+{
+    <MudText Color="Color.Secondary">Du har inga egna splits ännu. <MudLink Href="create-split">Skapa en split</MudLink></MudText>
+}
+else
+{
+    @foreach (var split in splits)
+    {
+        <MudCard Class="mb-4">
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.h5">@split.SplitName</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   Size="Size.Small"
+                                   OnClick="@(async () => await DeleteSplit(split.SplitId))" />
+                </div>
+            </MudCardContent>
+        </MudCard>
+
+        <MudExpansionPanels Elevation="0" Class="mb-6">
+            @foreach (var pass in split.Passes)
+            {
+                <MudExpansionPanel Text="@pass.PassName" DisableRipple="true">
+                    <MudList Dense="true" T="string">
+                        @foreach (var exercise in passExercises.GetValueOrDefault((split.SplitId, pass.PassId)) ?? new())
+                        {
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.subtitle1">@exercise.ExerciseName</MudText>
+                                <MudText Typo="Typo.caption">@FormatDefault(exercise)</MudText>
+                            </MudListItem>
+                        }
+                    </MudList>
+                </MudExpansionPanel>
+            }
+        </MudExpansionPanels>
+    }
+}

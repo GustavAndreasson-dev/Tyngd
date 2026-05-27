@@ -7,15 +7,12 @@ namespace ArnoldOne.Shared
     public partial class NavMenu : ComponentBase, IDisposable
     {
         [Inject]
-        private SplitTemplateService SplitTemplateService { get; set; } = default!;
-
-        [Inject]
         private UserSplitsService UserSplitsService { get; set; } = default!;
 
         [Inject]
         private LoginState LoginState { get; set; } = default!;
 
-        private List<TrainingSplitTemplate> activeSplitTemplates = new();
+        private List<TrainingSplit> activeSplits = new();
 
         protected override async Task OnInitializedAsync()
         {
@@ -35,16 +32,14 @@ namespace ArnoldOne.Shared
 
         private async Task LoadActiveSplitsAsync()
         {
-            activeSplitTemplates.Clear();
+            activeSplits.Clear();
 
             if (!LoginState.IsLoggedIn)
                 return;
 
             try
             {
-                var allTemplates  = await SplitTemplateService.GetAllAsync();
-                var activeSplitIds = await UserSplitsService.GetActiveSplitsAsync(LoginState.CurrentUser!.UserId);
-                activeSplitTemplates = allTemplates.Where(t => activeSplitIds.Contains(t.SplitId)).ToList();
+                activeSplits = await UserSplitsService.GetAllActiveSplitsAsync();
             }
             catch { }
         }

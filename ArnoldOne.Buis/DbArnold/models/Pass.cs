@@ -9,6 +9,8 @@ public partial class Pass
 {
     public int PassId { get; set; }
 
+    public int? PassTemplateId { get; set; }
+
     public int SplitId { get; set; }
 
     public string PassName { get; set; }

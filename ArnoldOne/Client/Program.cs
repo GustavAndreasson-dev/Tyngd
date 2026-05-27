@@ -7,7 +7,7 @@ using ArnoldOne.Shared.TrainingPrograms;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 // Registrera namngiven HttpClient som pekar mot server-API:t
-builder.Services.AddScoped<AuthTokenHandler>();
+builder.Services.AddSingleton<AuthTokenHandler>();
 builder.Services.AddHttpClient("ArnoldOne.ServerAPI", client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
     .AddHttpMessageHandler<AuthTokenHandler>();
 
@@ -30,7 +30,7 @@ builder.Services.AddSingleton<RestTimerState>();
 builder.Services.AddSingleton<SessionState>();
 
 // Singleton för inloggningsstatus
-builder.Services.AddScoped<LoginState>();
+builder.Services.AddSingleton<LoginState>();
 
 // Service för användarens aktiverade splits
 builder.Services.AddScoped<UserSplitsService>();
@@ -43,6 +43,12 @@ builder.Services.AddScoped<PassTemplateService>();
 
 // Service för splitmallar och pass från API
 builder.Services.AddScoped<SplitTemplateService>();
+
+// Service för att spara och läsa pass-logg från API
+builder.Services.AddScoped<PassLogService>();
+
+// Service för användarinställningar från API
+builder.Services.AddScoped<UserSettingsService>();
 
 // Scoped för localStorage-migrering
 builder.Services.AddScoped<LocalStorageMigrationService>();

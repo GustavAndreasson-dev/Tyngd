@@ -1,0 +1,209 @@
+@page "/create-split"
+@layout MainLayout
+@inherits PageComponentBase
+
+<PageTitle>Create Split</PageTitle>
+
+<style>
+    /* Pass-kort */
+    .cs-pass-card {
+        border-left: 3px solid var(--mud-palette-primary);
+        margin-bottom: 16px;
+    }
+    /* Pass-rubrik-rad */
+    .cs-pass-header {
+        cursor: pointer;
+        padding: 10px 4px;
+        border-radius: 4px;
+        transition: background 0.15s;
+    }
+    .cs-pass-header:hover {
+        background: rgba(255,255,255,0.05);
+    }
+    /* Övningskort */
+    .cs-exercise-card {
+        margin-bottom: 12px;
+        border-radius: 6px;
+    }
+
+    /* === Dark mode === */
+    .mud-theme-dark .cs-pass-card {
+        border-left: 4px solid var(--mud-palette-primary);
+        background: #1a1a2a;
+        box-shadow: 0 0 0 1px rgba(92,158,255,0.2);
+    }
+    .mud-theme-dark .cs-exercise-card {
+        border: 1px solid rgba(196,80,106,0.5) !important;
+        background: #13131f;
+        box-shadow: inset 0 0 0 1px rgba(196,80,106,0.15);
+    }
+    .mud-theme-dark .cs-pass-header:hover {
+        background: rgba(92,158,255,0.08);
+    }
+    .mud-theme-dark .cs-split-card {
+        border-left: 4px solid var(--mud-palette-tertiary);
+        background: #1a1a2a;
+        box-shadow: 0 0 0 1px rgba(212,168,75,0.2);
+    }
+</style>
+
+<ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
+
+@if (!LoginState.IsLoggedIn)
+{
+    <div class="d-flex flex-column align-center mt-12" style="gap:16px;">
+        <MudIcon Icon="@Icons.Material.Filled.Lock" Style="font-size:4rem;" Color="Color.Error" />
+        <MudText Typo="Typo.h5" Align="Align.Center">Åtkomst nekad</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary">Du måste vara inloggad för att skapa splits.</MudText>
+    </div>
+    return;
+}
+
+<MudText Typo="Typo.h4" Class="mb-4">Skapa split</MudText>
+
+<MudButton StartIcon="@Icons.Material.Filled.Download"
+           Variant="Variant.Outlined"
+           Color="Color.Secondary"
+           Class="mb-6"
+           Disabled="isImporting"
+           OnClick="OpenImportDialog">
+    Importera från befintlig split
+</MudButton>
+
+@if (isImporting)
+{
+    <div class="d-flex align-center mb-4" style="gap:12px;">
+        <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Secondary" />
+        <MudText Color="Color.Secondary">Laddar split...</MudText>
+    </div>
+}
+
+@* Splitnamn *@
+<MudCard Class="mb-6 cs-split-card">
+    <MudCardContent>
+        <div class="d-flex align-center" style="cursor:pointer;" @onclick="@(() => splitExpanded = !splitExpanded)">
+            <MudText Typo="Typo.h6" Style="flex:1">Splitinformation</MudText>
+            <MudIcon Icon="@(splitExpanded ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" />
+        </div>
+        <MudCollapse Expanded="splitExpanded">
+            <MudTextField @bind-Value="splitName"
+                          Label="Splittens namn"
+                          Variant="Variant.Outlined"
+                          Class="mt-4"
+                          Required="true" />
+        </MudCollapse>
+    </MudCardContent>
+</MudCard>
+
+@* Pass *@
+@for (int pi = 0; pi < passes.Count; pi++)
+{
+    var passIndex = pi;
+    var pass = passes[passIndex];
+
+    <MudCard Class="cs-pass-card">
+        <MudCardContent>
+            <div class="d-flex align-center cs-pass-header" style="gap:8px;" @onclick="@(() => passExpanded[passIndex] = !passExpanded[passIndex])">
+                <MudText Typo="Typo.h6" Style="flex:1">
+                    @(string.IsNullOrWhiteSpace(pass.PassName) ? $"Pass {passIndex + 1}" : pass.PassName)
+                </MudText>
+                <MudIcon Icon="@(passExpanded[passIndex] ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" />
+                <span @onclick:stopPropagation>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   Size="Size.Small"
+                                   OnClick="@(() => RemovePass(passIndex))" />
+                </span>
+            </div>
+
+            <MudCollapse Expanded="passExpanded[passIndex]">
+                <MudTextField @bind-Value="pass.PassName"
+                              Label="Passnamn"
+                              Variant="Variant.Outlined"
+                              Class="mt-4 mb-4"
+                              Required="true" />
+
+                @* Övningar *@
+                @for (int ei = 0; ei < pass.Exercises.Count; ei++)
+                {
+                    var exerciseIndex = ei;
+                    var exercise = pass.Exercises[exerciseIndex];
+
+                    <MudCard Outlined="true" Class="cs-exercise-card">
+                        <MudCardContent>
+                            <div class="d-flex align-center mb-2" style="gap:8px;">
+                                <MudText Typo="Typo.subtitle1" Style="flex:1">
+                                    @(string.IsNullOrWhiteSpace(exercise.ExerciseName) ? $"Övning {exerciseIndex + 1}" : exercise.ExerciseName)
+                                </MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="@(() => RemoveExercise(passIndex, exerciseIndex))" />
+                            </div>
+                            <MudTextField @bind-Value="exercise.ExerciseName"
+                                          Label="Övningsnamn"
+                                          Variant="Variant.Outlined"
+                                          Class="mb-2"
+                                          Required="true" />
+                            <div class="d-flex" style="gap:8px; flex-wrap:wrap;">
+                                <MudNumericField @bind-Value="exercise.DefaultSets"
+                                                 Label="Set"
+                                                 Variant="Variant.Outlined"
+                                                 Min="1" Max="20"
+                                                 Style="max-width:90px;" />
+                                <MudNumericField @bind-Value="exercise.RepsMin"
+                                                 Label="Reps min"
+                                                 Variant="Variant.Outlined"
+                                                 Min="1" Max="100"
+                                                 Style="max-width:110px;" />
+                                <MudNumericField @bind-Value="exercise.RepsMax"
+                                                 Label="Reps max"
+                                                 Variant="Variant.Outlined"
+                                                 Min="1" Max="100"
+                                                 Style="max-width:110px;" />
+                                <MudNumericField @bind-Value="exercise.DefaultWeight"
+                                                 Label="Vikt (kg)"
+                                                 Variant="Variant.Outlined"
+                                                 Min="0" Max="1000"
+                                                 Style="max-width:110px;" />
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                }
+
+                <MudButton StartIcon="@Icons.Material.Filled.Add"
+                           Variant="Variant.Text"
+                           Color="Color.Primary"
+                           OnClick="@(() => AddExercise(passIndex))">
+                    Lägg till övning
+                </MudButton>
+            </MudCollapse>
+        </MudCardContent>
+    </MudCard>
+}
+
+<MudButton StartIcon="@Icons.Material.Filled.Add"
+           Variant="Variant.Outlined"
+           Color="Color.Primary"
+           Class="mb-6"
+           OnClick="AddPass">
+    Lägg till pass
+</MudButton>
+
+<div>
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Success"
+               StartIcon="@(IsLoading ? null : Icons.Material.Filled.Save)"
+               Disabled="IsLoading"
+               OnClick="SaveAsync">
+        @if (IsLoading)
+        {
+            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            <span>Sparar...</span>
+        }
+        else
+        {
+            <span>Spara split</span>
+        }
+    </MudButton>
+</div>

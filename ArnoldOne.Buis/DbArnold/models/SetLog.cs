@@ -17,5 +17,7 @@ public partial class SetLog
 
     public bool IsDone { get; set; }
 
+    public decimal Weight { get; set; }
+
     public virtual ExerciseLog ExerciseLog { get; set; }
 }

@@ -1,11 +1,15 @@
 ﻿@namespace ArnoldOne.Shared
 <MudNavLink Href="" Icon="@Icons.Material.Filled.Backup">Översikt</MudNavLink>
-@foreach (var template in activeSplitTemplates)
+@foreach (var split in activeSplits)
 {
-    <MudNavGroup Title="@template.SplitName" Expanded="true" Icon="@Icons.Material.Filled.AdsClick">
-        @foreach (var pass in template.Passes)
+    <MudNavGroup Title="@split.SplitName" Expanded="true" Icon="@Icons.Material.Filled.AdsClick">
+        @foreach (var pass in split.Passes)
         {
-            <MudNavLink Href="@($"TP/split/{template.SplitId}/pass/{pass.PassId}")" Icon="@Icons.Material.Filled.Backup">@pass.PassName</MudNavLink>
+            <MudNavLink Href="@($"TP/split/{split.SplitId}/pass/{pass.PassId}")" Icon="@Icons.Material.Filled.FitnessCenter">@pass.PassName</MudNavLink>
         }
     </MudNavGroup>
 }
+<MudDivider Class="my-2" />
+<MudNavLink Href="TP/my-splits" Icon="@Icons.Material.Filled.FitnessCenter">Mina splits</MudNavLink>
+<MudNavLink Href="TP/templates" Icon="@Icons.Material.Filled.LibraryBooks">Split-mallar</MudNavLink>
+<MudNavLink Href="create-split" Icon="@Icons.Material.Filled.Add">Skapa split</MudNavLink>

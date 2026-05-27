@@ -96,6 +96,7 @@ public partial class ArnoldContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.PassTemplateId);
 
             entity.HasOne(d => d.Split).WithMany(p => p.Pass)
                 .HasForeignKey(d => d.SplitId)
@@ -144,6 +145,7 @@ public partial class ArnoldContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Visability).HasDefaultValue(true, "DF_Split_Visability");
+            entity.Property(e => e.SplitTemplateId);
 
             entity.HasOne(d => d.User).WithMany(p => p.Split)
                 .HasForeignKey(d => d.UserId)
@@ -169,13 +171,14 @@ public partial class ArnoldContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.Roles)
-                .IsRequired()
-                .HasMaxLength(500)
-                .IsUnicode(false);
             entity.Property(e => e.PasswordHash)
                 .IsRequired()
                 .HasMaxLength(256)
+                .IsUnicode(false)
+                .HasDefaultValue("");
+            entity.Property(e => e.Roles)
+                .IsRequired()
+                .HasMaxLength(500)
                 .IsUnicode(false);
             entity.Property(e => e.UserName)
                 .IsRequired()
