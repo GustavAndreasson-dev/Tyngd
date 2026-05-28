@@ -70,5 +70,6 @@
     <Build Include="dbo\Tables\ExerciseTemplate.sql" />
     <Build Include="dbo\Tables\ExerciseLog.sql" />
     <Build Include="dbo\Tables\Exercise.sql" />
+    <Build Include="dbo\Tables\UserSettings.sql" />
   </ItemGroup>
 </Project>

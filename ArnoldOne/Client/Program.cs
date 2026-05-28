@@ -7,7 +7,7 @@ using ArnoldOne.Shared.TrainingPrograms;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 // Registrera namngiven HttpClient som pekar mot server-API:t
-builder.Services.AddSingleton<AuthTokenHandler>();
+builder.Services.AddTransient<AuthTokenHandler>();
 builder.Services.AddHttpClient("ArnoldOne.ServerAPI", client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
     .AddHttpMessageHandler<AuthTokenHandler>();
 

@@ -22,6 +22,10 @@ public class SessionController : ApiControllerBase
         if (!await UserOwnsPassAsync(request.PassId))
             return Forbid();
 
+        var exerciseIds = request.Exercises.Select(e => e.ExerciseId).ToList();
+        if (exerciseIds.Count > 0 && !await AllExercisesBelongToPassAsync(request.PassId, exerciseIds))
+            return Forbid();
+
         // Återanvänd befintlig session för dagen om den finns (skapad av UpsertExercise)
         var session = await _context.Session
             .FirstOrDefaultAsync(s => s.PassId == request.PassId && s.Date == request.Date);
@@ -33,9 +37,6 @@ public class SessionController : ApiControllerBase
             await _context.SaveChangesAsync();
         }
 
-        var nextExerciseLogId = await _context.ExerciseLog.MaxAsync(e => (int?)e.ExerciseLogId) ?? 0;
-        var nextSetLogId      = await _context.SetLog.MaxAsync(s => (int?)s.SetLogIId) ?? 0;
-
         foreach (var ex in request.Exercises)
         {
             // Hämta eller skapa ExerciseLog
@@ -45,12 +46,10 @@ public class SessionController : ApiControllerBase
 
             if (exerciseLog is null)
             {
-                nextExerciseLogId++;
                 exerciseLog = new ExerciseLog
                 {
-                    ExerciseLogId = nextExerciseLogId,
-                    SessionId     = session.SessionId,
-                    ExerciseId    = ex.ExerciseId,
+                    SessionId  = session.SessionId,
+                    ExerciseId = ex.ExerciseId,
                 };
                 _context.ExerciseLog.Add(exerciseLog);
                 await _context.SaveChangesAsync();
@@ -62,10 +61,8 @@ public class SessionController : ApiControllerBase
 
             foreach (var s in ex.Sets.Where(s => s.IsDone))
             {
-                nextSetLogId++;
                 _context.SetLog.Add(new SetLog
                 {
-                    SetLogIId     = nextSetLogId,
                     ExerciseLogID = exerciseLog.ExerciseLogId,
                     SetIndex      = s.SetIndex,
                     Reps          = s.Reps,
@@ -132,7 +129,9 @@ public class SessionController : ApiControllerBase
         if (!await UserOwnsPassAsync(request.PassId))
             return Forbid();
 
-        // Hämta eller skapa session för dagens datum
+        if (!await AllExercisesBelongToPassAsync(request.PassId, new[] { request.ExerciseId }))
+            return Forbid();
+
         var session = await _context.Session
             .FirstOrDefaultAsync(s => s.PassId == request.PassId && s.Date == request.Date);
 
@@ -150,13 +149,10 @@ public class SessionController : ApiControllerBase
 
         if (exerciseLog is null)
         {
-            var nextId = await _context.ExerciseLog.MaxAsync(e => (int?)e.ExerciseLogId) ?? 0;
-            nextId++;
             exerciseLog = new ExerciseLog
             {
-                ExerciseLogId = nextId,
-                SessionId     = session.SessionId,
-                ExerciseId    = request.ExerciseId,
+                SessionId  = session.SessionId,
+                ExerciseId = request.ExerciseId,
             };
             _context.ExerciseLog.Add(exerciseLog);
             await _context.SaveChangesAsync();
@@ -167,13 +163,10 @@ public class SessionController : ApiControllerBase
         // Ta bort gamla sets och ersätt med nya (bara utförda)
         _context.SetLog.RemoveRange(exerciseLog.SetLog);
 
-        var nextSetId = await _context.SetLog.MaxAsync(s => (int?)s.SetLogIId) ?? 0;
         foreach (var s in request.Sets.Where(s => s.IsDone))
         {
-            nextSetId++;
             _context.SetLog.Add(new SetLog
             {
-                SetLogIId     = nextSetId,
                 ExerciseLogID = exerciseLog.ExerciseLogId,
                 SetIndex      = s.SetIndex,
                 Reps          = s.Reps,
@@ -192,9 +185,18 @@ public class SessionController : ApiControllerBase
     }
 
     /// <summary>Returnerar true om det inloggade kontot äger det angivna passet.</summary>
-    private async Task<bool> UserOwnsPassAsync(int passId)
-    {
-        return await _context.Pass
+    private async Task<bool> UserOwnsPassAsync(int passId) =>
+        await _context.Pass
             .AnyAsync(p => p.PassId == passId && p.Split.UserId == CurrentUserId);
+
+    /// <summary>Returnerar true om alla ExerciseId tillhör det angivna passet.</summary>
+    private async Task<bool> AllExercisesBelongToPassAsync(int passId, IEnumerable<int> exerciseIds)
+    {
+        var validIds = await _context.Exercise
+            .Where(e => e.PassId == passId)
+            .Select(e => e.ExerciseId)
+            .ToListAsync();
+
+        return exerciseIds.All(id => validIds.Contains(id));
     }
 }

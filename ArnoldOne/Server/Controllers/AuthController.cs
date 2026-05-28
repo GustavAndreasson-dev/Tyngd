@@ -2,6 +2,7 @@ using ArnoldOne.Shared.DTOs;
 using ArnoldOne.Shared.Users;
 using DbArnold.DbArnold.models;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -29,24 +30,42 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<LoginResponse>> Register(RegisterRequest request)
     {
-        if (await _context.UserInfo.AnyAsync(u => u.UserName == request.UserName))
+        var userName = request.UserName.Trim();
+        var email = request.Email.Trim();
+
+        if (await _context.UserInfo.AnyAsync(u => u.UserName == userName))
             return BadRequest("Användarnamnet är redan taget.");
 
-        if (await _context.UserInfo.AnyAsync(u => u.Email == request.Email))
+        if (await _context.UserInfo.AnyAsync(u => u.Email == email))
             return BadRequest("E-postadressen är redan registrerad.");
 
         var user = new DbArnold.DbArnold.models.UserInfo
         {
             UserId       = Guid.NewGuid(),
-            UserName     = request.UserName.Trim(),
-            Email        = request.Email.Trim(),
+            UserName     = userName,
+            Email        = email,
             CreatedAt    = DateTime.UtcNow,
             Roles        = AppRoles.User,
             PasswordHash = HashPassword(request.Password),
         };
 
         _context.UserInfo.Add(user);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex, "UQ_UserInfo_UserName"))
+        {
+            return BadRequest("Användarnamnet är redan taget.");
+        }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex, "UQ_UserInfo_Email"))
+        {
+            return BadRequest("E-postadressen är redan registrerad.");
+        }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        {
+            return BadRequest("Användarnamnet eller e-postadressen är redan registrerad.");
+        }
 
         return Ok(new LoginResponse { User = MapToDto(user), Token = GenerateToken(user) });
     }
@@ -85,6 +104,18 @@ public class AuthController : ControllerBase
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private static bool IsUniqueConstraintViolation(DbUpdateException exception, string? constraintName = null)
+    {
+        if (exception.InnerException is not SqlException sqlException)
+            return false;
+
+        var isUniqueViolation = sqlException.Number is 2601 or 2627;
+        if (!isUniqueViolation)
+            return false;
+
+        return constraintName is null || sqlException.Message.Contains(constraintName, StringComparison.OrdinalIgnoreCase);
     }
 
     private static SharedUserInfo MapToDto(DbArnold.DbArnold.models.UserInfo user) =>

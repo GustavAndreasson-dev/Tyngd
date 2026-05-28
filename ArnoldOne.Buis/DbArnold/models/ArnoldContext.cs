@@ -56,7 +56,6 @@ public partial class ArnoldContext : DbContext
         {
             entity.HasKey(e => e.ExerciseLogId).HasName("PK_ExerciseLogId");
 
-            entity.Property(e => e.ExerciseLogId).ValueGeneratedNever();
             entity.Property(e => e.NoteText)
                 .HasMaxLength(5000)
                 .IsUnicode(false);
@@ -96,7 +95,6 @@ public partial class ArnoldContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.PassTemplateId);
 
             entity.HasOne(d => d.Split).WithMany(p => p.Pass)
                 .HasForeignKey(d => d.SplitId)
@@ -130,7 +128,7 @@ public partial class ArnoldContext : DbContext
         {
             entity.HasKey(e => e.SetLogIId);
 
-            entity.Property(e => e.SetLogIId).ValueGeneratedNever();
+            entity.Property(e => e.Weight).HasColumnType("decimal(6, 2)");
 
             entity.HasOne(d => d.ExerciseLog).WithMany(p => p.SetLog)
                 .HasForeignKey(d => d.ExerciseLogID)
@@ -145,7 +143,6 @@ public partial class ArnoldContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Visability).HasDefaultValue(true, "DF_Split_Visability");
-            entity.Property(e => e.SplitTemplateId);
 
             entity.HasOne(d => d.User).WithMany(p => p.Split)
                 .HasForeignKey(d => d.UserId)

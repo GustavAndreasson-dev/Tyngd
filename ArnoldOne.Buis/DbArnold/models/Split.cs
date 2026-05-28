@@ -9,13 +9,13 @@ public partial class Split
 {
     public int SplitId { get; set; }
 
-    public int? SplitTemplateId { get; set; }
-
     public string SplitName { get; set; }
 
     public Guid UserId { get; set; }
 
     public bool Visability { get; set; }
+
+    public int? SplitTemplateId { get; set; }
 
     public virtual ICollection<Pass> Pass { get; set; } = new List<Pass>();
 

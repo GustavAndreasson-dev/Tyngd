@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 
 namespace ArnoldOne.Client.Services;
@@ -11,11 +12,16 @@ public class AuthTokenHandler : DelegatingHandler
         _loginState = loginState;
     }
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(_loginState.Token))
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _loginState.Token);
 
-        return base.SendAsync(request, cancellationToken);
+        var response = await base.SendAsync(request, cancellationToken);
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized && _loginState.IsLoggedIn)
+            await _loginState.LogoutAsync();
+
+        return response;
     }
 }

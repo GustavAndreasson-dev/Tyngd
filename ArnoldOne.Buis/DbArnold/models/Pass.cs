@@ -9,8 +9,6 @@ public partial class Pass
 {
     public int PassId { get; set; }
 
-    public int? PassTemplateId { get; set; }
-
     public int SplitId { get; set; }
 
     public string PassName { get; set; }
@@ -18,6 +16,8 @@ public partial class Pass
     public int Visability { get; set; }
 
     public int Ordning { get; set; }
+
+    public int? PassTemplateId { get; set; }
 
     public virtual ICollection<Exercise> Exercise { get; set; } = new List<Exercise>();
 
