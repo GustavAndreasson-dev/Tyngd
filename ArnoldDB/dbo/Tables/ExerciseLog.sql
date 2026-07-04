@@ -1,5 +1,5 @@
 ﻿CREATE TABLE [dbo].[ExerciseLog] (
-    [ExerciseLogId] INT            NOT NULL,
+    [ExerciseLogId] INT            IDENTITY (1, 1) NOT NULL,
     [SessionId]     INT            NOT NULL,
     [ExerciseId]    INT            NOT NULL,
     [NoteText]      VARCHAR (5000) NULL,

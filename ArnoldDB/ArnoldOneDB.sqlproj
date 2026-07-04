@@ -58,6 +58,7 @@
     <Folder Include="Properties" />
     <Folder Include="dbo\" />
     <Folder Include="dbo\Tables\" />
+    <Folder Include="Security\" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="dbo\Tables\UserInfo.sql" />
@@ -71,5 +72,6 @@
     <Build Include="dbo\Tables\ExerciseLog.sql" />
     <Build Include="dbo\Tables\Exercise.sql" />
     <Build Include="dbo\Tables\UserSettings.sql" />
+    <Build Include="Security\ArnoldUser.sql" />
   </ItemGroup>
 </Project>

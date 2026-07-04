@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.ResponseCompression;
 using ArnoldOne.Server;
+using ArnoldOne.Server.Middleware;
+using ArnoldOne.Server.Services;
 using DbArnold.DbArnold.models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,8 +14,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ArnoldContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ArnoldDb")));
 
+builder.Services.Configure<ErrorNotificationOptions>(
+    builder.Configuration.GetSection(ErrorNotificationOptions.SectionName));
+builder.Services.AddSingleton<IErrorNotificationService, SmtpErrorNotificationService>();
+
 // JWT-autentisering
-var jwtKey = builder.Configuration["Jwt:Key"]!;
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+    throw new InvalidOperationException("Missing configuration value: Jwt:Key. In Azure App Service, set Jwt__Key.");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -50,6 +59,8 @@ else
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<ErrorNotificationMiddleware>();
 
 app.UseRouting();
 app.UseAuthentication();

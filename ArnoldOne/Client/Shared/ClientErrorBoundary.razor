@@ -1,0 +1,22 @@
+@namespace ArnoldOne.Client.Shared
+@inherits ErrorBoundary
+
+@if (CurrentException is null)
+{
+    @ChildContent
+}
+else if (ErrorContent is not null)
+{
+    @ErrorContent(CurrentException)
+}
+else
+{
+    <div class="pa-6">
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">
+            Ett fel har uppstått. Ladda om sidan eller försök igen.
+        </MudAlert>
+        <MudButton Class="mt-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="Recover">
+            Försök igen
+        </MudButton>
+    </div>
+}

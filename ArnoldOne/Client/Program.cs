@@ -55,4 +55,6 @@ builder.Services.AddScoped<UserSettingsService>();
 // Scoped för localStorage-migrering
 builder.Services.AddScoped<LocalStorageMigrationService>();
 
+builder.Services.AddScoped<ClientErrorService>();
+
 await builder.Build().RunAsync();
