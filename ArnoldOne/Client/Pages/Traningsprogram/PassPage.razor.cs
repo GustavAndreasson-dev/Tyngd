@@ -1,5 +1,6 @@
 using ArnoldOne.Client.Services;
 using ArnoldOne.Client.Shared;
+using ArnoldOne.Client.Models;
 using ArnoldOne.Shared.TrainingPrograms;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
@@ -11,9 +12,8 @@ namespace ArnoldOne.Client.Pages.Traningsprogram;
 
 /// <summary>
 /// Delad sida för ett enskilt träningspass. Används av både PPL1 (PassId 101–104) och PPL2 (PassId 1–4).
-/// Hämtar passmall via <see cref="TrainingSplitTemplateGenerator.FindPass"/> och sparar användarens data i LocalStorage.
-/// Vikter lagras globalt per ExerciseId i <c>exercise-weights</c> för synkronisering mellan program.
-/// Reps och anteckningar lagras per pass i <c>pass-{PassId}</c>.
+/// Hämtar passmall via <see cref="TrainingSplitTemplateGenerator.FindPass"/> och sparar pågående data i LocalStorage.
+/// LocalStorage-datan synkas till API när användaren lämnar en övning eller avslutar passet.
 /// </summary>
 public partial class PassPage : IDisposable
 {
@@ -29,7 +29,7 @@ public partial class PassPage : IDisposable
     [SupplyParameterFromQuery(Name = "new")]
     public int NewSession { get; set; }
 
-    /// <summary>Tjänst för att läsa och skriva användardata i webbläsarens LocalStorage.</summary>
+    /// <summary>Tjänst för att läsa och skriva pågående passdata i webbläsarens LocalStorage.</summary>
     [Inject]
     private ILocalStorageService LocalStorage { get; set; } = default!;
 
@@ -55,15 +55,14 @@ public partial class PassPage : IDisposable
     [Inject]
     private PassLogService PassLogService { get; set; } = default!;
 
+    [Inject]
+    private PendingSyncState PendingSync { get; set; } = default!;
+
     private TrainingPassTemplate? pass;
     private Transition transition = Transition.None;
     private int activeIndex;
 
-    // Vikter delas globalt mellan program via "exercise-weights"
     private Dictionary<int, decimal> _weights = new();
-    private const string WeightsKey = "exercise-weights";
-
-    // Reps och anteckningar sparas per pass via "pass-{SplitId}-{PassId}"
     private PassData data = new();
     private string PassKey => $"pass-{SplitId}-{PassId}";
 
@@ -83,71 +82,53 @@ public partial class PassPage : IDisposable
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {
+        var passChanged = !_isInitialized || _lastPassId != PassId;
+        var isNewSession = NewSession == 1;
+
         await TryAsync(async () =>
         {
             pass = await UserSplitsService.GetPassAsync(PassId);
-        }, "Kunde inte ladda passet");
 
-        if (pass is not null)
-        {
-            if (_isInitialized && _lastPassId != PassId)
+            if (pass is not null && passChanged)
             {
-                _lastPassId = PassId;
-                activeIndex = FirstIncompleteExerciseIndex();
-                var stored = await LocalStorage.GetItemAsync<PassData>(PassKey);
-                data = stored ?? new PassData();
-            }
+                if (isNewSession)
+                {
+                    data = new PassData();
+                    await LoadLastSessionAsync(includeCompletedSets: false);
+                }
+                else
+                {
+                    var stored = await LocalStorage.GetItemAsync<PassData>(PassKey);
+                    data = stored ?? new PassData();
+                    data.NormalizeSyncState();
 
-            InitializeDefaults();
-        }
+                    if (stored is null)
+                        await LoadLastSessionAsync(includeCompletedSets: true);
+                }
+
+                InitializeDefaults();
+
+                if (isNewSession)
+                    await LocalStorage.SetItemAsync(PassKey, data);
+                else
+                    RestoreSessionStateFromLocalData();
+
+                await PendingSync.RefreshAsync();
+                PendingSync.SetActivePassKey(PassKey);
+                activeIndex = FirstIncompleteExerciseIndex();
+                _lastPassId = PassId;
+                _isInitialized = true;
+            }
+        }, "Kunde inte ladda passet");
     }
 
     /// <summary>
-    /// Läser sparad data från API vid första renderingen.
-    /// Vikter och passdata laddas från senaste session.
+    /// Startar eller återställer sessionen efter första renderingen.
     /// </summary>
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            var lastSession = await PassLogService.GetLastSessionAsync(PassId);
-            if (lastSession is not null)
-            {
-                foreach (var ex in lastSession.Exercises)
-                {
-                    _weights[ex.ExerciseId] = ex.Weight;
-
-                    if (ex.Sets.Count > 0)
-                    {
-                        data.Reps[ex.ExerciseId] = ex.Sets
-                            .OrderBy(s => s.SetIndex)
-                            .Select(s => (double)s.Reps)
-                            .ToArray();
-                    }
-
-                    if (!string.IsNullOrEmpty(ex.NoteText))
-                        data.Notes[ex.ExerciseId] = ex.NoteText;
-                }
-
-                // Återställ SessionState om sessionen är från idag (t.ex. efter page refresh)
-                if (lastSession.Date == DateOnly.FromDateTime(DateTime.Today))
-                {
-                    Session.StartPass(SplitId, PassId);
-                    foreach (var ex in lastSession.Exercises)
-                    {
-                        if (ex.Sets.Count > 0)
-                        {
-                            var setCount = pass?.Exercises.FirstOrDefault(e => e.ExerciseId == ex.ExerciseId)?.DefaultSets ?? ex.Sets.Count;
-                            var doneSets = new bool[setCount];
-                            foreach (var s in ex.Sets)
-                                if (s.SetIndex < setCount)
-                                    doneSets[s.SetIndex] = true;
-                            Session.RestoreSets(ex.ExerciseId, doneSets);
-                        }
-                    }
-                }
-            }
-
             _isInitialized = true;
             _lastPassId = PassId;
             if (NewSession == 1 || !Session.IsActive)
@@ -160,19 +141,103 @@ public partial class PassPage : IDisposable
         await JSRuntime.InvokeVoidAsync("arnoldOne.attachNoteKeyHandler");
     }
 
+    /// <summary>Läser sparad vikt, reps och anteckningar från senaste sessionen för aktuellt pass.</summary>
+    private async Task LoadLastSessionAsync(bool includeCompletedSets)
+    {
+        var lastSession = await PassLogService.GetLastSessionAsync(PassId);
+        if (lastSession is null || pass is null)
+            return;
+
+        foreach (var ex in lastSession.Exercises)
+        {
+            var template = pass.Exercises.FirstOrDefault(e => e.ExerciseId == ex.ExerciseId);
+            if (template is null)
+                continue;
+
+            _weights[ex.ExerciseId] = ex.Weight;
+            data.Weights[ex.ExerciseId] = ex.Weight;
+
+            if (ex.Sets.Count > 0)
+            {
+                var reps = new double[template.DefaultSets];
+                for (int i = 0; i < reps.Length; i++)
+                    reps[i] = template.DefaultRepsMin;
+
+                foreach (var set in ex.Sets)
+                    if (set.SetIndex >= 0 && set.SetIndex < reps.Length)
+                        reps[set.SetIndex] = set.Reps;
+
+                data.Reps[ex.ExerciseId] = reps;
+            }
+
+            if (!string.IsNullOrEmpty(ex.NoteText))
+                data.Notes[ex.ExerciseId] = ex.NoteText;
+
+            data.SavedExercises[ex.ExerciseId] = true;
+        }
+
+        // Återställ SessionState om sessionen är från idag (t.ex. efter page refresh).
+        if (includeCompletedSets && lastSession.Date == DateOnly.FromDateTime(DateTime.Today))
+        {
+            Session.StartPass(SplitId, PassId);
+            foreach (var ex in lastSession.Exercises)
+            {
+                var template = pass.Exercises.FirstOrDefault(e => e.ExerciseId == ex.ExerciseId);
+                if (template is null)
+                    continue;
+
+                var doneSets = new bool[template.DefaultSets];
+                foreach (var set in ex.Sets)
+                    if (set.SetIndex >= 0 && set.SetIndex < doneSets.Length)
+                        doneSets[set.SetIndex] = true;
+
+                data.CompletedSets[ex.ExerciseId] = doneSets;
+                Session.RestoreSets(ex.ExerciseId, doneSets);
+            }
+        }
+
+        data.IsSynced = true;
+    }
+
     /// <summary>Fyller i defaultvärden för vikt och reps för övningar som saknar sparad data.</summary>
     private void InitializeDefaults()
     {
         foreach (var ex in pass!.Exercises)
         {
-            if (!_weights.ContainsKey(ex.ExerciseId))
+            if (data.Weights.TryGetValue(ex.ExerciseId, out var storedWeight))
+                _weights[ex.ExerciseId] = storedWeight;
+            else if (!_weights.ContainsKey(ex.ExerciseId))
+            {
                 _weights[ex.ExerciseId] = ex.DefaultWeight;
+                data.Weights[ex.ExerciseId] = ex.DefaultWeight;
+            }
 
             if (!data.Reps.ContainsKey(ex.ExerciseId))
             {
                 data.Reps[ex.ExerciseId] = new double[ex.DefaultSets];
                 for (int i = 0; i < ex.DefaultSets; i++)
                     data.Reps[ex.ExerciseId][i] = (double)ex.DefaultRepsMin;
+            }
+
+            data.SavedExercises.TryAdd(ex.ExerciseId, true);
+        }
+    }
+
+    private void RestoreSessionStateFromLocalData()
+    {
+        if (pass is null || data.CompletedSets.Count == 0)
+            return;
+
+        Session.StartPass(SplitId, PassId);
+        foreach (var ex in pass.Exercises)
+        {
+            if (data.CompletedSets.TryGetValue(ex.ExerciseId, out var storedSets))
+            {
+                var doneSets = new bool[ex.DefaultSets];
+                for (int i = 0; i < doneSets.Length && i < storedSets.Length; i++)
+                    doneSets[i] = storedSets[i];
+
+                Session.RestoreSets(ex.ExerciseId, doneSets);
             }
         }
     }
@@ -206,8 +271,12 @@ public partial class PassPage : IDisposable
         _weights.TryGetValue(exerciseId, out var w) ? w : null;
 
     /// <summary>Sparar vikten för en övning. Nollvärde lagras som 0.</summary>
-    private void SetWeight(int exerciseId, decimal? value) =>
+    private async Task SetWeight(int exerciseId, decimal? value)
+    {
         _weights[exerciseId] = value ?? 0;
+        data.Weights[exerciseId] = value ?? 0;
+        await SaveLocalDataAsync(exerciseId);
+    }
 
     /// <summary>Returnerar antalet reps för ett specifikt set, eller 1 om index saknas.</summary>
     private double GetReps(int exerciseId, int setIndex)
@@ -218,10 +287,11 @@ public partial class PassPage : IDisposable
     }
 
     /// <summary>Justerar reps för ett specifikt set med ett steg upp eller ned (min 1, max 20).</summary>
-    private void AdjustReps(int exerciseId, int setIndex, int delta)
+    private async Task AdjustReps(int exerciseId, int setIndex, int delta)
     {
         var current = GetReps(exerciseId, setIndex);
         SetReps(exerciseId, setIndex, Math.Clamp(current + delta, 1, 1000));
+        await SaveLocalDataAsync(exerciseId);
     }
 
     /// <summary>Uppdaterar antalet reps för ett specifikt set.</summary>
@@ -244,6 +314,11 @@ public partial class PassPage : IDisposable
             StartRestTimer();
         else
             CancelRestTimer();
+
+        if (Session.CompletedSets.TryGetValue(exerciseId, out var doneSets))
+            data.CompletedSets[exerciseId] = doneSets.ToArray();
+
+        await SaveLocalDataAsync(exerciseId);
     }
 
     /// <summary>Returnerar sant om alla sets för alla övningar är markerade som klara.</summary>
@@ -296,6 +371,7 @@ public partial class PassPage : IDisposable
             await TryAsync(async () =>
             {
                 await PassLogService.SaveSessionAsync(request);
+                await MarkSessionSavedAsync();
                 saved = true;
             }, "Kunde inte spara passet");
 
@@ -353,11 +429,45 @@ public partial class PassPage : IDisposable
         data.Notes.TryGetValue(exerciseId, out var n) ? n : string.Empty;
 
     /// <summary>Uppdaterar anteckningen för en övning.</summary>
-    private void SetNote(int exerciseId, string value) =>
+    private async Task SetNote(int exerciseId, string value)
+    {
         data.Notes[exerciseId] = value;
+        await SaveLocalDataAsync(exerciseId);
+    }
 
     /// <summary>Tom – anteckningar sparas nu till DB vid övningsbyte och avslutat pass.</summary>
     private Task OnNoteChanged(FocusEventArgs _) => Task.CompletedTask;
+
+    private async Task SaveLocalDataAsync(int exerciseId)
+    {
+        data.IsSynced = false;
+        data.SavedExercises[exerciseId] = false;
+        await LocalStorage.SetItemAsync(PassKey, data);
+        await PendingSync.RefreshAsync();
+    }
+
+    private async Task MarkExerciseSavedAsync(int exerciseId)
+    {
+        data.SavedExercises[exerciseId] = true;
+        data.IsSynced = pass?.Exercises.All(ex =>
+            data.SavedExercises.TryGetValue(ex.ExerciseId, out var isSaved) && isSaved) ?? true;
+
+        await LocalStorage.SetItemAsync(PassKey, data);
+        await PendingSync.RefreshAsync();
+    }
+
+    private async Task MarkSessionSavedAsync()
+    {
+        if (pass is not null)
+        {
+            foreach (var ex in pass.Exercises)
+                data.SavedExercises[ex.ExerciseId] = true;
+        }
+
+        data.IsSynced = true;
+        await LocalStorage.SetItemAsync(PassKey, data);
+        await PendingSync.RefreshAsync();
+    }
 
     /// <summary>Sparar en enskild övnings data till DB (anropas vid övningsbyte och vid avslutat pass).</summary>
     private async Task SaveCurrentExerciseAsync(int exerciseId)
@@ -383,6 +493,7 @@ public partial class PassPage : IDisposable
         };
 
         await PassLogService.UpsertExerciseAsync(request);
+        await MarkExerciseSavedAsync(exerciseId);
     }
 
     /// <summary>Formaterar set och reps från en övningsmall som text, t.ex. "3x8-12".</summary>
@@ -424,13 +535,7 @@ public partial class PassPage : IDisposable
     public void Dispose()
     {
         CancelRestTimer();
+        PendingSync.ClearActivePassKey(PassKey);
         _ = JSRuntime.InvokeVoidAsync("arnoldOne.releaseWakeLock");
-    }
-
-    private class PassData
-    {
-        public Dictionary<int, double[]> Reps { get; set; } = new();
-        public Dictionary<int, string> Notes { get; set; } = new();
-        public Dictionary<int, bool[]> CompletedSets { get; set; } = new();
     }
 }

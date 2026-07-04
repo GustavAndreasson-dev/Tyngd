@@ -29,6 +29,8 @@ builder.Services.AddSingleton<RestTimerState>();
 // Singleton för att hålla pågående pass-session vid navigering
 builder.Services.AddSingleton<SessionState>();
 
+builder.Services.AddScoped<PendingSyncState>();
+
 // Singleton för inloggningsstatus
 builder.Services.AddSingleton<LoginState>();
 

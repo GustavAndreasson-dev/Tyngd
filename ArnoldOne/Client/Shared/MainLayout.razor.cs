@@ -37,9 +37,13 @@ public partial class MainLayout : IDisposable
     [Inject]
     private UserSettingsService UserSettingsService { get; set; } = default!;
 
+    [Inject]
+    private PendingSyncState PendingSync { get; set; } = default!;
+
     /// <summary>Styr om navigeringslådan är öppen eller stängd.</summary>
     bool _drawerOpen = true;
     bool _ready = false;
+    bool _syncingPendingData = false;
     MudMenu _menu = default!;
 
     protected override async Task OnInitializedAsync()
@@ -49,6 +53,8 @@ public partial class MainLayout : IDisposable
 
         ThemeState.OnChange += StateHasChanged;
         LoginState.OnChange += OnLoginChanged;
+        PendingSync.OnChange += StateHasChanged;
+        await PendingSync.RefreshAsync();
 
         if (LoginState.IsLoggedIn)
         {
@@ -112,16 +118,34 @@ public partial class MainLayout : IDisposable
         _drawerOpen = !_drawerOpen;
     }
 
+    private async Task SyncPendingData()
+    {
+        if (_syncingPendingData)
+            return;
+
+        _syncingPendingData = true;
+        try
+        {
+            await PendingSync.SyncVisiblePendingAsync();
+        }
+        finally
+        {
+            _syncingPendingData = false;
+        }
+    }
+
     /// <summary>Avslutar prenumerationerna.</summary>
     public void Dispose()
     {
         ThemeState.OnChange -= StateHasChanged;
         LoginState.OnChange -= OnLoginChanged;
+        PendingSync.OnChange -= StateHasChanged;
     }
 
     private void OnLoginChanged()
     {
         StateHasChanged();
+        _ = PendingSync.RefreshAsync();
         if (LoginState.IsLoggedIn)
             _ = LoadUserSettingsAsync();
     }
