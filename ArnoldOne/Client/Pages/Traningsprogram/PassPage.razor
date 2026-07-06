@@ -6,6 +6,13 @@
 
 <ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
 
+@if (!string.IsNullOrWhiteSpace(saveStatusMessage))
+{
+    <MudAlert Severity="@saveStatusSeverity" Dense="true" ShowCloseIcon="true" CloseIconClicked="ClearSaveStatus" Class="mb-4">
+        @saveStatusMessage
+    </MudAlert>
+}
+
 <MudText Typo="Typo.h4" Class="mb-4">@pass?.PassName</MudText>
 
 @if (pass is not null)

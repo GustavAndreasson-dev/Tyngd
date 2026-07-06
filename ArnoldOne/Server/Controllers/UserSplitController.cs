@@ -212,6 +212,49 @@ public class UserSplitController : ApiControllerBase
         return Ok(split.SplitId);
     }
 
+    /// <summary>Uppdaterar en egen split med nya pass och övningar för inloggad användare.</summary>
+    [HttpPut("my/{splitId:int}")]
+    public async Task<IActionResult> UpdateMySplit(int splitId, [FromBody] CreateSplitRequest request)
+    {
+        var userId = CurrentUserId;
+
+        var split = await _context.Split
+            .Where(s => s.SplitId == splitId && s.UserId == userId && s.SplitTemplateId == null)
+            .Include(s => s.Pass)
+            .ThenInclude(p => p.Exercise)
+            .FirstOrDefaultAsync();
+
+        if (split is null)
+            return NotFound();
+
+        split.SplitName = request.SplitName.Trim();
+
+        foreach (var pass in split.Pass.ToList())
+            _context.Exercise.RemoveRange(pass.Exercise);
+
+        _context.Pass.RemoveRange(split.Pass);
+        split.Pass = request.Passes.Select((p, pi) => new Pass
+        {
+            PassTemplateId = null,
+            PassName       = p.PassName.Trim(),
+            Visability     = 1,
+            Ordning        = pi + 1,
+            Exercise = p.Exercises.Select((e, ei) => new DbExercise
+            {
+                ExerciseName   = e.ExerciseName.Trim(),
+                DefaultSets    = e.DefaultSets,
+                DefautlRepsMin = e.RepsMin,
+                DefaultRepsMax = e.RepsMax,
+                DefaultWeight  = e.DefaultWeight,
+                Ordning        = ei + 1,
+            }).ToList(),
+        }).ToList();
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
     /// <summary>Returnerar en enskild egen split med alla pass och övningar – redo att redigera.</summary>
     [HttpGet("my/{splitId:int}/full")]
     public async Task<ActionResult<CreateSplitRequest>> GetMySplitFull(int splitId)

@@ -17,6 +17,7 @@ namespace ArnoldOne.Shared
         protected override async Task OnInitializedAsync()
         {
             LoginState.OnChange += OnLoginStateChanged;
+            UserSplitsService.SplitsChanged += OnSplitsChanged;
             await LoadActiveSplitsAsync();
         }
 
@@ -44,6 +45,16 @@ namespace ArnoldOne.Shared
             catch { }
         }
 
-        public void Dispose() => LoginState.OnChange -= OnLoginStateChanged;
+        private async Task OnSplitsChanged()
+        {
+            await LoadActiveSplitsAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+
+        public void Dispose()
+        {
+            LoginState.OnChange -= OnLoginStateChanged;
+            UserSplitsService.SplitsChanged -= OnSplitsChanged;
+        }
     }
 }

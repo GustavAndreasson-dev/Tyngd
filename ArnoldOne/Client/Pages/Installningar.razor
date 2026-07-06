@@ -5,6 +5,13 @@
 
 <MudText Typo="Typo.h4" Class="mb-6">Inställningar</MudText>
 
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <MudAlert Severity="Severity.Success" Dense="true" ShowCloseIcon="true" CloseIconClicked="ClearSuccess" Class="mb-4">
+        @successMessage
+    </MudAlert>
+}
+
 <MudPaper Class="pa-4 mb-4" Elevation="2">
     <MudSwitch T="bool"
                Value="@ThemeState.IsDarkMode"

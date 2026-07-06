@@ -70,6 +70,8 @@ public partial class PassPage : IDisposable
     private bool _isInitialized;
     private int _lastPassId = -1;
     private bool _navOpen;
+    private string? saveStatusMessage;
+    private Severity saveStatusSeverity = Severity.Info;
 
     // Vilotimer
     private CancellationTokenSource? _restTimerCts;
@@ -370,12 +372,20 @@ public partial class PassPage : IDisposable
             var saved = false;
             await TryAsync(async () =>
             {
+                SetSaveStatus("Sparar passet...", Severity.Info);
                 await PassLogService.SaveSessionAsync(request);
                 await MarkSessionSavedAsync();
+                SetSaveStatus("Passet har sparats.", Severity.Success);
                 saved = true;
             }, "Kunde inte spara passet");
 
-            if (!saved) return;
+            if (!saved)
+            {
+                SetSaveStatus("Passet kunde inte sparas.", Severity.Error);
+                return;
+            }
+
+            await Task.Delay(700);
         }
 
         Session.EndSession();
@@ -492,8 +502,19 @@ public partial class PassPage : IDisposable
             }).ToList(),
         };
 
-        await PassLogService.UpsertExerciseAsync(request);
-        await MarkExerciseSavedAsync(exerciseId);
+        SetSaveStatus("Sparar övningen...", Severity.Info);
+
+        try
+        {
+            await PassLogService.UpsertExerciseAsync(request);
+            await MarkExerciseSavedAsync(exerciseId);
+            SetSaveStatus("Övningen har sparats.", Severity.Success);
+        }
+        catch
+        {
+            SetSaveStatus("Övningen kunde inte sparas.", Severity.Error);
+            throw;
+        }
     }
 
     /// <summary>Formaterar set och reps från en övningsmall som text, t.ex. "3x8-12".</summary>
@@ -526,6 +547,15 @@ public partial class PassPage : IDisposable
         activeIndex = idx;
         _navOpen = false;
     }
+
+    private void SetSaveStatus(string message, Severity severity)
+    {
+        saveStatusMessage = message;
+        saveStatusSeverity = severity;
+        StateHasChanged();
+    }
+
+    private void ClearSaveStatus() => saveStatusMessage = null;
 
     /// <summary>
     /// Användarens sparade data per pass: reps och anteckningar per övning.

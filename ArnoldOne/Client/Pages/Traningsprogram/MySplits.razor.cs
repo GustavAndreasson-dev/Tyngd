@@ -15,6 +15,7 @@ public partial class MySplits : IDisposable
     private UserSplitsService UserSplitsService { get; set; } = default!;
 
     private List<TrainingSplit> splits = new();
+    private string? successMessage;
 
     // (splitId, passId) -> övningar
     private Dictionary<(int, int), List<CreateExerciseDto>> passExercises = new();
@@ -72,6 +73,8 @@ public partial class MySplits : IDisposable
             splits.RemoveAll(s => s.SplitId == splitId);
             foreach (var key in passExercises.Keys.Where(k => k.Item1 == splitId).ToList())
                 passExercises.Remove(key);
+
+            successMessage = "Splitten har tagits bort.";
         }, "Kunde inte ta bort split");
     }
 
@@ -89,4 +92,6 @@ public partial class MySplits : IDisposable
     }
 
     public void Dispose() => LoginState.OnChange -= OnLoginStateChanged;
+
+    private void ClearSuccess() => successMessage = null;
 }

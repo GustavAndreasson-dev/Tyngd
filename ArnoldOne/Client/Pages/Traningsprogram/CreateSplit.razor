@@ -1,8 +1,9 @@
 @page "/create-split"
+@page "/edit-split/{SplitId:int}"
 @layout MainLayout
 @inherits PageComponentBase
 
-<PageTitle>Create Split</PageTitle>
+<PageTitle>@(IsEditMode ? "Redigera split" : "Skapa split")</PageTitle>
 
 <style>
     /* Pass-kort */
@@ -47,6 +48,13 @@
     }
 </style>
 
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <MudAlert Severity="Severity.Success" Dense="true" ShowCloseIcon="true" CloseIconClicked="ClearSuccess" Class="mb-4">
+        @successMessage
+    </MudAlert>
+}
+
 <ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
 
 @if (!LoginState.IsLoggedIn)
@@ -59,7 +67,7 @@
     return;
 }
 
-<MudText Typo="Typo.h4" Class="mb-4">Skapa split</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">@(IsEditMode ? "Redigera split" : "Skapa split")</MudText>
 
 <MudButton StartIcon="@Icons.Material.Filled.Download"
            Variant="Variant.Outlined"
@@ -131,15 +139,19 @@
 
                     <MudCard Outlined="true" Class="cs-exercise-card">
                         <MudCardContent>
-                            <div class="d-flex align-center mb-2" style="gap:8px;">
+                            <div class="d-flex align-center mb-2" style="gap:8px; cursor:pointer;" @onclick="@(() => exerciseExpanded[passIndex][exerciseIndex] = !exerciseExpanded[passIndex][exerciseIndex])">
                                 <MudText Typo="Typo.subtitle1" Style="flex:1">
                                     @(string.IsNullOrWhiteSpace(exercise.ExerciseName) ? $"Övning {exerciseIndex + 1}" : exercise.ExerciseName)
                                 </MudText>
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                               Color="Color.Error"
-                                               Size="Size.Small"
-                                               OnClick="@(() => RemoveExercise(passIndex, exerciseIndex))" />
+                                <MudIcon Icon="@(exerciseExpanded[passIndex][exerciseIndex] ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" />
+                                <span @onclick:stopPropagation>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                   Color="Color.Error"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => RemoveExercise(passIndex, exerciseIndex))" />
+                                </span>
                             </div>
+                            <MudCollapse Expanded="exerciseExpanded[passIndex][exerciseIndex]">
                             <MudTextField @bind-Value="exercise.ExerciseName"
                                           Label="Övningsnamn"
                                           Variant="Variant.Outlined"
@@ -167,6 +179,7 @@
                                                  Min="0" Max="1000"
                                                  Style="max-width:110px;" />
                             </div>
+                            </MudCollapse>
                         </MudCardContent>
                     </MudCard>
                 }
@@ -203,7 +216,7 @@
         }
         else
         {
-            <span>Spara split</span>
+            <span>@(IsEditMode ? "Spara ändringar" : "Spara split")</span>
         }
     </MudButton>
 </div>

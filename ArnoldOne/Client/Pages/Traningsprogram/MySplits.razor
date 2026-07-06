@@ -4,6 +4,13 @@
 
 <PageTitle>Mina splits</PageTitle>
 
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <MudAlert Severity="Severity.Success" Dense="true" ShowCloseIcon="true" CloseIconClicked="ClearSuccess" Class="mb-4">
+        @successMessage
+    </MudAlert>
+}
+
 <ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
 
 @if (!LoginState.IsLoggedIn)
@@ -34,10 +41,16 @@ else
             <MudCardContent>
                 <div class="d-flex justify-space-between align-center">
                     <MudText Typo="Typo.h5">@split.SplitName</MudText>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                   Color="Color.Error"
-                                   Size="Size.Small"
-                                   OnClick="@(async () => await DeleteSplit(split.SplitId))" />
+                    <div class="d-flex align-center" style="gap:4px;">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       Href="@($"/edit-split/{split.SplitId}")" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       OnClick="@(async () => await DeleteSplit(split.SplitId))" />
+                    </div>
                 </div>
             </MudCardContent>
         </MudCard>

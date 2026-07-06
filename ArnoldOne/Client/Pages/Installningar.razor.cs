@@ -22,6 +22,7 @@ public partial class Installningar : ComponentBase, IDisposable
     private UserSettingsService UserSettingsService { get; set; } = default!;
 
     private int _restTimerMinutes;
+    private string? successMessage;
 
     protected override void OnInitialized()
     {
@@ -61,6 +62,7 @@ public partial class Installningar : ComponentBase, IDisposable
                 IsRestTimerEnabled = RestTimer.IsEnabled,
                 RestTimerSeconds   = RestTimer.Seconds,
             });
+            successMessage = "Inställningarna har sparats.";
         }
         catch { }
     }
@@ -70,4 +72,6 @@ public partial class Installningar : ComponentBase, IDisposable
     {
         ThemeState.OnChange -= StateHasChanged;
     }
+
+    private void ClearSuccess() => successMessage = null;
 }

@@ -13,6 +13,8 @@ public class UserSplitsService
         _http = http;
     }
 
+    public event Func<Task>? SplitsChanged;
+
     public async Task<HashSet<int>> GetActiveSplitsAsync(string userId)
     {
         var result = await _http.GetFromJsonAsync<List<int>>("api/UserSplit");
@@ -54,7 +56,16 @@ public class UserSplitsService
     {
         var response = await _http.PostAsJsonAsync("api/UserSplit/custom", request);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<int>();
+        var splitId = await response.Content.ReadFromJsonAsync<int>();
+        await NotifySplitsChangedAsync();
+        return splitId;
+    }
+
+    public async Task UpdateCustomSplitAsync(int splitId, CreateSplitRequest request)
+    {
+        var response = await _http.PutAsJsonAsync($"api/UserSplit/my/{splitId}", request);
+        response.EnsureSuccessStatusCode();
+        await NotifySplitsChangedAsync();
     }
 
     public async Task<List<TrainingSplit>> GetMySplitsAsync()
@@ -67,6 +78,7 @@ public class UserSplitsService
     {
         var response = await _http.DeleteAsync($"api/UserSplit/my/{splitId}");
         response.EnsureSuccessStatusCode();
+        await NotifySplitsChangedAsync();
     }
 
     public async Task<CreateSplitRequest?> GetMySplitFullAsync(int splitId)
@@ -90,5 +102,13 @@ public class UserSplitsService
             }).ToList(),
         }).ToList(),
     };
-}
 
+    private async Task NotifySplitsChangedAsync()
+    {
+        if (SplitsChanged is null)
+            return;
+
+        foreach (Func<Task> handler in SplitsChanged.GetInvocationList())
+            await handler();
+    }
+}

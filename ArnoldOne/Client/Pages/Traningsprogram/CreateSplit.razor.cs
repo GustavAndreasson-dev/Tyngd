@@ -24,6 +24,11 @@ public partial class CreateSplit : PageComponentBase
     [Inject]
     private NavigationManager Nav { get; set; } = default!;
 
+    [Parameter]
+    public int? SplitId { get; set; }
+
+    private bool IsEditMode => SplitId.HasValue;
+
     private string splitName = string.Empty;
     private List<CreatePassDto> passes = new() { new CreatePassDto() };
 
@@ -32,6 +37,8 @@ public partial class CreateSplit : PageComponentBase
     private bool isImporting = false;
     private bool splitExpanded = true;
     private List<bool> passExpanded = new() { true };
+    private List<List<bool>> exerciseExpanded = new() { new List<bool>() };
+    private string? successMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -40,6 +47,9 @@ public partial class CreateSplit : PageComponentBase
         {
             allTemplates = await SplitTemplateService.GetAllAsync();
             mySplits     = await UserSplitsService.GetMySplitsAsync();
+
+            if (SplitId.HasValue)
+                await LoadSplitForEditAsync(SplitId.Value);
         }, "Failed to load splits");
     }
 
@@ -47,19 +57,27 @@ public partial class CreateSplit : PageComponentBase
     {
         passes.Add(new CreatePassDto());
         passExpanded.Add(true);
+        exerciseExpanded.Add(new List<bool>());
     }
 
     private void RemovePass(int index)
     {
         passes.RemoveAt(index);
         passExpanded.RemoveAt(index);
+        exerciseExpanded.RemoveAt(index);
     }
 
-    private void AddExercise(int passIndex) =>
+    private void AddExercise(int passIndex)
+    {
         passes[passIndex].Exercises.Add(new CreateExerciseDto());
+        exerciseExpanded[passIndex].Add(true);
+    }
 
-    private void RemoveExercise(int passIndex, int exerciseIndex) =>
+    private void RemoveExercise(int passIndex, int exerciseIndex)
+    {
         passes[passIndex].Exercises.RemoveAt(exerciseIndex);
+        exerciseExpanded[passIndex].RemoveAt(exerciseIndex);
+    }
 
     private IDialogReference? _importDialog;
 
@@ -95,8 +113,7 @@ public partial class CreateSplit : PageComponentBase
         var imported = UserSplitsService.FromTemplate(template);
         splitName    = imported.SplitName;
         passes       = imported.Passes;
-        passExpanded = passes.Select(_ => true).ToList();
-        splitExpanded = true;
+        ResetExpandedState();
     }
 
     private async Task ImportFromMySplitAsync(TrainingSplit split)
@@ -107,9 +124,22 @@ public partial class CreateSplit : PageComponentBase
             if (imported is null) return;
             splitName    = imported.SplitName;
             passes       = imported.Passes;
-            passExpanded = passes.Select(_ => true).ToList();
-            splitExpanded = true;
+            ResetExpandedState();
         }, "Failed to fetch split");
+    }
+
+    private async Task LoadSplitForEditAsync(int splitId)
+    {
+        var imported = await UserSplitsService.GetMySplitFullAsync(splitId);
+        if (imported is null)
+        {
+            Nav.NavigateTo("/TP/my-splits");
+            return;
+        }
+
+        splitName = imported.SplitName;
+        passes = imported.Passes;
+        ResetExpandedState();
     }
 
     private async Task SaveAsync()
@@ -124,8 +154,27 @@ public partial class CreateSplit : PageComponentBase
                 Passes    = passes,
             };
 
-            await UserSplitsService.CreateCustomSplitAsync(request);
-            Nav.NavigateTo("/");
+            if (SplitId.HasValue)
+            {
+                await UserSplitsService.UpdateCustomSplitAsync(SplitId.Value, request);
+                successMessage = "Ändringarna har sparats.";
+            }
+            else
+            {
+                await UserSplitsService.CreateCustomSplitAsync(request);
+                successMessage = "Splitten har sparats.";
+            }
         }, "Failed to save split");
     }
+
+    private void ResetExpandedState()
+    {
+        splitExpanded = true;
+        passExpanded = passes.Select(_ => true).ToList();
+        exerciseExpanded = passes
+            .Select(p => p.Exercises.Select(_ => true).ToList())
+            .ToList();
+    }
+
+    private void ClearSuccess() => successMessage = null;
 }
