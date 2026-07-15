@@ -23,6 +23,8 @@ public partial class Exercise
 
     public int Ordning { get; set; }
 
+    public bool Visability { get; set; }
+
     public virtual ICollection<ExerciseLog> ExerciseLog { get; set; } = new List<ExerciseLog>();
 
     public virtual Pass Pass { get; set; }

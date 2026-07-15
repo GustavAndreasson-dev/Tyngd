@@ -7,6 +7,7 @@
     [DefaultRepsMax] INT             NULL,
     [DefaultWeight]  DECIMAL (10, 2) NULL,
     [Ordning]        INT             CONSTRAINT [DF_Exercise_Ordning] DEFAULT ((1)) NOT NULL,
+    [Visability]     BIT             CONSTRAINT [DF_Exercise_Visability] DEFAULT ((1)) NOT NULL,
     CONSTRAINT [PK_Exercise] PRIMARY KEY CLUSTERED ([ExerciseId] ASC),
     CONSTRAINT [FK_Exercise_Pass] FOREIGN KEY ([PassId]) REFERENCES [dbo].[Pass] ([PassId])
 );

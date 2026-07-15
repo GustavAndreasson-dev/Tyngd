@@ -1,38 +1,139 @@
 @page "/admin"
-@namespace ArnoldOne.Client.Pages
-@using ArnoldOne.Client.Services
-@using System.Reflection
+@inherits PageComponentBase
 
 <PageTitle>Admin – Översikt</PageTitle>
 
-@if (!LoginState.IsLoggedIn || !LoginState.CurrentUser!.IsAdmin)
+@if (!LoginState.IsLoggedIn || LoginState.CurrentUser?.IsAdmin != true)
 {
-    <div class="d-flex flex-column align-center mt-12" style="gap:16px;">
-        <MudIcon Icon="@Icons.Material.Filled.Lock" Style="font-size:4rem;" Color="Color.Error" />
-        <MudText Typo="Typo.h5" Align="Align.Center">Åtkomst nekad</MudText>
-        <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary">Du måste vara inloggad som admin.</MudText>
+    <div class="admin-denied">
+        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Color="Color.Error" />
+        <MudText Typo="Typo.h5">Åtkomst nekad</MudText>
+        <MudText Color="Color.Secondary">Du måste vara inloggad som administratör.</MudText>
     </div>
     return;
 }
 
-<MudText Typo="Typo.h4" Class="mb-6">Admin – Dataöversikt</MudText>
+<div class="admin-header">
+    <div>
+        <MudText Typo="Typo.overline" Color="Color.Secondary">ADMINISTRATION</MudText>
+        <MudText Typo="Typo.h3">Systemöversikt</MudText>
+        <MudText Color="Color.Secondary">Följ användning och hantera användare och träningsmallar.</MudText>
+    </div>
+    <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Class="admin-header__icon" />
+</div>
 
-@foreach (var table in _tables)
+<ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
+
+@if (IsLoading && overview is null)
 {
-    <MudText Typo="Typo.h6" Class="mb-2">@table.ClassName</MudText>
+    <MudProgressLinear Indeterminate="true" Color="Color.Secondary" Class="mt-5" />
+}
+else
+{
+    <MudTabs Rounded="true" Class="mt-5">
+        <MudTabPanel Text="Översikt" Icon="@Icons.Material.Filled.Dashboard">
+            @if (overview is not null)
+            {
+                <MudGrid>
+                    <MudItem xs="6" md="2"><MudPaper Class="admin-stat pa-4" Outlined="true"><MudText Typo="Typo.h4">@overview.TotalUsers</MudText><MudText Color="Color.Secondary">Användare</MudText></MudPaper></MudItem>
+                    <MudItem xs="6" md="2"><MudPaper Class="admin-stat pa-4" Outlined="true"><MudText Typo="Typo.h4">@overview.NewUsersLast30Days</MudText><MudText Color="Color.Secondary">Nya 30 dagar</MudText></MudPaper></MudItem>
+                    <MudItem xs="6" md="2"><MudPaper Class="admin-stat pa-4" Outlined="true"><MudText Typo="Typo.h4">@overview.ActiveUsersLast30Days</MudText><MudText Color="Color.Secondary">Aktiva 30 dagar</MudText></MudPaper></MudItem>
+                    <MudItem xs="6" md="2"><MudPaper Class="admin-stat pa-4" Outlined="true"><MudText Typo="Typo.h4">@overview.CompletedSessionsLast7Days</MudText><MudText Color="Color.Secondary">Pass 7 dagar</MudText></MudPaper></MudItem>
+                    <MudItem xs="6" md="2"><MudPaper Class="admin-stat pa-4" Outlined="true"><MudText Typo="Typo.h4">@overview.CompletedSessionsLast30Days</MudText><MudText Color="Color.Secondary">Pass 30 dagar</MudText></MudPaper></MudItem>
+                    <MudItem xs="6" md="2"><MudPaper Class="admin-stat pa-4" Outlined="true"><MudText Typo="Typo.h4">@overview.VisibleTemplates</MudText><MudText Color="Color.Secondary">Aktiva mallar</MudText></MudPaper></MudItem>
+                </MudGrid>
 
-    <MudTable Items="@table.Items" Dense="true" Hover="true" Striped="true" Elevation="2" Class="mb-8">
-        <HeaderContent>
-            @foreach (var prop in table.Properties)
-            {
-                <MudTh>@prop.Name</MudTh>
+                <MudGrid Class="mt-4">
+                    <MudItem xs="12" lg="6">
+                        <MudPaper Class="pa-4 admin-table" Outlined="true">
+                            <MudText Typo="Typo.h6" Class="mb-3">Senaste användarna</MudText>
+                            <MudTable Items="@overview.RecentUsers" Dense="true" Hover="true">
+                                <HeaderContent><MudTh>Användare</MudTh><MudTh>Roll</MudTh><MudTh>Skapad</MudTh></HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Användare"><strong>@context.UserName</strong><br /><small>@context.Email</small></MudTd>
+                                    <MudTd DataLabel="Roll">@(context.IsAdmin ? "Admin" : "User")</MudTd>
+                                    <MudTd DataLabel="Skapad">@context.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" lg="6">
+                        <MudPaper Class="pa-4 admin-table" Outlined="true">
+                            <MudText Typo="Typo.h6" Class="mb-3">Senaste träningspassen</MudText>
+                            <MudTable Items="@overview.RecentSessions" Dense="true" Hover="true">
+                                <HeaderContent><MudTh>Användare</MudTh><MudTh>Pass</MudTh><MudTh>Tid</MudTh></HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Användare">@context.UserName</MudTd>
+                                    <MudTd DataLabel="Pass"><strong>@context.PassName</strong><br /><small>@context.SplitName</small></MudTd>
+                                    <MudTd DataLabel="Tid">@context.DurationMinutes min<br /><small>@context.CompletedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small></MudTd>
+                                </RowTemplate>
+                                <NoRecordsContent><MudText Color="Color.Secondary">Inga genomförda pass ännu.</MudText></NoRecordsContent>
+                            </MudTable>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
             }
-        </HeaderContent>
-        <RowTemplate>
-            @foreach (var prop in table.Properties)
-            {
-                <MudTd>@(prop.GetValue(context)?.ToString() ?? "-")</MudTd>
-            }
-        </RowTemplate>
-    </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Användare" Icon="@Icons.Material.Filled.People">
+            <MudPaper Class="pa-4 admin-table" Outlined="true">
+                <div class="admin-toolbar">
+                    <MudTextField @bind-Value="userSearch" Label="Sök användare eller e-post" Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchUsersAsync">Sök</MudButton>
+                </div>
+                <MudTable Items="@(users?.Items ?? new())" Dense="true" Hover="true" Class="mt-4">
+                    <HeaderContent><MudTh>Användare</MudTh><MudTh>Skapad</MudTh><MudTh>Admin</MudTh></HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Användare"><strong>@context.UserName</strong><br /><small>@context.Email</small></MudTd>
+                        <MudTd DataLabel="Skapad">@context.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</MudTd>
+                        <MudTd DataLabel="Admin">
+                            <MudSwitch T="bool" Value="@context.IsAdmin" Color="Color.Secondary"
+                                       Disabled="@(context.UserId.ToString() == LoginState.CurrentUser!.UserId)"
+                                       ValueChanged="@(value => ChangeAdminRoleAsync(context, value))" />
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent><MudText Color="Color.Secondary">Inga användare hittades.</MudText></NoRecordsContent>
+                </MudTable>
+                <div class="admin-pagination">
+                    <MudButton Variant="Variant.Text" Disabled="@(users is null || users.Page <= 1)" OnClick="PreviousUsersPageAsync">Föregående</MudButton>
+                    <MudText>Sida @(users?.Page ?? 1) av @TotalUserPages</MudText>
+                    <MudButton Variant="Variant.Text" Disabled="@(users is null || users.Page >= TotalUserPages)" OnClick="NextUsersPageAsync">Nästa</MudButton>
+                </div>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Mallar" Icon="@Icons.Material.Filled.AccountTree">
+            <div class="admin-toolbar admin-toolbar--end">
+                <MudText Color="Color.Secondary">Redigering behåller stabila id:n. Borttagning arkiverar.</MudText>
+                <MudButton Href="/admin/templates/new" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">Ny mall</MudButton>
+            </div>
+            <MudGrid Class="mt-3">
+                @foreach (var template in templates)
+                {
+                    <MudItem xs="12" md="6">
+                        <MudCard Class="@($"template-card {(template.IsVisible ? string.Empty : "template-card--archived")}")">
+                            <MudCardContent>
+                                <div class="template-card__header">
+                                    <div>
+                                        <MudText Typo="Typo.h6">@template.SplitTemplateName</MudText>
+                                        <MudText Color="Color.Secondary">@template.Passes.Count pass · @template.Passes.Sum(pass => pass.Exercises.Count) övningar</MudText>
+                                    </div>
+                                    <MudChip T="string" Size="Size.Small" Color="@(template.IsVisible ? Color.Success : Color.Default)">@(template.IsVisible ? "Aktiv" : "Arkiverad")</MudChip>
+                                </div>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton Href="@($"/admin/templates/{template.SplitTemplateId}")" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit">Redigera</MudButton>
+                                <MudSpacer />
+                                <MudButton Variant="Variant.Text" Color="@(template.IsVisible ? Color.Error : Color.Success)"
+                                           OnClick="@(() => ToggleTemplateVisibilityAsync(template))">
+                                    @(template.IsVisible ? "Arkivera" : "Återställ")
+                                </MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudTabPanel>
+    </MudTabs>
 }

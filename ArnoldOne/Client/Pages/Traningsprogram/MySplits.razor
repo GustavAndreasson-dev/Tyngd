@@ -59,6 +59,13 @@ else
             @foreach (var pass in split.Passes)
             {
                 <MudExpansionPanel Text="@pass.PassName" DisableRipple="true">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.PlayArrow"
+                               Href="@($"/TP/split/{split.SplitId}/pass/{pass.PassId}")"
+                               Class="mb-3">
+                        Öppna pass
+                    </MudButton>
                     <MudList Dense="true" T="string">
                         @foreach (var exercise in passExercises.GetValueOrDefault((split.SplitId, pass.PassId)) ?? new())
                         {

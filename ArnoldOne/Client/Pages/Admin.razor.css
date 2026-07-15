@@ -1,0 +1,16 @@
+.admin-denied { min-height:50vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:.75rem; }
+.admin-header { display:flex; align-items:center; justify-content:space-between; padding:2rem; border-radius:20px; background:linear-gradient(135deg,rgba(123,31,58,.14),rgba(196,147,63,.1)); }
+.admin-header__icon { font-size:4rem; color:var(--mud-palette-secondary); }
+.admin-stat { height:100%; border-top:3px solid var(--mud-palette-secondary); border-radius:12px; }
+.admin-table, .template-card { border-radius:14px; }
+.admin-toolbar, .template-card__header, .admin-pagination { display:flex; align-items:center; gap:1rem; }
+.admin-toolbar > :first-child { flex:1; }
+.admin-toolbar--end { justify-content:space-between; }
+.template-card__header { justify-content:space-between; }
+.template-card--archived { opacity:.68; }
+.admin-pagination { justify-content:center; margin-top:1rem; }
+@media (max-width:600px) {
+  .admin-header { padding:1.25rem; }
+  .admin-header__icon { display:none; }
+  .admin-toolbar { align-items:stretch; flex-direction:column; }
+}

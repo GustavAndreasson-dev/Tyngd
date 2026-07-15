@@ -3,6 +3,7 @@ using ArnoldOne.Client.Shared;
 using ArnoldOne.Shared.DTOs;
 using ArnoldOne.Shared.TrainingPrograms;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace ArnoldOne.Client.Pages.Traningsprogram;
 
@@ -14,6 +15,12 @@ public partial class MySplits : IDisposable
     [Inject]
     private UserSplitsService UserSplitsService { get; set; } = default!;
 
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "saved")]
+    public string? SavedStatus { get; set; }
+
     private List<TrainingSplit> splits = new();
     private string? successMessage;
 
@@ -23,6 +30,12 @@ public partial class MySplits : IDisposable
     protected override async Task OnInitializedAsync()
     {
         LoginState.OnChange += OnLoginStateChanged;
+        successMessage = SavedStatus switch
+        {
+            "created" => "Splitten har skapats.",
+            "updated" => "Ändringarna har sparats.",
+            _ => null,
+        };
         await LoadAsync();
     }
 
@@ -55,10 +68,11 @@ public partial class MySplits : IDisposable
                 var full = await UserSplitsService.GetMySplitFullAsync(split.SplitId);
                 if (full is null) continue;
 
-                for (int i = 0; i < split.Passes.Count; i++)
+                foreach (var pass in split.Passes)
                 {
-                    var pass = split.Passes[i];
-                    var exercises = full.Passes.ElementAtOrDefault(i)?.Exercises ?? new();
+                    var exercises = full.Passes
+                        .FirstOrDefault(candidate => candidate.PassId == pass.PassId)?
+                        .Exercises ?? new();
                     passExercises[(split.SplitId, pass.PassId)] = exercises;
                 }
             }
@@ -67,6 +81,15 @@ public partial class MySplits : IDisposable
 
     private async Task DeleteSplit(int splitId)
     {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Arkivera split",
+            "Splitten döljs från nya träningspass, men träningshistoriken bevaras. Vill du fortsätta?",
+            yesText: "Arkivera",
+            cancelText: "Avbryt");
+
+        if (confirmed != true)
+            return;
+
         await TryAsync(async () =>
         {
             await UserSplitsService.DeleteMySplitAsync(splitId);

@@ -19,6 +19,9 @@ public class SessionController : ApiControllerBase
     [HttpPost]
     public async Task<IActionResult> SaveSession([FromBody] SaveSessionRequest request)
     {
+        if (request.SessionKey == Guid.Empty || request.StartedAtUtc == default)
+            return BadRequest("SessionKey och StartedAtUtc måste anges.");
+
         if (!await UserOwnsPassAsync(request.PassId))
             return Forbid();
 
@@ -26,13 +29,24 @@ public class SessionController : ApiControllerBase
         if (exerciseIds.Count > 0 && !await AllExercisesBelongToPassAsync(request.PassId, exerciseIds))
             return Forbid();
 
-        // Återanvänd befintlig session för dagen om den finns (skapad av UpsertExercise)
         var session = await _context.Session
-            .FirstOrDefaultAsync(s => s.PassId == request.PassId && s.Date == request.Date);
+            .FirstOrDefaultAsync(s => s.SessionKey == request.SessionKey);
+
+        if (session is not null && session.PassId != request.PassId)
+            return Forbid();
+
+        if (session?.CompletedAtUtc is not null)
+            return request.CompleteSession ? Ok() : Conflict("Sessionen är redan avslutad och kan inte ändras.");
 
         if (session is null)
         {
-            session = new Session { PassId = request.PassId, Date = request.Date };
+            session = new Session
+            {
+                SessionKey = request.SessionKey,
+                PassId = request.PassId,
+                Date = request.Date,
+                StartedAtUtc = request.StartedAtUtc.ToUniversalTime(),
+            };
             _context.Session.Add(session);
             await _context.SaveChangesAsync();
         }
@@ -76,6 +90,9 @@ public class SessionController : ApiControllerBase
                 exercise.DefaultWeight = ex.Weight;
         }
 
+        if (request.CompleteSession)
+            session.CompletedAtUtc = DateTimeOffset.UtcNow;
+
         await _context.SaveChangesAsync();
         return Ok();
     }
@@ -89,7 +106,7 @@ public class SessionController : ApiControllerBase
 
         var lastSession = await _context.Session
             .Where(s => s.PassId == passId)
-            .OrderByDescending(s => s.Date)
+            .OrderByDescending(s => s.StartedAtUtc)
             .Include(s => s.ExerciseLog)
                 .ThenInclude(e => e.SetLog)
             .Include(s => s.ExerciseLog)
@@ -101,12 +118,17 @@ public class SessionController : ApiControllerBase
 
         var dto = new LastSessionDto
         {
+            SessionKey = lastSession.SessionKey,
             Date      = lastSession.Date,
+            StartedAtUtc = lastSession.StartedAtUtc,
+            CompletedAtUtc = lastSession.CompletedAtUtc,
             Exercises = lastSession.ExerciseLog.Select(e => new LastSessionExerciseDto
             {
                 ExerciseId = e.ExerciseId,
                 NoteText   = e.NoteText ?? string.Empty,
-                Weight     = e.Exercise.DefaultWeight ?? 0,
+                Weight     = e.SetLog.OrderByDescending(s => s.SetIndex)
+                    .Select(s => s.Weight)
+                    .FirstOrDefault(e.Exercise.DefaultWeight ?? 0),
                 Sets       = e.SetLog.OrderBy(s => s.SetIndex).Select(s => new LastSessionSetDto
                 {
                     SetIndex = s.SetIndex,
@@ -119,6 +141,24 @@ public class SessionController : ApiControllerBase
         return Ok(dto);
     }
 
+    [HttpPost("{sessionKey:guid}/complete")]
+    public async Task<IActionResult> CompleteSession(Guid sessionKey)
+    {
+        var session = await _context.Session
+            .FirstOrDefaultAsync(s => s.SessionKey == sessionKey && s.Pass.Split.UserId == CurrentUserId);
+
+        if (session is null)
+            return NotFound();
+
+        if (session.CompletedAtUtc is null)
+        {
+            session.CompletedAtUtc = DateTimeOffset.UtcNow;
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
+    }
+
     /// <summary>
     /// Sparar eller uppdaterar en enskild övning för dagens session.
     /// Skapar sessionen om den inte finns ännu för dagens datum.
@@ -126,6 +166,9 @@ public class SessionController : ApiControllerBase
     [HttpPost("exercise")]
     public async Task<IActionResult> UpsertExercise([FromBody] UpsertExerciseRequest request)
     {
+        if (request.SessionKey == Guid.Empty || request.StartedAtUtc == default)
+            return BadRequest("SessionKey och StartedAtUtc måste anges.");
+
         if (!await UserOwnsPassAsync(request.PassId))
             return Forbid();
 
@@ -133,11 +176,23 @@ public class SessionController : ApiControllerBase
             return Forbid();
 
         var session = await _context.Session
-            .FirstOrDefaultAsync(s => s.PassId == request.PassId && s.Date == request.Date);
+            .FirstOrDefaultAsync(s => s.SessionKey == request.SessionKey);
+
+        if (session is not null && session.PassId != request.PassId)
+            return Forbid();
+
+        if (session?.CompletedAtUtc is not null)
+            return Conflict("Sessionen är redan avslutad och kan inte ändras.");
 
         if (session is null)
         {
-            session = new Session { PassId = request.PassId, Date = request.Date };
+            session = new Session
+            {
+                SessionKey = request.SessionKey,
+                PassId = request.PassId,
+                Date = request.Date,
+                StartedAtUtc = request.StartedAtUtc.ToUniversalTime(),
+            };
             _context.Session.Add(session);
             await _context.SaveChangesAsync();
         }

@@ -69,6 +69,8 @@ public partial class PassPage : IDisposable
     // Används för att detektera PassId-byte vid navigering
     private bool _isInitialized;
     private int _lastPassId = -1;
+    private int _lastSplitId = -1;
+    private bool _isNewPassData;
     private bool _navOpen;
     private string? saveStatusMessage;
     private Severity saveStatusSeverity = Severity.Info;
@@ -84,41 +86,29 @@ public partial class PassPage : IDisposable
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {
-        var passChanged = !_isInitialized || _lastPassId != PassId;
+        var passChanged = !_isInitialized || _lastPassId != PassId || _lastSplitId != SplitId;
         var isNewSession = NewSession == 1;
 
         await TryAsync(async () =>
         {
-            pass = await UserSplitsService.GetPassAsync(PassId);
+            pass = await UserSplitsService.GetPassAsync(SplitId, PassId);
 
             if (pass is not null && passChanged)
             {
-                if (isNewSession)
-                {
-                    data = new PassData();
-                    await LoadLastSessionAsync(includeCompletedSets: false);
-                }
-                else
-                {
-                    var stored = await LocalStorage.GetItemAsync<PassData>(PassKey);
-                    data = stored ?? new PassData();
-                    data.NormalizeSyncState();
-
-                    if (stored is null)
-                        await LoadLastSessionAsync(includeCompletedSets: true);
-                }
-
+                await InitializePassDataAsync(isNewSession);
                 InitializeDefaults();
-
-                if (isNewSession)
-                    await LocalStorage.SetItemAsync(PassKey, data);
-                else
-                    RestoreSessionStateFromLocalData();
+                await LocalStorage.SetItemAsync(PassKey, data);
+                RestoreSessionStateFromLocalData();
+                if (_isNewPassData)
+                    Session.StartNewPass(SplitId, PassId);
+                else if (Session.ActiveSplitId != SplitId || Session.ActivePassId != PassId)
+                    Session.StartPass(SplitId, PassId);
 
                 await PendingSync.RefreshAsync();
                 PendingSync.SetActivePassKey(PassKey);
                 activeIndex = FirstIncompleteExerciseIndex();
                 _lastPassId = PassId;
+                _lastSplitId = SplitId;
                 _isInitialized = true;
             }
         }, "Kunde inte ladda passet");
@@ -133,7 +123,10 @@ public partial class PassPage : IDisposable
         {
             _isInitialized = true;
             _lastPassId = PassId;
-            if (NewSession == 1 || !Session.IsActive)
+            _lastSplitId = SplitId;
+            if (_isNewPassData)
+                StartSession(reset: true);
+            else if (!Session.IsActive || Session.ActiveSplitId != SplitId || Session.ActivePassId != PassId)
                 StartSession();
             else
                 activeIndex = FirstIncompleteExerciseIndex();
@@ -143,10 +136,61 @@ public partial class PassPage : IDisposable
         await JSRuntime.InvokeVoidAsync("arnoldOne.attachNoteKeyHandler");
     }
 
-    /// <summary>Läser sparad vikt, reps och anteckningar från senaste sessionen för aktuellt pass.</summary>
-    private async Task LoadLastSessionAsync(bool includeCompletedSets)
+    private async Task InitializePassDataAsync(bool forceNewSession)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var stored = await LocalStorage.GetItemAsync<PassData>(PassKey);
+        if (stored is not null)
+        {
+            stored.NormalizeSyncState();
+            stored.NormalizeSessionIdentity(now);
+            data = stored;
+
+            if (!forceNewSession && PassResumePolicy.ShouldResume(stored, now))
+            {
+                _isNewPassData = false;
+                return;
+            }
+
+            if (stored.CompletedAtUtc is null)
+                await PendingSync.FinalizeAsync(PassKey);
+
+            data = CreateNewPassData(now);
+            _isNewPassData = true;
+            await ApplyLastSessionAsync(includeCompletedSets: false);
+            return;
+        }
+
+        var lastSession = await PassLogService.GetLastSessionAsync(PassId);
+        if (lastSession?.SessionKey is not null
+            && lastSession.StartedAtUtc is not null
+            && lastSession.CompletedAtUtc is null)
+        {
+            var serverData = CreatePassDataFromSession(lastSession);
+            if (!forceNewSession && PassResumePolicy.ShouldResume(serverData, now))
+            {
+                data = serverData;
+                _isNewPassData = false;
+                ApplyLastSession(lastSession, includeCompletedSets: true);
+                return;
+            }
+
+            await PassLogService.CompleteSessionAsync(lastSession.SessionKey.Value);
+        }
+
+        data = CreateNewPassData(now);
+        _isNewPassData = true;
+        ApplyLastSession(lastSession, includeCompletedSets: false);
+    }
+
+    private async Task ApplyLastSessionAsync(bool includeCompletedSets)
     {
         var lastSession = await PassLogService.GetLastSessionAsync(PassId);
+        ApplyLastSession(lastSession, includeCompletedSets);
+    }
+
+    private void ApplyLastSession(ArnoldOne.Shared.DTOs.LastSessionDto? lastSession, bool includeCompletedSets)
+    {
         if (lastSession is null || pass is null)
             return;
 
@@ -178,8 +222,7 @@ public partial class PassPage : IDisposable
             data.SavedExercises[ex.ExerciseId] = true;
         }
 
-        // Återställ SessionState om sessionen är från idag (t.ex. efter page refresh).
-        if (includeCompletedSets && lastSession.Date == DateOnly.FromDateTime(DateTime.Today))
+        if (includeCompletedSets)
         {
             Session.StartPass(SplitId, PassId);
             foreach (var ex in lastSession.Exercises)
@@ -200,6 +243,21 @@ public partial class PassPage : IDisposable
 
         data.IsSynced = true;
     }
+
+    private static PassData CreateNewPassData(DateTimeOffset now) => new()
+    {
+        SessionKey = Guid.NewGuid(),
+        StartedAtUtc = now.ToUniversalTime(),
+        IsSynced = true,
+    };
+
+    private static PassData CreatePassDataFromSession(ArnoldOne.Shared.DTOs.LastSessionDto session) => new()
+    {
+        SessionKey = session.SessionKey ?? Guid.NewGuid(),
+        StartedAtUtc = session.StartedAtUtc ?? DateTimeOffset.UtcNow,
+        CompletedAtUtc = session.CompletedAtUtc,
+        IsSynced = true,
+    };
 
     /// <summary>Fyller i defaultvärden för vikt och reps för övningar som saknar sparad data.</summary>
     private void InitializeDefaults()
@@ -338,9 +396,12 @@ public partial class PassPage : IDisposable
     }
 
     /// <summary>Startar ett nytt pass via SessionState och aktiverar wake lock.</summary>
-    private void StartSession()
+    private void StartSession(bool reset = false)
     {
-        Session.StartPass(SplitId, PassId);
+        if (reset)
+            Session.StartNewPass(SplitId, PassId);
+        else
+            Session.StartPass(SplitId, PassId);
         CancelRestTimer();
         _ = JSRuntime.InvokeVoidAsync("arnoldOne.requestWakeLock");
     }
@@ -352,8 +413,11 @@ public partial class PassPage : IDisposable
         {
             var request = new ArnoldOne.Shared.DTOs.SaveSessionRequest
             {
+                SessionKey = data.SessionKey,
                 PassId = PassId,
-                Date   = DateOnly.FromDateTime(DateTime.Today),
+                Date   = DateOnly.FromDateTime(data.StartedAtUtc!.Value.ToLocalTime().DateTime),
+                StartedAtUtc = data.StartedAtUtc.Value,
+                CompleteSession = true,
                 Exercises = pass.Exercises.Select(ex => new ArnoldOne.Shared.DTOs.SaveSessionExerciseDto
                 {
                     ExerciseId = ex.ExerciseId,
@@ -374,6 +438,7 @@ public partial class PassPage : IDisposable
             {
                 SetSaveStatus("Sparar passet...", Severity.Info);
                 await PassLogService.SaveSessionAsync(request);
+                data.CompletedAtUtc = DateTimeOffset.UtcNow;
                 await MarkSessionSavedAsync();
                 SetSaveStatus("Passet har sparats.", Severity.Success);
                 saved = true;
@@ -488,8 +553,10 @@ public partial class PassPage : IDisposable
 
         var request = new ArnoldOne.Shared.DTOs.UpsertExerciseRequest
         {
+            SessionKey = data.SessionKey,
             PassId     = PassId,
-            Date       = DateOnly.FromDateTime(DateTime.Today),
+            Date       = DateOnly.FromDateTime(data.StartedAtUtc!.Value.ToLocalTime().DateTime),
+            StartedAtUtc = data.StartedAtUtc.Value,
             ExerciseId = exerciseId,
             NoteText   = GetNote(exerciseId),
             Weight     = GetWeight(exerciseId) ?? 0,

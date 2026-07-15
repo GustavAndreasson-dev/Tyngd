@@ -41,6 +41,7 @@ public partial class CreateSplit : PageComponentBase
     private string? successMessage;
     private bool isLoadingEditSplit;
     private bool isSaving;
+    private Dictionary<string, string> validationErrors = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,16 +64,8 @@ public partial class CreateSplit : PageComponentBase
 
     private async Task LoadImportDataAsync()
     {
-        try
-        {
-            allTemplates = await SplitTemplateService.GetAllAsync();
-            mySplits     = await UserSplitsService.GetMySplitsAsync();
-        }
-        catch
-        {
-            allTemplates = new();
-            mySplits = new();
-        }
+        allTemplates = await SplitTemplateService.GetAllAsync();
+        mySplits     = await UserSplitsService.GetMySplitsAsync();
     }
 
     private void AddPass()
@@ -122,12 +115,17 @@ public partial class CreateSplit : PageComponentBase
         StateHasChanged();
         await Task.Yield();
 
-        if (import.MySplit is not null)
-            await ImportFromMySplitAsync(import.MySplit);
-        else if (import.Template is not null)
-            ImportFromTemplate(import.Template);
-
-        isImporting = false;
+        try
+        {
+            if (import.MySplit is not null)
+                await ImportFromMySplitAsync(import.MySplit);
+            else if (import.Template is not null)
+                ImportFromTemplate(import.Template);
+        }
+        finally
+        {
+            isImporting = false;
+        }
     }
 
     private void ImportFromTemplate(TrainingSplitTemplate template)
@@ -144,8 +142,9 @@ public partial class CreateSplit : PageComponentBase
         {
             var imported = await UserSplitsService.GetMySplitFullAsync(split.SplitId);
             if (imported is null) return;
-            splitName    = imported.SplitName;
-            passes       = imported.Passes;
+            var copy = UserSplitsService.AsNewCopy(imported);
+            splitName    = copy.SplitName;
+            passes       = copy.Passes;
             ResetExpandedState();
         }, "Failed to fetch split");
     }
@@ -166,26 +165,36 @@ public partial class CreateSplit : PageComponentBase
 
     private async Task SaveAsync()
     {
-        if (string.IsNullOrWhiteSpace(splitName) || isSaving || isLoadingEditSplit) return;
+        if (isSaving || isLoadingEditSplit) return;
+
+        var request = new CreateSplitRequest
+        {
+            SplitName = splitName.Trim(),
+            Passes    = passes,
+        };
+
+        validationErrors = SplitRequestValidator.Validate(request)
+            .GroupBy(error => error.Key)
+            .ToDictionary(group => group.Key, group => group.First().Message);
+
+        if (validationErrors.Count > 0)
+        {
+            StateHasChanged();
+            return;
+        }
 
         isSaving = true;
         await TryAsync(async () =>
         {
-            var request = new CreateSplitRequest
-            {
-                SplitName = splitName.Trim(),
-                Passes    = passes,
-            };
-
             if (SplitId.HasValue)
             {
                 await UserSplitsService.UpdateCustomSplitAsync(SplitId.Value, request);
-                successMessage = "Ändringarna har sparats.";
+                Nav.NavigateTo("/TP/my-splits?saved=updated");
             }
             else
             {
                 await UserSplitsService.CreateCustomSplitAsync(request);
-                successMessage = "Splitten har sparats.";
+                Nav.NavigateTo("/TP/my-splits?saved=created");
             }
         }, "Failed to save split");
         isSaving = false;
@@ -202,4 +211,7 @@ public partial class CreateSplit : PageComponentBase
     }
 
     private void ClearSuccess() => successMessage = null;
+
+    private string? FieldError(string key) =>
+        validationErrors.TryGetValue(key, out var error) ? error : null;
 }

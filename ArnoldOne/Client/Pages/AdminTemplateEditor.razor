@@ -1,0 +1,86 @@
+@page "/admin/templates/new"
+@page "/admin/templates/{TemplateId:int}"
+@inherits PageComponentBase
+
+<PageTitle>@(IsEditMode ? "Redigera mall" : "Ny mall")</PageTitle>
+
+@if (!LoginState.IsLoggedIn || LoginState.CurrentUser?.IsAdmin != true)
+{
+    <MudAlert Severity="Severity.Error">Du saknar adminbehörighet.</MudAlert>
+    return;
+}
+
+<div class="editor-header">
+    <div>
+        <MudText Typo="Typo.overline" Color="Color.Secondary">TRÄNINGSMALL</MudText>
+        <MudText Typo="Typo.h3">@(IsEditMode ? "Redigera mall" : "Skapa mall")</MudText>
+        <MudText Color="Color.Secondary">Befintliga id:n behålls. Borttagna delar arkiveras när du sparar.</MudText>
+    </div>
+    <MudButton Href="/admin" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack">Till admin</MudButton>
+</div>
+
+<ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
+@if (!string.IsNullOrWhiteSpace(validationMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">@validationMessage</MudAlert>
+}
+
+@if (IsLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Secondary" Class="mt-5" />
+    return;
+}
+
+<MudPaper Class="pa-5 mt-5 editor-card" Outlined="true">
+    <div class="editor-row">
+        <MudTextField @bind-Value="model.SplitTemplateName" Label="Mallnamn" Variant="Variant.Outlined" MaxLength="50" Required="true" />
+        <MudSwitch T="bool" @bind-Value="model.IsVisible" Color="Color.Success">Aktiv</MudSwitch>
+    </div>
+</MudPaper>
+
+@for (var passIndex = 0; passIndex < model.Passes.Count; passIndex++)
+{
+    var currentPassIndex = passIndex;
+    var pass = model.Passes[currentPassIndex];
+    <MudCard Class="mt-4 editor-card pass-editor">
+        <MudCardContent>
+            <div class="editor-row">
+                <MudText Typo="Typo.h6">Pass @(currentPassIndex + 1)</MudText>
+                <MudSpacer />
+                <MudSwitch T="bool" @bind-Value="pass.IsVisible" Color="Color.Success" Size="Size.Small">Aktiv</MudSwitch>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemovePass(currentPassIndex))" />
+            </div>
+            <MudTextField @bind-Value="pass.PassTemplateName" Label="Passnamn" Variant="Variant.Outlined" MaxLength="50" Class="mt-3" />
+
+            @for (var exerciseIndex = 0; exerciseIndex < pass.Exercises.Count; exerciseIndex++)
+            {
+                var currentExerciseIndex = exerciseIndex;
+                var exercise = pass.Exercises[currentExerciseIndex];
+                <MudPaper Class="pa-4 mt-3 exercise-editor" Outlined="true">
+                    <div class="editor-row">
+                        <MudTextField @bind-Value="exercise.ExerciseTemplateName" Label="Övning" Variant="Variant.Outlined" MaxLength="50" />
+                        <MudSwitch T="bool" @bind-Value="exercise.IsVisible" Color="Color.Success" Size="Size.Small">Aktiv</MudSwitch>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(() => RemoveExercise(currentPassIndex, currentExerciseIndex))" />
+                    </div>
+                    <div class="exercise-values">
+                        <MudNumericField T="int" @bind-Value="exercise.DefaultSets" Label="Set" Variant="Variant.Outlined" Min="1" Max="20" />
+                        <MudNumericField T="int" @bind-Value="exercise.DefaultRepsMin" Label="Reps min" Variant="Variant.Outlined" Min="1" Max="100" />
+                        <MudNumericField T="int" @bind-Value="exercise.DefaultRepsMax" Label="Reps max" Variant="Variant.Outlined" Min="1" Max="100" />
+                        <MudNumericField T="int" @bind-Value="exercise.DefaultWeight" Label="Vikt (kg)" Variant="Variant.Outlined" Min="0" Max="1000" />
+                    </div>
+                </MudPaper>
+            }
+
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Class="mt-3"
+                       OnClick="@(() => AddExercise(currentPassIndex))">Lägg till övning</MudButton>
+        </MudCardContent>
+    </MudCard>
+}
+
+<div class="editor-actions">
+    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddPass">Lägg till pass</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Save" Disabled="isSaving" OnClick="SaveAsync">
+        @(isSaving ? "Sparar..." : "Spara mall")
+    </MudButton>
+</div>

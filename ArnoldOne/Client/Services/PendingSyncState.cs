@@ -82,7 +82,8 @@ public class PendingSyncState
 
             try
             {
-                await _passLogService.SaveSessionAsync(CreateSaveSessionRequest(passId, data));
+                data.NormalizeSessionIdentity(DateTimeOffset.UtcNow);
+                await _passLogService.SaveSessionAsync(CreateSaveSessionRequest(passId, data, completeSession: false));
                 MarkSaved(data);
                 await _localStorage.SetItemAsync(key, data);
             }
@@ -94,7 +95,24 @@ public class PendingSyncState
         await RefreshAsync();
     }
 
-    private static SaveSessionRequest CreateSaveSessionRequest(int passId, PassData data)
+    public async Task FinalizeAsync(string passKey)
+    {
+        if (!TryGetPassId(passKey, out var passId))
+            throw new InvalidOperationException("Passnyckeln är ogiltig.");
+
+        var data = await _localStorage.GetItemAsync<PassData>(passKey)
+            ?? throw new InvalidOperationException("Det finns ingen lokal passdata att slutföra.");
+
+        data.NormalizeSyncState();
+        data.NormalizeSessionIdentity(DateTimeOffset.UtcNow);
+        await _passLogService.SaveSessionAsync(CreateSaveSessionRequest(passId, data, completeSession: true));
+        MarkSaved(data);
+        data.CompletedAtUtc = DateTimeOffset.UtcNow;
+        await _localStorage.SetItemAsync(passKey, data);
+        await RefreshAsync();
+    }
+
+    private static SaveSessionRequest CreateSaveSessionRequest(int passId, PassData data, bool completeSession)
     {
         var exerciseIds = data.Reps.Keys
             .Concat(data.Notes.Keys)
@@ -105,8 +123,11 @@ public class PendingSyncState
 
         return new SaveSessionRequest
         {
+            SessionKey = data.SessionKey,
             PassId = passId,
-            Date   = DateOnly.FromDateTime(DateTime.Today),
+            Date   = DateOnly.FromDateTime(data.StartedAtUtc!.Value.ToLocalTime().DateTime),
+            StartedAtUtc = data.StartedAtUtc.Value,
+            CompleteSession = completeSession,
             Exercises = exerciseIds.Select(exerciseId =>
             {
                 data.Reps.TryGetValue(exerciseId, out var reps);

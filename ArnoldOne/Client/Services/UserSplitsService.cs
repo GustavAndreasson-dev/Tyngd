@@ -27,11 +27,11 @@ public class UserSplitsService
                ?? new List<TrainingSplit>();
     }
 
-    public async Task<TrainingPassTemplate?> GetPassAsync(int passId)
+    public async Task<TrainingPassTemplate?> GetPassAsync(int splitId, int passId)
     {
         try
         {
-            return await _http.GetFromJsonAsync<TrainingPassTemplate>($"api/UserSplit/pass/{passId}");
+            return await _http.GetFromJsonAsync<TrainingPassTemplate>($"api/UserSplit/{splitId}/pass/{passId}");
         }
         catch { return null; }
     }
@@ -44,12 +44,16 @@ public class UserSplitsService
 
     public async Task ActivateSplitAsync(string userId, int splitId)
     {
-        await _http.PostAsync($"api/UserSplit/{splitId}", null);
+        var response = await _http.PostAsync($"api/UserSplit/{splitId}", null);
+        response.EnsureSuccessStatusCode();
+        await NotifySplitsChangedAsync();
     }
 
     public async Task DeactivateSplitAsync(string userId, int splitId)
     {
-        await _http.DeleteAsync($"api/UserSplit/{splitId}");
+        var response = await _http.DeleteAsync($"api/UserSplit/{splitId}");
+        response.EnsureSuccessStatusCode();
+        await NotifySplitsChangedAsync();
     }
 
     public async Task<int> CreateCustomSplitAsync(CreateSplitRequest request)
@@ -106,6 +110,23 @@ public class UserSplitsService
                 RepsMin       = e.DefaultRepsMin,
                 RepsMax       = e.DefaultRepsMax,
                 DefaultWeight = e.DefaultWeight,
+            }).ToList(),
+        }).ToList(),
+    };
+
+    public static CreateSplitRequest AsNewCopy(CreateSplitRequest source) => new()
+    {
+        SplitName = source.SplitName,
+        Passes = source.Passes.Select(pass => new CreatePassDto
+        {
+            PassName = pass.PassName,
+            Exercises = pass.Exercises.Select(exercise => new CreateExerciseDto
+            {
+                ExerciseName = exercise.ExerciseName,
+                DefaultSets = exercise.DefaultSets,
+                RepsMin = exercise.RepsMin,
+                RepsMax = exercise.RepsMax,
+                DefaultWeight = exercise.DefaultWeight,
             }).ToList(),
         }).ToList(),
     };

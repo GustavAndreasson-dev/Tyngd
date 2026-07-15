@@ -1,30 +1,145 @@
-﻿@page "/"
+@page "/"
 @inherits PageComponentBase
 
+<PageTitle>@(LoginState.IsLoggedIn ? "Min träning" : "Arnold – Träning på ditt sätt")</PageTitle>
 <ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
 
-<MudText Typo="Typo.h1">Arnold</MudText>
-<MudText Typo="Typo.h3">PPL 1</MudText>
-<MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/TP/split/2/pass/1?new=1">Dag 1</MudButton>
-<MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/TP/split/2/pass/2?new=1">Dag 2</MudButton>
-<MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/TP/split/2/pass/3?new=1">Dag 3</MudButton>
-<MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/TP/split/2/pass/4?new=1">Dag 4</MudButton>
-
-<MudText Typo="Typo.h3">PPL 2</MudText>
-<MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/TP/split/1/pass/1?new=1">Push</MudButton>
-<MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/TP/split/1/pass/2?new=1">Pull</MudButton>
-<MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/TP/split/1/pass/3?new=1">Legs</MudButton>
-<MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/TP/split/1/pass/4?new=1">Axel/underarmar</MudButton>
-
-<MudText Typo="Typo.h3">Templates</MudText>
-<MudButton Variant="Variant.Filled" Color="Color.Tertiary" Href="/TP/templates">Split template</MudButton>
-
-<MudText Typo="Typo.h3">Övningar per passtemplate</MudText>
-@foreach (var split in exerciseCounts.GroupBy(e => e.SplitTemplateName))
+@if (!LoginState.IsLoggedIn)
 {
-    <MudText Typo="Typo.h5">@split.Key</MudText>
-    @foreach (var pass in split)
+    <section class="home-hero">
+        <div class="home-hero__content">
+            <MudText Typo="Typo.overline" Class="home-eyebrow">ARNOLD TRAINING</MudText>
+            <MudText Typo="Typo.h1" Class="home-title">Bygg ditt upplägg.<br />Träna med fokus.</MudText>
+            <MudText Typo="Typo.h6" Class="home-lead">
+                Skapa splits som passar dig, följ passen steg för steg och bygg en träningshistorik som håller över tid.
+            </MudText>
+            <div class="home-actions">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                           StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenRegisterDialog">
+                    Skapa konto
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Large"
+                           StartIcon="@Icons.Material.Filled.Login" OnClick="OpenLoginDialog">
+                    Logga in
+                </MudButton>
+            </div>
+        </div>
+        <MudPaper Class="home-hero__panel pa-6" Elevation="6">
+            <MudIcon Icon="@Icons.Material.Filled.FitnessCenter" Class="home-hero__icon" />
+            <MudText Typo="Typo.h5">Ditt nästa pass är alltid nära</MudText>
+            <MudText Color="Color.Secondary">Välj split, starta ett pass och fortsätt där du slutade.</MudText>
+        </MudPaper>
+    </section>
+
+    <MudGrid Class="mt-8">
+        <MudItem xs="12" md="4">
+            <MudPaper Class="home-feature pa-5" Outlined="true">
+                <MudIcon Icon="@Icons.Material.Filled.AccountTree" Color="Color.Primary" Size="Size.Large" />
+                <MudText Typo="Typo.h6">Planera</MudText>
+                <MudText Color="Color.Secondary">Bygg egna splits eller utgå från färdiga mallar.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="home-feature pa-5" Outlined="true">
+                <MudIcon Icon="@Icons.Material.Filled.PlayCircle" Color="Color.Secondary" Size="Size.Large" />
+                <MudText Typo="Typo.h6">Genomför</MudText>
+                <MudText Color="Color.Secondary">Logga set, reps och vikt utan att tappa flytet.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="home-feature pa-5" Outlined="true">
+                <MudIcon Icon="@Icons.Material.Filled.Insights" Color="Color.Tertiary" Size="Size.Large" />
+                <MudText Typo="Typo.h6">Följ utvecklingen</MudText>
+                <MudText Color="Color.Secondary">Historiken behåller sammanhanget när ditt upplägg förändras.</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+else
+{
+    <div class="dashboard-header">
+        <div>
+            <MudText Typo="Typo.overline" Color="Color.Secondary">MIN TRÄNING</MudText>
+            <MudText Typo="Typo.h3">Välkommen, @LoginState.CurrentUser!.UserName</MudText>
+            <MudText Color="Color.Secondary">Välj ett pass och bygg vidare på kontinuiteten.</MudText>
+        </div>
+        <div class="dashboard-actions">
+            <MudButton Href="/create-split" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">Skapa split</MudButton>
+            <MudButton Href="/TP/templates" Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.LibraryBooks">Mallar</MudButton>
+        </div>
+    </div>
+
+    @if (IsLoading || dashboard is null)
     {
-        <MudText>@pass.PassTemplateName: @pass.ExerciseCount övningar</MudText>
+        <MudGrid Class="mt-5">
+            @for (var index = 0; index < 3; index++)
+            {
+                <MudItem xs="12" sm="4"><MudSkeleton Height="112px" /></MudItem>
+            }
+        </MudGrid>
+    }
+    else
+    {
+        <MudGrid Class="mt-5">
+            <MudItem xs="12" sm="4"><MudPaper Class="dashboard-stat pa-4" Outlined="true"><MudText Typo="Typo.h3">@dashboard.CompletedSessionsLast7Days</MudText><MudText Color="Color.Secondary">Pass senaste 7 dagarna</MudText></MudPaper></MudItem>
+            <MudItem xs="12" sm="4"><MudPaper Class="dashboard-stat pa-4" Outlined="true"><MudText Typo="Typo.h3">@dashboard.CompletedSessionsLast30Days</MudText><MudText Color="Color.Secondary">Pass senaste 30 dagarna</MudText></MudPaper></MudItem>
+            <MudItem xs="12" sm="4"><MudPaper Class="dashboard-stat pa-4" Outlined="true"><MudText Typo="Typo.h3">@dashboard.TotalCompletedSessions</MudText><MudText Color="Color.Secondary">Pass totalt</MudText></MudPaper></MudItem>
+        </MudGrid>
+
+        @if (dashboard.LastCompletedSession is not null)
+        {
+            <MudPaper Class="last-session pa-5 mt-5" Outlined="true">
+                <div>
+                    <MudText Typo="Typo.overline" Color="Color.Secondary">SENASTE PASSET</MudText>
+                    <MudText Typo="Typo.h6">@dashboard.LastCompletedSession.PassName</MudText>
+                    <MudText Color="Color.Secondary">@dashboard.LastCompletedSession.SplitName · @FormatDate(dashboard.LastCompletedSession.CompletedAtUtc)</MudText>
+                </div>
+                <MudButton Href="@PassUrl(dashboard.LastCompletedSession)" Variant="Variant.Text" EndIcon="@Icons.Material.Filled.ArrowForward">Öppna passet</MudButton>
+            </MudPaper>
+        }
+
+        <div class="section-heading mt-8">
+            <MudText Typo="Typo.h4">Aktiva splits</MudText>
+            <MudButton Href="/TP/my-splits" Variant="Variant.Text" Color="Color.Secondary">Hantera splits</MudButton>
+        </div>
+
+        @if (dashboard.ActiveSplits.Count == 0)
+        {
+            <MudPaper Class="empty-state pa-8" Outlined="true">
+                <MudIcon Icon="@Icons.Material.Filled.Route" Color="Color.Secondary" Size="Size.Large" />
+                <MudText Typo="Typo.h5">Du har ingen aktiv split ännu</MudText>
+                <MudText Color="Color.Secondary">Skapa ett eget upplägg eller börja med en mall.</MudText>
+                <div class="home-actions">
+                    <MudButton Href="/create-split" Variant="Variant.Filled" Color="Color.Primary">Skapa split</MudButton>
+                    <MudButton Href="/TP/templates" Variant="Variant.Outlined" Color="Color.Secondary">Utforska mallar</MudButton>
+                </div>
+            </MudPaper>
+        }
+        else
+        {
+            <MudGrid>
+                @foreach (var split in dashboard.ActiveSplits)
+                {
+                    <MudItem xs="12" md="6">
+                        <MudCard Class="split-card">
+                            <MudCardContent>
+                                <MudText Typo="Typo.h5">@split.SplitName</MudText>
+                                <MudText Color="Color.Secondary" Class="mb-4">@split.Passes.Count pass</MudText>
+                                <div class="pass-grid">
+                                    @foreach (var pass in split.Passes)
+                                    {
+                                        <MudButton Href="@($"/TP/split/{split.SplitId}/pass/{pass.PassId}")"
+                                                   Variant="Variant.Filled" Color="Color.Secondary"
+                                                   StartIcon="@Icons.Material.Filled.PlayArrow">
+                                            @pass.PassName
+                                        </MudButton>
+                                    }
+                                </div>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
     }
 }

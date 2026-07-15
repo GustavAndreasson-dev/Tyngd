@@ -45,6 +45,7 @@ public partial class ArnoldContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Ordning).HasDefaultValue(1, "DF_Exercise_Ordning");
+            entity.Property(e => e.Visability).HasDefaultValue(true, "DF_Exercise_Visability");
 
             entity.HasOne(d => d.Pass).WithMany(p => p.Exercise)
                 .HasForeignKey(d => d.PassId)
@@ -73,9 +74,8 @@ public partial class ArnoldContext : DbContext
 
         modelBuilder.Entity<ExerciseTemplate>(entity =>
         {
-            entity.HasNoKey();
+            entity.HasKey(e => e.ExerciseTemplateId).HasName("PK_ExerciseTemplate");
 
-            entity.Property(e => e.ExerciseTemplateId).ValueGeneratedOnAdd();
             entity.Property(e => e.ExerciseTemplateName)
                 .IsRequired()
                 .HasMaxLength(50)
@@ -118,6 +118,11 @@ public partial class ArnoldContext : DbContext
 
         modelBuilder.Entity<Session>(entity =>
         {
+            entity.HasIndex(e => e.SessionKey, "UX_Session_SessionKey").IsUnique();
+
+            entity.Property(e => e.SessionKey).HasDefaultValueSql("(newid())", "DF_Session_SessionKey");
+            entity.Property(e => e.StartedAtUtc).HasDefaultValueSql("(sysutcdatetime())", "DF_Session_StartedAtUtc");
+
             entity.HasOne(d => d.Pass).WithMany(p => p.Session)
                 .HasForeignKey(d => d.PassId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

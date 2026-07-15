@@ -33,6 +33,13 @@ public class SessionState
         ActivePassId = passId;
     }
 
+    public void StartNewPass(int splitId, int passId)
+    {
+        CompletedSets = new();
+        ActiveSplitId = splitId;
+        ActivePassId = passId;
+    }
+
     /// <summary>Togglar ett set och returnerar det nya värdet.</summary>
     public bool ToggleSet(int exerciseId, int setCount, int setIndex)
     {

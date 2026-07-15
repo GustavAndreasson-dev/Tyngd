@@ -36,6 +36,8 @@ builder.Services.AddSingleton<LoginState>();
 
 // Service för användarens aktiverade splits
 builder.Services.AddScoped<UserSplitsService>();
+builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<AdminService>();
 
 // Service för autentisering mot API
 builder.Services.AddScoped<AuthService>();

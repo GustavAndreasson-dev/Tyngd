@@ -8,12 +8,14 @@ public class CreateSplitRequest
 
 public class CreatePassDto
 {
+    public int? PassId { get; set; }
     public string PassName { get; set; } = string.Empty;
     public List<CreateExerciseDto> Exercises { get; set; } = new();
 }
 
 public class CreateExerciseDto
 {
+    public int? ExerciseId { get; set; }
     public string ExerciseName  { get; set; } = string.Empty;
     public int    DefaultSets   { get; set; } = 3;
     public int    RepsMin       { get; set; } = 8;

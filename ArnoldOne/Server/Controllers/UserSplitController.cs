@@ -26,7 +26,7 @@ public class UserSplitController : ApiControllerBase
 
         var splits = await _context.Split
             .Where(s => s.UserId == userId && s.Visability)
-            .Include(s => s.Pass.OrderBy(p => p.Ordning))
+            .Include(s => s.Pass.Where(p => p.Visability == 1).OrderBy(p => p.Ordning))
             .ToListAsync();
 
         var result = splits.Select(s => new TrainingSplit
@@ -46,14 +46,18 @@ public class UserSplitController : ApiControllerBase
     }
 
     /// <summary>Returnerar pass-data med övningar för inloggad användare.</summary>
-    [HttpGet("pass/{passId:int}")]
-    public async Task<ActionResult<TrainingPassTemplate>> GetPass(int passId)
+    [HttpGet("{splitId:int}/pass/{passId:int}")]
+    public async Task<ActionResult<TrainingPassTemplate>> GetPass(int splitId, int passId)
     {
         var userId = CurrentUserId;
 
         var pass = await _context.Pass
-            .Where(p => p.PassId == passId && p.Split.UserId == userId)
-            .Include(p => p.Exercise.OrderBy(e => e.Ordning))
+            .Where(p => p.PassId == passId
+                && p.SplitId == splitId
+                && p.Visability == 1
+                && p.Split.Visability
+                && p.Split.UserId == userId)
+            .Include(p => p.Exercise.Where(e => e.Visability).OrderBy(e => e.Ordning))
             .FirstOrDefaultAsync();
 
         if (pass is null)
@@ -148,6 +152,7 @@ public class UserSplitController : ApiControllerBase
                         DefaultRepsMax = e.DefaultRepsMax,
                         DefaultWeight  = e.DefaultWeight,
                         Ordning        = e.Ordning,
+                        Visability     = true,
                     }).ToList(),
             }).ToList(),
         };
@@ -180,28 +185,33 @@ public class UserSplitController : ApiControllerBase
     [HttpPost("custom")]
     public async Task<ActionResult<int>> CreateCustomSplit([FromBody] CreateSplitRequest request)
     {
+        var validationResult = ValidateRequest(request);
+        if (validationResult is not null)
+            return validationResult;
+
         var userId = CurrentUserId;
 
         var split = new Split
         {
             SplitTemplateId = null,
-            SplitName       = request.SplitName,
+            SplitName       = request.SplitName.Trim(),
             UserId          = userId,
             Visability      = true,
             Pass = request.Passes.Select((p, pi) => new Pass
             {
                 PassTemplateId = null,
-                PassName       = p.PassName,
+                PassName       = p.PassName.Trim(),
                 Visability     = 1,
                 Ordning        = pi + 1,
                 Exercise = p.Exercises.Select((e, ei) => new DbExercise
                 {
-                    ExerciseName   = e.ExerciseName,
+                    ExerciseName   = e.ExerciseName.Trim(),
                     DefaultSets    = e.DefaultSets,
                     DefautlRepsMin = e.RepsMin,
                     DefaultRepsMax = e.RepsMax,
                     DefaultWeight  = e.DefaultWeight,
                     Ordning        = ei + 1,
+                    Visability     = true,
                 }).ToList(),
             }).ToList(),
         };
@@ -216,10 +226,17 @@ public class UserSplitController : ApiControllerBase
     [HttpPut("my/{splitId:int}")]
     public async Task<IActionResult> UpdateMySplit(int splitId, [FromBody] CreateSplitRequest request)
     {
+        var validationResult = ValidateRequest(request);
+        if (validationResult is not null)
+            return validationResult;
+
         var userId = CurrentUserId;
 
         var split = await _context.Split
-            .Where(s => s.SplitId == splitId && s.UserId == userId)
+            .Where(s => s.SplitId == splitId
+                && s.UserId == userId
+                && s.Visability
+                && s.SplitTemplateId == null)
             .Include(s => s.Pass)
             .ThenInclude(p => p.Exercise)
             .FirstOrDefaultAsync();
@@ -227,28 +244,82 @@ public class UserSplitController : ApiControllerBase
         if (split is null)
             return NotFound();
 
+        var activePasses = split.Pass.Where(p => p.Visability == 1).ToDictionary(p => p.PassId);
+        var incomingPassIds = request.Passes.Where(p => p.PassId.HasValue).Select(p => p.PassId!.Value).ToList();
+
+        if (incomingPassIds.Count != incomingPassIds.Distinct().Count()
+            || incomingPassIds.Any(id => !activePasses.ContainsKey(id)))
+            return BadRequest("Ett eller flera pass-ID:n är ogiltiga för splitten.");
+
         split.SplitName = request.SplitName.Trim();
 
-        foreach (var pass in split.Pass.ToList())
-            _context.Exercise.RemoveRange(pass.Exercise);
-
-        _context.Pass.RemoveRange(split.Pass);
-        split.Pass = request.Passes.Select((p, pi) => new Pass
+        foreach (var (passRequest, passIndex) in request.Passes.Select((pass, index) => (pass, index)))
         {
-            PassTemplateId = null,
-            PassName       = p.PassName.Trim(),
-            Visability     = 1,
-            Ordning        = pi + 1,
-            Exercise = p.Exercises.Select((e, ei) => new DbExercise
+            Pass pass;
+            if (passRequest.PassId.HasValue)
             {
-                ExerciseName   = e.ExerciseName.Trim(),
-                DefaultSets    = e.DefaultSets,
-                DefautlRepsMin = e.RepsMin,
-                DefaultRepsMax = e.RepsMax,
-                DefaultWeight  = e.DefaultWeight,
-                Ordning        = ei + 1,
-            }).ToList(),
-        }).ToList();
+                pass = activePasses[passRequest.PassId.Value];
+            }
+            else
+            {
+                pass = new Pass
+                {
+                    SplitId = split.SplitId,
+                    PassTemplateId = null,
+                    Visability = 1,
+                };
+                _context.Pass.Add(pass);
+            }
+
+            pass.PassName = passRequest.PassName.Trim();
+            pass.Ordning = passIndex + 1;
+
+            var activeExercises = pass.Exercise.Where(e => e.Visability).ToDictionary(e => e.ExerciseId);
+            var incomingExerciseIds = passRequest.Exercises
+                .Where(e => e.ExerciseId.HasValue)
+                .Select(e => e.ExerciseId!.Value)
+                .ToList();
+
+            if (incomingExerciseIds.Count != incomingExerciseIds.Distinct().Count()
+                || incomingExerciseIds.Any(id => !activeExercises.ContainsKey(id)))
+                return BadRequest("En eller flera övningar tillhör inte det angivna passet.");
+
+            foreach (var (exerciseRequest, exerciseIndex) in passRequest.Exercises.Select((exercise, index) => (exercise, index)))
+            {
+                DbExercise exercise;
+                if (exerciseRequest.ExerciseId.HasValue)
+                {
+                    exercise = activeExercises[exerciseRequest.ExerciseId.Value];
+                }
+                else
+                {
+                    exercise = new DbExercise
+                    {
+                        Pass = pass,
+                        Visability = true,
+                    };
+                    _context.Exercise.Add(exercise);
+                }
+
+                exercise.ExerciseName = exerciseRequest.ExerciseName.Trim();
+                exercise.DefaultSets = exerciseRequest.DefaultSets;
+                exercise.DefautlRepsMin = exerciseRequest.RepsMin;
+                exercise.DefaultRepsMax = exerciseRequest.RepsMax;
+                exercise.DefaultWeight = exerciseRequest.DefaultWeight;
+                exercise.Ordning = exerciseIndex + 1;
+            }
+
+            foreach (var removedExercise in activeExercises.Values
+                         .Where(e => !incomingExerciseIds.Contains(e.ExerciseId)))
+                removedExercise.Visability = false;
+        }
+
+        foreach (var removedPass in activePasses.Values.Where(p => !incomingPassIds.Contains(p.PassId)))
+        {
+            removedPass.Visability = 0;
+            foreach (var exercise in removedPass.Exercise.Where(e => e.Visability))
+                exercise.Visability = false;
+        }
 
         await _context.SaveChangesAsync();
 
@@ -263,7 +334,10 @@ public class UserSplitController : ApiControllerBase
 
         var split = await _context.Split
             .AsNoTracking()
-            .Where(s => s.SplitId == splitId && s.UserId == userId && s.Visability)
+            .Where(s => s.SplitId == splitId
+                && s.UserId == userId
+                && s.Visability
+                && s.SplitTemplateId == null)
             .FirstOrDefaultAsync();
 
         if (split is null)
@@ -271,14 +345,14 @@ public class UserSplitController : ApiControllerBase
 
         var passes = await _context.Pass
             .AsNoTracking()
-            .Where(p => p.SplitId == splitId)
+            .Where(p => p.SplitId == splitId && p.Visability == 1)
             .OrderBy(p => p.Ordning)
             .ToListAsync();
 
         var passIds = passes.Select(p => p.PassId).ToList();
         var exercises = await _context.Exercise
             .AsNoTracking()
-            .Where(e => passIds.Contains(e.PassId))
+            .Where(e => passIds.Contains(e.PassId) && e.Visability)
             .OrderBy(e => e.Ordning)
             .ToListAsync();
 
@@ -287,9 +361,11 @@ public class UserSplitController : ApiControllerBase
             SplitName = split.SplitName,
             Passes = passes.Select(p => new CreatePassDto
             {
+                PassId = p.PassId,
                 PassName  = p.PassName,
                 Exercises = exercises.Where(e => e.PassId == p.PassId).Select(e => new CreateExerciseDto
                 {
+                    ExerciseId     = e.ExerciseId,
                     ExerciseName   = e.ExerciseName,
                     DefaultSets    = e.DefaultSets    ?? 3,
                     RepsMin        = e.DefautlRepsMin ?? 8,
@@ -310,7 +386,7 @@ public class UserSplitController : ApiControllerBase
 
         var splits = await _context.Split
             .Where(s => s.UserId == userId && s.Visability && s.SplitTemplateId == null)
-            .Include(s => s.Pass.OrderBy(p => p.Ordning))
+            .Include(s => s.Pass.Where(p => p.Visability == 1).OrderBy(p => p.Ordning))
             .ToListAsync();
 
         var result = splits.Select(s => new TrainingSplit
@@ -345,5 +421,20 @@ public class UserSplitController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    private ActionResult? ValidateRequest(CreateSplitRequest request)
+    {
+        var errors = SplitRequestValidator.Validate(request);
+        if (errors.Count == 0)
+            return null;
+
+        var validationErrors = errors
+            .GroupBy(error => error.Key)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(error => error.Message).Distinct().ToArray());
+
+        return ValidationProblem(new ValidationProblemDetails(validationErrors));
     }
 }

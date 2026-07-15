@@ -1,0 +1,14 @@
+.editor-header, .editor-row, .editor-actions, .exercise-values { display:flex; align-items:center; gap:1rem; }
+.editor-header { justify-content:space-between; }
+.editor-card { border-radius:14px; }
+.pass-editor { border-left:3px solid var(--mud-palette-primary); }
+.exercise-editor { border-left:3px solid var(--mud-palette-secondary); }
+.editor-row > .mud-input-control { flex:1; }
+.exercise-values { flex-wrap:wrap; margin-top:1rem; }
+.exercise-values > * { width:130px; }
+.editor-actions { justify-content:space-between; margin-top:1.5rem; padding-bottom:2rem; }
+@media (max-width:700px) {
+  .editor-header { align-items:flex-start; flex-direction:column; }
+  .editor-row { align-items:stretch; flex-wrap:wrap; }
+  .exercise-values > * { width:calc(50% - .5rem); }
+}

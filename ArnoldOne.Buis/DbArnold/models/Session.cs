@@ -13,6 +13,12 @@ public partial class Session
 
     public DateOnly Date { get; set; }
 
+    public Guid SessionKey { get; set; }
+
+    public DateTimeOffset StartedAtUtc { get; set; }
+
+    public DateTimeOffset? CompletedAtUtc { get; set; }
+
     public virtual ICollection<ExerciseLog> ExerciseLog { get; set; } = new List<ExerciseLog>();
 
     public virtual Pass Pass { get; set; }

@@ -1,57 +1,92 @@
 using ArnoldOne.Client.Services;
+using ArnoldOne.Client.Shared;
+using ArnoldOne.Shared.DTOs;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using System.Reflection;
 
 namespace ArnoldOne.Client.Pages;
 
-public partial class Admin : ComponentBase, IDisposable
+public partial class Admin : PageComponentBase, IDisposable
 {
-    [Inject]
-    private LoginState LoginState { get; set; } = default!;
+    [Inject] private LoginState LoginState { get; set; } = default!;
+    [Inject] private AdminService AdminService { get; set; } = default!;
+    [Inject] private IDialogService DialogService { get; set; } = default!;
 
-    private List<TableInfo> _tables = new();
+    private AdminOverviewDto? overview;
+    private PagedResultDto<AdminUserDto>? users;
+    private List<AdminSplitTemplateDto> templates = new();
+    private string? userSearch;
+    private int TotalUserPages => Math.Max(1, (int)Math.Ceiling((users?.TotalCount ?? 0) / (double)(users?.PageSize ?? 25)));
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        LoginState.OnChange += StateHasChanged;
-        DiscoverDbModels();
+        LoginState.OnChange += OnLoginChanged;
+        await LoadAsync();
     }
 
-    private void DiscoverDbModels()
+    private async Task LoadAsync()
     {
-        _tables.Clear();
+        if (!LoginState.IsLoggedIn || LoginState.CurrentUser?.IsAdmin != true)
+            return;
 
-        var assembly = typeof(ArnoldOne.Shared.TrainingPrograms.Exercise).Assembly;
-        var modelTypes = assembly.GetTypes()
-            .Where(t => (t.Namespace == "ArnoldOne.Shared.TrainingPrograms" || t.Namespace == "ArnoldOne.Shared.Users" || t.Namespace == "ArnoldOne.Shared.DTOs") && t.IsClass && !t.IsAbstract)
-            .OrderBy(t => t.Name)
-            .ToList();
-
-        foreach (var type in modelTypes)
+        await TryAsync(async () =>
         {
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.PropertyType.IsPrimitive || p.PropertyType == typeof(string) || p.PropertyType == typeof(DateTime) || p.PropertyType == typeof(Guid) || p.PropertyType == typeof(decimal) || Nullable.GetUnderlyingType(p.PropertyType) != null)
-                .OrderBy(p => p.Name)
-                .ToList();
-
-            _tables.Add(new TableInfo
-            {
-                ClassName  = type.Name,
-                Type       = type,
-                Properties = properties,
-                Items      = new List<object>(),
-            });
-        }
+            var overviewTask = AdminService.GetOverviewAsync();
+            var usersTask = AdminService.GetUsersAsync(userSearch, 1);
+            var templatesTask = AdminService.GetTemplatesAsync();
+            await Task.WhenAll(overviewTask, usersTask, templatesTask);
+            overview = await overviewTask;
+            users = await usersTask;
+            templates = await templatesTask;
+        }, "Kunde inte ladda adminöversikten");
     }
 
-    public void Dispose() => LoginState.OnChange -= StateHasChanged;
+    private async Task SearchUsersAsync() => await LoadUsersPageAsync(1);
+    private async Task PreviousUsersPageAsync() => await LoadUsersPageAsync(Math.Max(1, (users?.Page ?? 1) - 1));
+    private async Task NextUsersPageAsync() => await LoadUsersPageAsync(Math.Min(TotalUserPages, (users?.Page ?? 1) + 1));
 
-    private class TableInfo
+    private async Task LoadUsersPageAsync(int page) =>
+        await TryAsync(async () => users = await AdminService.GetUsersAsync(userSearch, page), "Kunde inte ladda användare");
+
+    private async Task ChangeAdminRoleAsync(AdminUserDto user, bool isAdmin)
     {
-        public string ClassName { get; set; } = string.Empty;
-        public Type Type { get; set; } = default!;
-        public List<PropertyInfo> Properties { get; set; } = new();
-        public List<object> Items { get; set; } = new();
+        var action = isAdmin ? "ge adminbehörighet till" : "ta bort adminbehörighet från";
+        var confirmed = await DialogService.ShowMessageBoxAsync("Bekräfta rolländring", $"Vill du {action} {user.UserName}?", yesText: "Ja", cancelText: "Avbryt");
+        if (confirmed != true)
+            return;
+
+        await TryAsync(async () =>
+        {
+            await AdminService.SetAdminRoleAsync(user.UserId, isAdmin);
+            await LoadUsersPageAsync(users?.Page ?? 1);
+            overview = await AdminService.GetOverviewAsync();
+        }, "Kunde inte ändra användarrollen");
     }
+
+    private async Task ToggleTemplateVisibilityAsync(AdminSplitTemplateDto template)
+    {
+        var verb = template.IsVisible ? "arkivera" : "återställa";
+        var confirmed = await DialogService.ShowMessageBoxAsync("Bekräfta", $"Vill du {verb} mallen {template.SplitTemplateName}?", yesText: "Ja", cancelText: "Avbryt");
+        if (confirmed != true)
+            return;
+
+        await TryAsync(async () =>
+        {
+            await AdminService.SetTemplateVisibilityAsync(template.SplitTemplateId, !template.IsVisible);
+            templates = await AdminService.GetTemplatesAsync();
+            overview = await AdminService.GetOverviewAsync();
+        }, "Kunde inte ändra mallens status");
+    }
+
+    private async void OnLoginChanged()
+    {
+        try
+        {
+            await LoadAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch { }
+    }
+
+    public void Dispose() => LoginState.OnChange -= OnLoginChanged;
 }

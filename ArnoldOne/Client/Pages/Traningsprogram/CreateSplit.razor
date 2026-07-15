@@ -57,6 +57,13 @@
 
 <ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
 
+@if (validationErrors.Count > 0)
+{
+    <MudAlert Severity="Severity.Error" Dense="true" Class="mb-4">
+        Kontrollera de markerade fälten innan du sparar.
+    </MudAlert>
+}
+
 @if (!LoginState.IsLoggedIn)
 {
     <div class="d-flex flex-column align-center mt-12" style="gap:16px;">
@@ -110,6 +117,9 @@
                           Label="Splittens namn"
                           Variant="Variant.Outlined"
                           Class="mt-4"
+                          MaxLength="50"
+                          Error="@(FieldError("SplitName") is not null)"
+                          ErrorText="@FieldError("SplitName")"
                           Required="true" />
         </MudCollapse>
     </MudCardContent>
@@ -141,6 +151,9 @@
                               Label="Passnamn"
                               Variant="Variant.Outlined"
                               Class="mt-4 mb-4"
+                              MaxLength="50"
+                              Error="@(FieldError($"Passes[{passIndex}].PassName") is not null)"
+                              ErrorText="@FieldError($"Passes[{passIndex}].PassName")"
                               Required="true" />
 
                 @* Övningar *@
@@ -168,28 +181,40 @@
                                           Label="Övningsnamn"
                                           Variant="Variant.Outlined"
                                           Class="mb-2"
+                                          MaxLength="50"
+                                          HelperText="Namnbyte behåller samma historik. Ta bort och lägg till för en ny statistikserie."
+                                          Error="@(FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].ExerciseName") is not null)"
+                                          ErrorText="@FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].ExerciseName")"
                                           Required="true" />
                             <div class="d-flex" style="gap:8px; flex-wrap:wrap;">
                                 <MudNumericField @bind-Value="exercise.DefaultSets"
                                                  Label="Set"
                                                  Variant="Variant.Outlined"
                                                  Min="1" Max="20"
+                                                 Error="@(FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].DefaultSets") is not null)"
+                                                 ErrorText="@FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].DefaultSets")"
                                                  Style="max-width:90px;" />
                                 <MudNumericField @bind-Value="exercise.RepsMin"
                                                  Label="Reps min"
                                                  Variant="Variant.Outlined"
                                                  Min="1" Max="100"
+                                                 Error="@(FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].RepsMin") is not null)"
+                                                 ErrorText="@FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].RepsMin")"
                                                  Style="max-width:110px;" />
                                 <MudNumericField @bind-Value="exercise.RepsMax"
                                                  Label="Reps max"
                                                  Variant="Variant.Outlined"
                                                  Min="1" Max="100"
+                                                 Error="@(FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].RepsMax") is not null)"
+                                                 ErrorText="@FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].RepsMax")"
                                                  Style="max-width:110px;" />
                                 <MudNumericField @bind-Value="exercise.DefaultWeight"
                                                  Label="Vikt (kg)"
                                                  Variant="Variant.Outlined"
                                                  Format="0.##"
                                                  Min="0" Max="1000"
+                                                 Error="@(FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].DefaultWeight") is not null)"
+                                                 ErrorText="@FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].DefaultWeight")"
                                                  Style="max-width:110px;" />
                             </div>
                             </MudCollapse>
