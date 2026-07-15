@@ -69,6 +69,17 @@
 
 <MudText Typo="Typo.h4" Class="mb-4">@(IsEditMode ? "Redigera split" : "Skapa split")</MudText>
 
+@if (isLoadingEditSplit)
+{
+    <div class="d-flex align-center mb-4" style="gap:12px;">
+        <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Secondary" />
+        <MudText Color="Color.Secondary">Laddar split...</MudText>
+    </div>
+    return;
+}
+
+@if (!IsEditMode)
+{
 <MudButton StartIcon="@Icons.Material.Filled.Download"
            Variant="Variant.Outlined"
            Color="Color.Secondary"
@@ -84,6 +95,7 @@
         <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Secondary" />
         <MudText Color="Color.Secondary">Laddar split...</MudText>
     </div>
+}
 }
 
 @* Splitnamn *@
@@ -176,6 +188,7 @@
                                 <MudNumericField @bind-Value="exercise.DefaultWeight"
                                                  Label="Vikt (kg)"
                                                  Variant="Variant.Outlined"
+                                                 Format="0.##"
                                                  Min="0" Max="1000"
                                                  Style="max-width:110px;" />
                             </div>
@@ -206,10 +219,10 @@
 <div>
     <MudButton Variant="Variant.Filled"
                Color="Color.Success"
-               StartIcon="@(IsLoading ? null : Icons.Material.Filled.Save)"
-               Disabled="IsLoading"
+               StartIcon="@(isSaving ? null : Icons.Material.Filled.Save)"
+               Disabled="isSaving || isLoadingEditSplit"
                OnClick="SaveAsync">
-        @if (IsLoading)
+        @if (isSaving)
         {
             <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
             <span>Sparar...</span>

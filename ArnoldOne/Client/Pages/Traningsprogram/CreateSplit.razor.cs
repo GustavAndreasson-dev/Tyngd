@@ -39,18 +39,40 @@ public partial class CreateSplit : PageComponentBase
     private List<bool> passExpanded = new() { true };
     private List<List<bool>> exerciseExpanded = new() { new List<bool>() };
     private string? successMessage;
+    private bool isLoadingEditSplit;
+    private bool isSaving;
 
     protected override async Task OnInitializedAsync()
     {
         if (!LoginState.IsLoggedIn) return;
+
+        if (SplitId.HasValue)
+        {
+            isLoadingEditSplit = true;
+            await TryAsync(() => LoadSplitForEditAsync(SplitId.Value), "Kunde inte ladda splitten");
+            isLoadingEditSplit = false;
+            StateHasChanged();
+            return;
+        }
+
         await TryAsync(async () =>
+        {
+            await LoadImportDataAsync();
+        }, "Failed to load splits");
+    }
+
+    private async Task LoadImportDataAsync()
+    {
+        try
         {
             allTemplates = await SplitTemplateService.GetAllAsync();
             mySplits     = await UserSplitsService.GetMySplitsAsync();
-
-            if (SplitId.HasValue)
-                await LoadSplitForEditAsync(SplitId.Value);
-        }, "Failed to load splits");
+        }
+        catch
+        {
+            allTemplates = new();
+            mySplits = new();
+        }
     }
 
     private void AddPass()
@@ -130,7 +152,7 @@ public partial class CreateSplit : PageComponentBase
 
     private async Task LoadSplitForEditAsync(int splitId)
     {
-        var imported = await UserSplitsService.GetMySplitFullAsync(splitId);
+        var imported = await UserSplitsService.GetMySplitFullAsync(splitId).WaitAsync(TimeSpan.FromSeconds(12));
         if (imported is null)
         {
             Nav.NavigateTo("/TP/my-splits");
@@ -144,8 +166,9 @@ public partial class CreateSplit : PageComponentBase
 
     private async Task SaveAsync()
     {
-        if (string.IsNullOrWhiteSpace(splitName)) return;
+        if (string.IsNullOrWhiteSpace(splitName) || isSaving || isLoadingEditSplit) return;
 
+        isSaving = true;
         await TryAsync(async () =>
         {
             var request = new CreateSplitRequest
@@ -165,6 +188,8 @@ public partial class CreateSplit : PageComponentBase
                 successMessage = "Splitten har sparats.";
             }
         }, "Failed to save split");
+        isSaving = false;
+        StateHasChanged();
     }
 
     private void ResetExpandedState()

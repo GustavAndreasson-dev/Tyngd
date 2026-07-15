@@ -83,7 +83,14 @@ public class UserSplitsService
 
     public async Task<CreateSplitRequest?> GetMySplitFullAsync(int splitId)
     {
-        return await _http.GetFromJsonAsync<CreateSplitRequest>($"api/UserSplit/my/{splitId}/full");
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var response = await _http.GetAsync($"api/UserSplit/my/{splitId}/full", cts.Token);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            return null;
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CreateSplitRequest>(cancellationToken: cts.Token);
     }
 
     public static CreateSplitRequest FromTemplate(TrainingSplitTemplate template) => new()

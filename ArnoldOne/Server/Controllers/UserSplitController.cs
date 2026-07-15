@@ -219,7 +219,7 @@ public class UserSplitController : ApiControllerBase
         var userId = CurrentUserId;
 
         var split = await _context.Split
-            .Where(s => s.SplitId == splitId && s.UserId == userId && s.SplitTemplateId == null)
+            .Where(s => s.SplitId == splitId && s.UserId == userId)
             .Include(s => s.Pass)
             .ThenInclude(p => p.Exercise)
             .FirstOrDefaultAsync();
@@ -262,21 +262,33 @@ public class UserSplitController : ApiControllerBase
         var userId = CurrentUserId;
 
         var split = await _context.Split
-            .Where(s => s.SplitId == splitId && s.UserId == userId && s.Visability && s.SplitTemplateId == null)
-            .Include(s => s.Pass.OrderBy(p => p.Ordning))
-            .ThenInclude(p => p.Exercise.OrderBy(e => e.Ordning))
+            .AsNoTracking()
+            .Where(s => s.SplitId == splitId && s.UserId == userId && s.Visability)
             .FirstOrDefaultAsync();
 
         if (split is null)
             return NotFound();
 
+        var passes = await _context.Pass
+            .AsNoTracking()
+            .Where(p => p.SplitId == splitId)
+            .OrderBy(p => p.Ordning)
+            .ToListAsync();
+
+        var passIds = passes.Select(p => p.PassId).ToList();
+        var exercises = await _context.Exercise
+            .AsNoTracking()
+            .Where(e => passIds.Contains(e.PassId))
+            .OrderBy(e => e.Ordning)
+            .ToListAsync();
+
         var result = new CreateSplitRequest
         {
             SplitName = split.SplitName,
-            Passes = split.Pass.Select(p => new CreatePassDto
+            Passes = passes.Select(p => new CreatePassDto
             {
                 PassName  = p.PassName,
-                Exercises = p.Exercise.Select(e => new CreateExerciseDto
+                Exercises = exercises.Where(e => e.PassId == p.PassId).Select(e => new CreateExerciseDto
                 {
                     ExerciseName   = e.ExerciseName,
                     DefaultSets    = e.DefaultSets    ?? 3,

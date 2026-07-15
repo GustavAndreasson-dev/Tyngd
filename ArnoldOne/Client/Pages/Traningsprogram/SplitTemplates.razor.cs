@@ -85,7 +85,7 @@ public partial class SplitTemplates : IDisposable
 
         var weight = exercise.DefaultWeight == 0
             ? "kroppsvikt"
-            : $"{exercise.DefaultWeight:0.#} kg";
+            : $"{exercise.DefaultWeight:0.##} kg";
 
         return $"{exercise.DefaultSets} x {reps} @ {weight}";
     }
