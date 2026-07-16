@@ -58,7 +58,8 @@ else
         <MudExpansionPanels Elevation="0" Class="mb-6">
             @foreach (var pass in split.Passes)
             {
-                <MudExpansionPanel Text="@pass.PassName" DisableRipple="true">
+                <MudExpansionPanel Text="@pass.PassName"
+                                   ExpandedChanged="@(expanded => OnPassExpandedAsync(split.SplitId, pass.PassId, expanded))">
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Primary"
                                StartIcon="@Icons.Material.Filled.PlayArrow"
@@ -66,8 +67,14 @@ else
                                Class="mb-3">
                         Öppna pass
                     </MudButton>
+                    @if (loadingPasses.Contains((split.SplitId, pass.PassId)))
+                    {
+                        <MudProgressLinear Indeterminate="true" Color="Color.Secondary" Class="mb-3" />
+                    }
+                    else if (passExercises.TryGetValue((split.SplitId, pass.PassId), out var exercises))
+                    {
                     <MudList Dense="true" T="string">
-                        @foreach (var exercise in passExercises.GetValueOrDefault((split.SplitId, pass.PassId)) ?? new())
+                        @foreach (var exercise in exercises)
                         {
                             <MudListItem T="string">
                                 <MudText Typo="Typo.subtitle1">@exercise.ExerciseName</MudText>
@@ -75,6 +82,7 @@ else
                             </MudListItem>
                         }
                     </MudList>
+                    }
                 </MudExpansionPanel>
             }
         </MudExpansionPanels>

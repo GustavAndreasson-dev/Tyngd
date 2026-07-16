@@ -1,16 +1,22 @@
 using ArnoldOne.Shared.DTOs;
 using ArnoldOne.Shared.TrainingPrograms;
 using System.Net.Http.Json;
+using System.Diagnostics;
 
 namespace ArnoldOne.Client.Services;
 
 public class UserSplitsService
 {
     private readonly HttpClient _http;
+    private readonly LoginState _loginState;
+    private readonly ILogger<UserSplitsService> _logger;
+    private readonly Dictionary<(string UserId, int SplitId), CreateSplitRequest> _fullSplitCache = new();
 
-    public UserSplitsService(HttpClient http)
+    public UserSplitsService(HttpClient http, LoginState loginState, ILogger<UserSplitsService> logger)
     {
         _http = http;
+        _loginState = loginState;
+        _logger = logger;
     }
 
     public event Func<Task>? SplitsChanged;
@@ -69,6 +75,7 @@ public class UserSplitsService
     {
         var response = await _http.PutAsJsonAsync($"api/UserSplit/my/{splitId}", request);
         response.EnsureSuccessStatusCode();
+        RemoveCachedSplit(splitId);
         await NotifySplitsChangedAsync();
     }
 
@@ -82,19 +89,38 @@ public class UserSplitsService
     {
         var response = await _http.DeleteAsync($"api/UserSplit/my/{splitId}");
         response.EnsureSuccessStatusCode();
+        RemoveCachedSplit(splitId);
         await NotifySplitsChangedAsync();
     }
 
     public async Task<CreateSplitRequest?> GetMySplitFullAsync(int splitId)
     {
+        var cacheKey = CurrentCacheKey(splitId);
+        if (_fullSplitCache.TryGetValue(cacheKey, out var cached))
+        {
+            _logger.LogInformation("Editable split {SplitId} loaded from client cache", splitId);
+            return Clone(cached);
+        }
+
+        var started = Stopwatch.GetTimestamp();
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-        var response = await _http.GetAsync($"api/UserSplit/my/{splitId}/full", cts.Token);
+        using var response = await _http.GetAsync($"api/UserSplit/my/{splitId}/full", cts.Token);
 
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             return null;
 
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<CreateSplitRequest>(cancellationToken: cts.Token);
+        var result = await response.Content.ReadFromJsonAsync<CreateSplitRequest>(cancellationToken: cts.Token);
+        if (result is null)
+            return null;
+
+        _fullSplitCache[cacheKey] = Clone(result);
+        _logger.LogInformation(
+            "Editable split {SplitId} fetched in {ElapsedMilliseconds} ms; {ServerTiming}",
+            splitId,
+            Stopwatch.GetElapsedTime(started).TotalMilliseconds,
+            response.Headers.TryGetValues("Server-Timing", out var values) ? string.Join(',', values) : "no Server-Timing");
+        return Clone(result);
     }
 
     public static CreateSplitRequest FromTemplate(TrainingSplitTemplate template) => new()
@@ -139,4 +165,28 @@ public class UserSplitsService
         foreach (Func<Task> handler in SplitsChanged.GetInvocationList())
             await handler();
     }
+
+    private (string UserId, int SplitId) CurrentCacheKey(int splitId) =>
+        (_loginState.CurrentUser?.UserId ?? string.Empty, splitId);
+
+    private void RemoveCachedSplit(int splitId) => _fullSplitCache.Remove(CurrentCacheKey(splitId));
+
+    private static CreateSplitRequest Clone(CreateSplitRequest source) => new()
+    {
+        SplitName = source.SplitName,
+        Passes = source.Passes.Select(pass => new CreatePassDto
+        {
+            PassId = pass.PassId,
+            PassName = pass.PassName,
+            Exercises = pass.Exercises.Select(exercise => new CreateExerciseDto
+            {
+                ExerciseId = exercise.ExerciseId,
+                ExerciseName = exercise.ExerciseName,
+                DefaultSets = exercise.DefaultSets,
+                RepsMin = exercise.RepsMin,
+                RepsMax = exercise.RepsMax,
+                DefaultWeight = exercise.DefaultWeight,
+            }).ToList(),
+        }).ToList(),
+    };
 }

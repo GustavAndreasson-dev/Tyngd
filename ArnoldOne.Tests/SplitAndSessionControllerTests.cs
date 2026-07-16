@@ -95,6 +95,47 @@ public class SplitAndSessionControllerTests
     }
 
     [Fact]
+    public async Task Editable_split_returns_visible_passes_and_exercises_in_order()
+    {
+        await using var context = CreateContext();
+        var userId = Guid.NewGuid();
+        var split = CreateSplit(userId);
+        var firstPass = split.Pass.Single();
+        firstPass.Ordning = 2;
+        firstPass.Exercise.Last().Visability = false;
+        split.Pass.Add(new Pass
+        {
+            PassName = "Pass först",
+            Visability = 1,
+            Ordning = 1,
+            Exercise =
+            [
+                new DbExercise
+                {
+                    ExerciseName = "Första övningen",
+                    DefaultSets = 3,
+                    DefautlRepsMin = 8,
+                    DefaultRepsMax = 12,
+                    DefaultWeight = 20,
+                    Ordning = 1,
+                    Visability = true,
+                },
+            ],
+        });
+        context.Add(split);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var controller = WithUser(new UserSplitController(context), userId);
+
+        var result = await controller.GetMySplitFull(split.SplitId);
+        var dto = Assert.IsType<OkObjectResult>(result.Result).Value as CreateSplitRequest;
+
+        Assert.NotNull(dto);
+        Assert.Equal(["Pass först", "Pass A"], dto.Passes.Select(pass => pass.PassName));
+        Assert.Single(dto.Passes.Last().Exercises);
+        Assert.DoesNotContain(dto.Passes.SelectMany(pass => pass.Exercises), exercise => exercise.ExerciseName == "Flyes");
+    }
+
+    [Fact]
     public async Task Pass_route_requires_matching_split()
     {
         await using var context = CreateContext();

@@ -39,6 +39,8 @@ public partial class ArnoldContext : DbContext
 
         modelBuilder.Entity<Exercise>(entity =>
         {
+            entity.HasIndex(e => new { e.PassId, e.Visability, e.Ordning }, "IX_Exercise_PassId_Visability_Ordning");
+
             entity.Property(e => e.DefaultWeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ExerciseName)
                 .IsRequired()
@@ -90,6 +92,8 @@ public partial class ArnoldContext : DbContext
 
         modelBuilder.Entity<Pass>(entity =>
         {
+            entity.HasIndex(e => new { e.SplitId, e.Visability, e.Ordning }, "IX_Pass_SplitId_Visability_Ordning");
+
             entity.Property(e => e.Ordning).HasDefaultValue(1, "DF_Pass_Ordning");
             entity.Property(e => e.PassName)
                 .IsRequired()

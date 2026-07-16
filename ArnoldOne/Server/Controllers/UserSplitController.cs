@@ -3,6 +3,8 @@ using ArnoldOne.Shared.TrainingPrograms;
 using DbArnold.DbArnold.models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using System.Diagnostics;
 using DbExercise = DbArnold.DbArnold.models.Exercise;
 using SharedExercise = ArnoldOne.Shared.TrainingPrograms.Exercise;
 
@@ -12,10 +14,12 @@ namespace ArnoldOne.Server.Controllers;
 public class UserSplitController : ApiControllerBase
 {
     private readonly ArnoldContext _context;
+    private readonly ILogger<UserSplitController> _logger;
 
-    public UserSplitController(ArnoldContext context)
+    public UserSplitController(ArnoldContext context, ILogger<UserSplitController>? logger = null)
     {
         _context = context;
+        _logger = logger ?? NullLogger<UserSplitController>.Instance;
     }
 
     /// <summary>Returnerar alla aktiva splits för inloggad användare med riktiga Pass.PassId.</summary>
@@ -330,50 +334,54 @@ public class UserSplitController : ApiControllerBase
     [HttpGet("my/{splitId:int}/full")]
     public async Task<ActionResult<CreateSplitRequest>> GetMySplitFull(int splitId)
     {
-        var userId = CurrentUserId;
-
-        var split = await _context.Split
+        var started = Stopwatch.GetTimestamp();
+        var cancellationToken = HttpContext?.RequestAborted ?? CancellationToken.None;
+        var result = await _context.Split
             .AsNoTracking()
             .Where(s => s.SplitId == splitId
-                && s.UserId == userId
+                && s.UserId == CurrentUserId
                 && s.Visability
                 && s.SplitTemplateId == null)
-            .FirstOrDefaultAsync();
-
-        if (split is null)
-            return NotFound();
-
-        var passes = await _context.Pass
-            .AsNoTracking()
-            .Where(p => p.SplitId == splitId && p.Visability == 1)
-            .OrderBy(p => p.Ordning)
-            .ToListAsync();
-
-        var passIds = passes.Select(p => p.PassId).ToList();
-        var exercises = await _context.Exercise
-            .AsNoTracking()
-            .Where(e => passIds.Contains(e.PassId) && e.Visability)
-            .OrderBy(e => e.Ordning)
-            .ToListAsync();
-
-        var result = new CreateSplitRequest
-        {
-            SplitName = split.SplitName,
-            Passes = passes.Select(p => new CreatePassDto
+            .AsSingleQuery()
+            .Select(split => new CreateSplitRequest
             {
-                PassId = p.PassId,
-                PassName  = p.PassName,
-                Exercises = exercises.Where(e => e.PassId == p.PassId).Select(e => new CreateExerciseDto
-                {
-                    ExerciseId     = e.ExerciseId,
-                    ExerciseName   = e.ExerciseName,
-                    DefaultSets    = e.DefaultSets    ?? 3,
-                    RepsMin        = e.DefautlRepsMin ?? 8,
-                    RepsMax        = e.DefaultRepsMax ?? 12,
-                    DefaultWeight  = e.DefaultWeight  ?? 0,
-                }).ToList(),
-            }).ToList(),
-        };
+                SplitName = split.SplitName,
+                Passes = split.Pass
+                    .Where(pass => pass.Visability == 1)
+                    .OrderBy(pass => pass.Ordning)
+                    .Select(pass => new CreatePassDto
+                    {
+                        PassId = pass.PassId,
+                        PassName = pass.PassName,
+                        Exercises = pass.Exercise
+                            .Where(exercise => exercise.Visability)
+                            .OrderBy(exercise => exercise.Ordning)
+                            .Select(exercise => new CreateExerciseDto
+                            {
+                                ExerciseId = exercise.ExerciseId,
+                                ExerciseName = exercise.ExerciseName,
+                                DefaultSets = exercise.DefaultSets ?? 3,
+                                RepsMin = exercise.DefautlRepsMin ?? 8,
+                                RepsMax = exercise.DefaultRepsMax ?? 12,
+                                DefaultWeight = exercise.DefaultWeight ?? 0,
+                            }).ToList(),
+                    }).ToList(),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var elapsed = Stopwatch.GetElapsedTime(started);
+        if (HttpContext is not null)
+            Response.Headers["Server-Timing"] = $"editSplit;dur={elapsed.TotalMilliseconds:0.0}";
+
+        _logger.LogInformation(
+            "Loaded editable split {SplitId} with {PassCount} passes and {ExerciseCount} exercises in {ElapsedMilliseconds} ms",
+            splitId,
+            result?.Passes.Count ?? 0,
+            result?.Passes.Sum(pass => pass.Exercises.Count) ?? 0,
+            elapsed.TotalMilliseconds);
+
+        if (result is null)
+            return NotFound();
 
         return Ok(result);
     }

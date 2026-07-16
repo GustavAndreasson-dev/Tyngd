@@ -18,6 +18,9 @@ public partial class MySplits : IDisposable
     [Inject]
     private IDialogService DialogService { get; set; } = default!;
 
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = default!;
+
     [SupplyParameterFromQuery(Name = "saved")]
     public string? SavedStatus { get; set; }
 
@@ -26,6 +29,7 @@ public partial class MySplits : IDisposable
 
     // (splitId, passId) -> övningar
     private Dictionary<(int, int), List<CreateExerciseDto>> passExercises = new();
+    private HashSet<(int, int)> loadingPasses = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -62,21 +66,34 @@ public partial class MySplits : IDisposable
         {
             splits = await UserSplitsService.GetMySplitsAsync();
             passExercises = new();
-
-            foreach (var split in splits)
-            {
-                var full = await UserSplitsService.GetMySplitFullAsync(split.SplitId);
-                if (full is null) continue;
-
-                foreach (var pass in split.Passes)
-                {
-                    var exercises = full.Passes
-                        .FirstOrDefault(candidate => candidate.PassId == pass.PassId)?
-                        .Exercises ?? new();
-                    passExercises[(split.SplitId, pass.PassId)] = exercises;
-                }
-            }
         }, "Kunde inte ladda splits");
+    }
+
+    private async Task OnPassExpandedAsync(int splitId, int passId, bool expanded)
+    {
+        var key = (splitId, passId);
+        if (!expanded || passExercises.ContainsKey(key) || !loadingPasses.Add(key))
+            return;
+
+        StateHasChanged();
+        try
+        {
+            var full = await UserSplitsService.GetMySplitFullAsync(splitId);
+            if (full is null)
+                return;
+
+            foreach (var pass in full.Passes)
+                passExercises[(splitId, pass.PassId ?? 0)] = pass.Exercises;
+        }
+        catch (Exception exception)
+        {
+            Snackbar.Add($"Kunde inte ladda övningarna: {exception.Message}", Severity.Error);
+        }
+        finally
+        {
+            loadingPasses.Remove(key);
+            StateHasChanged();
+        }
     }
 
     private async Task DeleteSplit(int splitId)

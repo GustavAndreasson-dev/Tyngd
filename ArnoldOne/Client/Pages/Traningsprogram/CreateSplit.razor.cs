@@ -4,6 +4,7 @@ using ArnoldOne.Shared.DTOs;
 using ArnoldOne.Shared.TrainingPrograms;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using System.Diagnostics;
 
 namespace ArnoldOne.Client.Pages.Traningsprogram;
 
@@ -24,6 +25,9 @@ public partial class CreateSplit : PageComponentBase
     [Inject]
     private NavigationManager Nav { get; set; } = default!;
 
+    [Inject]
+    private ILogger<CreateSplit> Logger { get; set; } = default!;
+
     [Parameter]
     public int? SplitId { get; set; }
 
@@ -42,6 +46,8 @@ public partial class CreateSplit : PageComponentBase
     private bool isLoadingEditSplit;
     private bool isSaving;
     private Dictionary<string, string> validationErrors = new();
+    private long? editLoadStartedTimestamp;
+    private bool measureNextEditRender;
 
     protected override async Task OnInitializedAsync()
     {
@@ -49,9 +55,11 @@ public partial class CreateSplit : PageComponentBase
 
         if (SplitId.HasValue)
         {
+            editLoadStartedTimestamp = Stopwatch.GetTimestamp();
             isLoadingEditSplit = true;
             await TryAsync(() => LoadSplitForEditAsync(SplitId.Value), "Kunde inte ladda splitten");
             isLoadingEditSplit = false;
+            measureNextEditRender = true;
             StateHasChanged();
             return;
         }
@@ -70,6 +78,8 @@ public partial class CreateSplit : PageComponentBase
 
     private void AddPass()
     {
+        for (var index = 0; index < passExpanded.Count; index++)
+            passExpanded[index] = false;
         passes.Add(new CreatePassDto());
         passExpanded.Add(true);
         exerciseExpanded.Add(new List<bool>());
@@ -84,6 +94,8 @@ public partial class CreateSplit : PageComponentBase
 
     private void AddExercise(int passIndex)
     {
+        for (var index = 0; index < exerciseExpanded[passIndex].Count; index++)
+            exerciseExpanded[passIndex][index] = false;
         passes[passIndex].Exercises.Add(new CreateExerciseDto());
         exerciseExpanded[passIndex].Add(true);
     }
@@ -151,7 +163,12 @@ public partial class CreateSplit : PageComponentBase
 
     private async Task LoadSplitForEditAsync(int splitId)
     {
-        var imported = await UserSplitsService.GetMySplitFullAsync(splitId).WaitAsync(TimeSpan.FromSeconds(12));
+        var apiStarted = Stopwatch.GetTimestamp();
+        var imported = await UserSplitsService.GetMySplitFullAsync(splitId);
+        Logger.LogInformation(
+            "Edit split {SplitId}: data loaded in {ElapsedMilliseconds} ms",
+            splitId,
+            Stopwatch.GetElapsedTime(apiStarted).TotalMilliseconds);
         if (imported is null)
         {
             Nav.NavigateTo("/TP/my-splits");
@@ -179,6 +196,7 @@ public partial class CreateSplit : PageComponentBase
 
         if (validationErrors.Count > 0)
         {
+            ExpandFirstValidationError();
             StateHasChanged();
             return;
         }
@@ -204,10 +222,66 @@ public partial class CreateSplit : PageComponentBase
     private void ResetExpandedState()
     {
         splitExpanded = true;
-        passExpanded = passes.Select(_ => true).ToList();
+        passExpanded = passes.Select(_ => false).ToList();
         exerciseExpanded = passes
-            .Select(p => p.Exercises.Select(_ => true).ToList())
+            .Select(p => p.Exercises.Select(_ => false).ToList())
             .ToList();
+    }
+
+    private void TogglePass(int passIndex)
+    {
+        var shouldExpand = !passExpanded[passIndex];
+        for (var index = 0; index < passExpanded.Count; index++)
+            passExpanded[index] = false;
+        passExpanded[passIndex] = shouldExpand;
+    }
+
+    private void ToggleExercise(int passIndex, int exerciseIndex)
+    {
+        var shouldExpand = !exerciseExpanded[passIndex][exerciseIndex];
+        for (var index = 0; index < exerciseExpanded[passIndex].Count; index++)
+            exerciseExpanded[passIndex][index] = false;
+        exerciseExpanded[passIndex][exerciseIndex] = shouldExpand;
+    }
+
+    private void ExpandFirstValidationError()
+    {
+        for (var passIndex = 0; passIndex < passes.Count; passIndex++)
+        {
+            var passPrefix = $"Passes[{passIndex}]";
+            if (!validationErrors.Keys.Any(key => key.StartsWith(passPrefix, StringComparison.Ordinal)))
+                continue;
+
+            for (var index = 0; index < passExpanded.Count; index++)
+                passExpanded[index] = false;
+            passExpanded[passIndex] = true;
+
+            for (var exerciseIndex = 0; exerciseIndex < passes[passIndex].Exercises.Count; exerciseIndex++)
+            {
+                var exercisePrefix = $"{passPrefix}.Exercises[{exerciseIndex}]";
+                if (!validationErrors.Keys.Any(key => key.StartsWith(exercisePrefix, StringComparison.Ordinal)))
+                    continue;
+
+                for (var index = 0; index < exerciseExpanded[passIndex].Count; index++)
+                    exerciseExpanded[passIndex][index] = false;
+                exerciseExpanded[passIndex][exerciseIndex] = true;
+                break;
+            }
+
+            break;
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!measureNextEditRender || editLoadStartedTimestamp is not long started)
+            return;
+
+        measureNextEditRender = false;
+        Logger.LogInformation(
+            "Edit split {SplitId}: first usable render completed in {ElapsedMilliseconds} ms",
+            SplitId,
+            Stopwatch.GetElapsedTime(started).TotalMilliseconds);
     }
 
     private void ClearSuccess() => successMessage = null;

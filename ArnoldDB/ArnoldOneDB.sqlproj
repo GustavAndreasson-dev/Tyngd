@@ -58,6 +58,7 @@
     <Folder Include="Properties" />
     <Folder Include="dbo\" />
     <Folder Include="dbo\Tables\" />
+    <Folder Include="dbo\Indexes\" />
     <Folder Include="Security\" />
   </ItemGroup>
   <ItemGroup>
@@ -72,6 +73,8 @@
     <Build Include="dbo\Tables\ExerciseLog.sql" />
     <Build Include="dbo\Tables\Exercise.sql" />
     <Build Include="dbo\Tables\UserSettings.sql" />
+    <Build Include="dbo\Indexes\IX_Pass_SplitId_Visability_Ordning.sql" />
+    <Build Include="dbo\Indexes\IX_Exercise_PassId_Visability_Ordning.sql" />
     <Build Include="Security\ArnoldUser.sql" />
   </ItemGroup>
 </Project>

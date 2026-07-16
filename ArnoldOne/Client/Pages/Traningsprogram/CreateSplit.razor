@@ -131,9 +131,9 @@
     var passIndex = pi;
     var pass = passes[passIndex];
 
-    <MudCard Class="cs-pass-card">
+    <MudCard @key="pass" Class="cs-pass-card">
         <MudCardContent>
-            <div class="d-flex align-center cs-pass-header" style="gap:8px;" @onclick="@(() => passExpanded[passIndex] = !passExpanded[passIndex])">
+            <div class="d-flex align-center cs-pass-header" style="gap:8px;" @onclick="@(() => TogglePass(passIndex))">
                 <MudText Typo="Typo.h6" Style="flex:1">
                     @(string.IsNullOrWhiteSpace(pass.PassName) ? $"Pass {passIndex + 1}" : pass.PassName)
                 </MudText>
@@ -146,7 +146,8 @@
                 </span>
             </div>
 
-            <MudCollapse Expanded="passExpanded[passIndex]">
+            @if (passExpanded[passIndex])
+            {
                 <MudTextField @bind-Value="pass.PassName"
                               Label="Passnamn"
                               Variant="Variant.Outlined"
@@ -162,9 +163,9 @@
                     var exerciseIndex = ei;
                     var exercise = pass.Exercises[exerciseIndex];
 
-                    <MudCard Outlined="true" Class="cs-exercise-card">
+                    <MudCard @key="exercise" Outlined="true" Class="cs-exercise-card">
                         <MudCardContent>
-                            <div class="d-flex align-center mb-2" style="gap:8px; cursor:pointer;" @onclick="@(() => exerciseExpanded[passIndex][exerciseIndex] = !exerciseExpanded[passIndex][exerciseIndex])">
+                            <div class="d-flex align-center mb-2" style="gap:8px; cursor:pointer;" @onclick="@(() => ToggleExercise(passIndex, exerciseIndex))">
                                 <MudText Typo="Typo.subtitle1" Style="flex:1">
                                     @(string.IsNullOrWhiteSpace(exercise.ExerciseName) ? $"Övning {exerciseIndex + 1}" : exercise.ExerciseName)
                                 </MudText>
@@ -176,7 +177,8 @@
                                                    OnClick="@(() => RemoveExercise(passIndex, exerciseIndex))" />
                                 </span>
                             </div>
-                            <MudCollapse Expanded="exerciseExpanded[passIndex][exerciseIndex]">
+                            @if (exerciseExpanded[passIndex][exerciseIndex])
+                            {
                             <MudTextField @bind-Value="exercise.ExerciseName"
                                           Label="Övningsnamn"
                                           Variant="Variant.Outlined"
@@ -217,7 +219,7 @@
                                                  ErrorText="@FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].DefaultWeight")"
                                                  Style="max-width:110px;" />
                             </div>
-                            </MudCollapse>
+                            }
                         </MudCardContent>
                     </MudCard>
                 }
@@ -228,7 +230,7 @@
                            OnClick="@(() => AddExercise(passIndex))">
                     Lägg till övning
                 </MudButton>
-            </MudCollapse>
+            }
         </MudCardContent>
     </MudCard>
 }
