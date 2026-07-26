@@ -125,6 +125,16 @@
     </MudCardContent>
 </MudCard>
 
+<div class="d-flex justify-end mb-3">
+    <MudButton StartIcon="@Icons.Material.Filled.Reorder"
+               Variant="Variant.Outlined"
+               Color="Color.Secondary"
+               Disabled="@(!CanReorder)"
+               OnClick="OpenReorderDialogAsync">
+        Ändra ordning
+    </MudButton>
+</div>
+
 @* Pass *@
 @for (int pi = 0; pi < passes.Count; pi++)
 {

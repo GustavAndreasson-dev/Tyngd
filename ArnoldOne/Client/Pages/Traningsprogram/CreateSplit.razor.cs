@@ -48,6 +48,8 @@ public partial class CreateSplit : PageComponentBase
     private Dictionary<string, string> validationErrors = new();
     private long? editLoadStartedTimestamp;
     private bool measureNextEditRender;
+    private bool CanReorder =>
+        passes.Count > 1 || passes.Any(pass => pass.Exercises.Count > 1);
 
     protected override async Task OnInitializedAsync()
     {
@@ -104,6 +106,35 @@ public partial class CreateSplit : PageComponentBase
     {
         passes[passIndex].Exercises.RemoveAt(exerciseIndex);
         exerciseExpanded[passIndex].RemoveAt(exerciseIndex);
+    }
+
+    private async Task OpenReorderDialogAsync()
+    {
+        if (!CanReorder)
+            return;
+
+        var parameters = new DialogParameters
+        {
+            { nameof(ReorderSplitDialog.Passes), passes },
+        };
+        var options = new DialogOptions
+        {
+            FullWidth = true,
+            MaxWidth = MaxWidth.Medium,
+            CloseOnEscapeKey = true,
+        };
+
+        var dialog = await DialogService.ShowAsync<ReorderSplitDialog>("", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is null
+            || result.Canceled
+            || result.Data is not List<CreatePassDto> reorderedPasses)
+            return;
+
+        passes = reorderedPasses;
+        validationErrors.Clear();
+        ResetExpandedState();
     }
 
     private IDialogReference? _importDialog;
