@@ -30,6 +30,7 @@ builder.Services.AddSingleton<RestTimerState>();
 builder.Services.AddSingleton<SessionState>();
 
 builder.Services.AddScoped<PendingSyncState>();
+builder.Services.AddScoped<PwaService>();
 
 // Singleton för inloggningsstatus
 builder.Services.AddSingleton<LoginState>();

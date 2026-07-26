@@ -51,7 +51,7 @@
     <MudExpansionPanels Elevation="0" Class="mb-6">
         @foreach (var pass in template.Passes)
         {
-            <MudExpansionPanel Text="@pass.PassName" DisableRipple="true">
+            <MudExpansionPanel Text="@pass.PassName">
                 <MudList Dense="true" T="TrainingExerciseTemplate">
                     @foreach (var exercise in pass.Exercises)
                     {

@@ -40,10 +40,17 @@ public partial class MainLayout : IDisposable
     [Inject]
     private PendingSyncState PendingSync { get; set; } = default!;
 
+    [Inject]
+    private PwaService PwaService { get; set; } = default!;
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = default!;
+
     /// <summary>Styr om navigeringslådan är öppen eller stängd.</summary>
     bool _drawerOpen = true;
     bool _ready = false;
     bool _syncingPendingData = false;
+    bool _updateSnackbarShown = false;
     MudMenu _menu = default!;
 
     protected override async Task OnInitializedAsync()
@@ -80,6 +87,16 @@ public partial class MainLayout : IDisposable
         _ready = true;
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        PwaService.OnChange += OnPwaStateChanged;
+        await PwaService.InitializeAsync();
+        ShowUpdateSnackbarIfNeeded();
+    }
+
     /// <summary>Öppnar inloggningsdialogen och loggar in om lyckad.</summary>
     private async Task OpenLoginDialog()
     {
@@ -88,7 +105,7 @@ public partial class MainLayout : IDisposable
 
         await _menu.CloseMenuAsync();
 
-        if (!result.Canceled && result.Data is UserInfo user)
+        if (result is { Canceled: false, Data: UserInfo })
             StateHasChanged();
     }
 
@@ -100,7 +117,7 @@ public partial class MainLayout : IDisposable
 
         await _menu.CloseMenuAsync();
 
-        if (!result.Canceled && result.Data is UserInfo user)
+        if (result is { Canceled: false, Data: UserInfo })
             StateHasChanged();
     }
 
@@ -140,6 +157,7 @@ public partial class MainLayout : IDisposable
         ThemeState.OnChange -= StateHasChanged;
         LoginState.OnChange -= OnLoginChanged;
         PendingSync.OnChange -= StateHasChanged;
+        PwaService.OnChange -= OnPwaStateChanged;
     }
 
     private void OnLoginChanged()
@@ -163,5 +181,30 @@ public partial class MainLayout : IDisposable
             }
         }
         catch { }
+    }
+
+    private void OnPwaStateChanged()
+    {
+        _ = InvokeAsync(ShowUpdateSnackbarIfNeeded);
+    }
+
+    private void ShowUpdateSnackbarIfNeeded()
+    {
+        if (!PwaService.IsUpdateAvailable || _updateSnackbarShown)
+            return;
+
+        _updateSnackbarShown = true;
+        Snackbar.Add(
+            "En ny version finns",
+            Severity.Info,
+            options =>
+            {
+                options.Action = "Uppdatera";
+                options.ActionColor = Color.Primary;
+                options.RequireInteraction = true;
+                options.ShowCloseIcon = false;
+                options.OnClick = _ => PwaService.ReloadAsync().AsTask();
+            },
+            key: "pwa-update");
     }
 }

@@ -21,13 +21,23 @@ public partial class Installningar : ComponentBase, IDisposable
     [Inject]
     private UserSettingsService UserSettingsService { get; set; } = default!;
 
+    [Inject]
+    private PwaService PwaService { get; set; } = default!;
+
     private int _restTimerMinutes;
     private string? successMessage;
 
     protected override void OnInitialized()
     {
         ThemeState.OnChange += StateHasChanged;
+        PwaService.OnChange += OnPwaStateChanged;
         _restTimerMinutes = RestTimer.Seconds / 60;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await PwaService.InitializeAsync();
     }
 
     /// <summary>Togglar mörkt läge och sparar till API.</summary>
@@ -71,7 +81,18 @@ public partial class Installningar : ComponentBase, IDisposable
     public void Dispose()
     {
         ThemeState.OnChange -= StateHasChanged;
+        PwaService.OnChange -= OnPwaStateChanged;
     }
 
     private void ClearSuccess() => successMessage = null;
+
+    private async Task InstallArnold()
+    {
+        await PwaService.InstallAsync();
+    }
+
+    private void OnPwaStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
 }

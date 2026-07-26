@@ -77,8 +77,6 @@ public partial class PassPage : IDisposable
 
     // Vilotimer
     private CancellationTokenSource? _restTimerCts;
-    private bool _restTimerRunning;
-    private int _restTimerRemaining;
 
     /// <summary>
     /// Körs när <see cref="PassId"/> ändras. Hämtar rätt passmall och
@@ -465,22 +463,18 @@ public partial class PassPage : IDisposable
         CancelRestTimer();
         _restTimerCts = new CancellationTokenSource();
         var token = _restTimerCts.Token;
-        _restTimerRemaining = RestTimer.Seconds;
-        _restTimerRunning = true;
+        var remainingSeconds = RestTimer.Seconds;
 
         _ = Task.Run(async () =>
         {
             try
             {
-                while (_restTimerRemaining > 0)
+                while (remainingSeconds > 0)
                 {
                     await Task.Delay(1000, token);
-                    _restTimerRemaining--;
-                    await InvokeAsync(StateHasChanged);
+                    remainingSeconds--;
                 }
 
-                _restTimerRunning = false;
-                await InvokeAsync(StateHasChanged);
                 await JSRuntime.InvokeVoidAsync("arnoldOne.flashScreen", token);
             }
             catch (OperationCanceledException) { }
@@ -493,7 +487,6 @@ public partial class PassPage : IDisposable
         _restTimerCts?.Cancel();
         _restTimerCts?.Dispose();
         _restTimerCts = null;
-        _restTimerRunning = false;
     }
 
     /// <summary>Tom – vikter sparas nu till DB vid övningsbyte och avslutat pass.</summary>

@@ -1,16 +1,33 @@
 {
-  "name": "ArnoldOne",
-  "short_name": "ArnoldOne",
-  "start_url": "./",
+  "id": "/",
+  "name": "Arnold",
+  "short_name": "Arnold",
+  "description": "Träning på ditt sätt",
+  "lang": "sv",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#03173d",
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "favicon.ico",
-      "type": "image/x-icon",
-      "sizes": "48x48"
+      "src": "icons/arnold-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/arnold-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/arnold-maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ]
 }

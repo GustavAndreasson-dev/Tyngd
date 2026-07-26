@@ -24,7 +24,11 @@
                 Osynkat
             </MudButton>
         }
-        <MudMenu @ref="_menu" Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End">
+        <MudMenu @ref="_menu"
+                 Icon="@Icons.Material.Filled.MoreVert"
+                 Color="Color.Inherit"
+                 AnchorOrigin="Origin.BottomRight"
+                 TransformOrigin="Origin.TopRight">
             @if (LoginState.IsLoggedIn)
             {
                 <MudMenuItem Disabled="true" Icon="@Icons.Material.Filled.AccountCircle">@LoginState.CurrentUser!.UserName</MudMenuItem>

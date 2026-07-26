@@ -20,7 +20,7 @@
                Label="Mörkt läge" />
 </MudPaper>
 
-<MudPaper Class="pa-4" Elevation="2">
+<MudPaper Class="pa-4 mb-4" Elevation="2">
     <MudText Typo="Typo.subtitle1" Class="mb-3">Vilotimer</MudText>
     <MudSwitch T="bool"
                Value="@RestTimer.IsEnabled"
@@ -37,3 +37,16 @@
                      Class="mt-2"
                      Style="max-width:180px;" />
 </MudPaper>
+
+@if (PwaService.CanInstall)
+{
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudText Typo="Typo.subtitle1" Class="mb-3">App</MudText>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.InstallMobile"
+                   OnClick="InstallArnold">
+            Installera Arnold
+        </MudButton>
+    </MudPaper>
+}
