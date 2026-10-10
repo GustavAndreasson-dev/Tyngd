@@ -21,6 +21,8 @@ public sealed class AdminExerciseTemplateDto
 {
     public int ExerciseTemplateId { get; set; }
     public string ExerciseTemplateName { get; set; } = string.Empty;
+    /// <summary>Koppling till övningskatalogen (wger). Null för egen övning.</summary>
+    public int? CatalogExerciseId { get; set; }
     public bool IsVisible { get; set; }
     public int Order { get; set; }
     public int DefaultSets { get; set; }
@@ -48,6 +50,8 @@ public sealed class UpsertAdminExerciseTemplateRequest
 {
     public int? ExerciseTemplateId { get; set; }
     public string ExerciseTemplateName { get; set; } = string.Empty;
+    /// <summary>Koppling till övningskatalogen (wger). Null för egen övning.</summary>
+    public int? CatalogExerciseId { get; set; }
     public bool IsVisible { get; set; } = true;
     public int DefaultSets { get; set; } = 3;
     public int DefaultRepsMin { get; set; } = 8;

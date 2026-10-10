@@ -1,5 +1,6 @@
 using ArnoldOne.Shared.DTOs;
 using DbArnold.DbArnold.models;
+using ArnoldOne.Server.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -60,7 +61,7 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
     [HttpPost]
     public async Task<ActionResult<int>> Create(UpsertAdminSplitTemplateRequest request)
     {
-        if (Validate(request) is { } validationError)
+        if ((Validate(request) ?? await ValidateCatalogLinksAsync(request)) is { } validationError)
             return BadRequest(validationError);
         if (request.Passes.Any(pass => pass.PassTemplateId.HasValue || pass.Exercises.Any(exercise => exercise.ExerciseTemplateId.HasValue)))
             return BadRequest("Nya mallar får inte innehålla befintliga id:n.");
@@ -81,7 +82,7 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
     [HttpPut("{templateId:int}")]
     public async Task<IActionResult> Update(int templateId, UpsertAdminSplitTemplateRequest request)
     {
-        if (Validate(request) is { } validationError)
+        if ((Validate(request) ?? await ValidateCatalogLinksAsync(request)) is { } validationError)
             return BadRequest(validationError);
 
         var split = await _context.SplitTemplate.FindAsync(templateId);
@@ -189,6 +190,7 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
                 }
 
                 exercise.ExerciseTemplateName = exerciseRequest.ExerciseTemplateName.Trim();
+                exercise.CatalogExerciseId = exerciseRequest.CatalogExerciseId;
                 exercise.Visability = exerciseRequest.IsVisible;
                 exercise.Ordning = exerciseIndex + 1;
                 exercise.DefaultSets = exerciseRequest.DefaultSets;
@@ -200,6 +202,11 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
 
         await _context.SaveChangesAsync();
     }
+
+    private async Task<string?> ValidateCatalogLinksAsync(UpsertAdminSplitTemplateRequest request) =>
+        await CatalogLinks.AllExistAsync(_context, request.Passes.SelectMany(p => p.Exercises).Select(e => e.CatalogExerciseId))
+            ? null
+            : "En eller flera övningar pekar på en okänd katalogövning.";
 
     private static string? Validate(UpsertAdminSplitTemplateRequest request)
     {
@@ -253,6 +260,7 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
                         {
                             ExerciseTemplateId = exercise.ExerciseTemplateId,
                             ExerciseTemplateName = exercise.ExerciseTemplateName,
+                            CatalogExerciseId = exercise.CatalogExerciseId,
                             IsVisible = exercise.Visability,
                             Order = exercise.Ordning,
                             DefaultSets = exercise.DefaultSets ?? 3,

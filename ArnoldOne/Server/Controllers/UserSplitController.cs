@@ -1,6 +1,7 @@
 using ArnoldOne.Shared.DTOs;
 using ArnoldOne.Shared.TrainingPrograms;
 using DbArnold.DbArnold.models;
+using ArnoldOne.Server.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DbExercise = DbArnold.DbArnold.models.Exercise;
@@ -61,6 +62,7 @@ public class UserSplitController : ApiControllerBase
             {
                 ExerciseId     = e.ExerciseId,
                 Exercise       = new SharedExercise { ExerciseId = e.ExerciseId, ExerciseName = e.ExerciseName },
+                CatalogExerciseId = e.CatalogExerciseId,
                 DefaultSets    = e.DefaultSets    ?? 3,
                 DefaultRepsMin = e.DefautlRepsMin ?? 8,
                 DefaultRepsMax = e.DefaultRepsMax ?? 12,
@@ -137,6 +139,7 @@ public class UserSplitController : ApiControllerBase
                     .Select(e => new DbExercise
                     {
                         ExerciseName   = e.ExerciseTemplateName,
+                        CatalogExerciseId = e.CatalogExerciseId,
                         DefaultSets    = e.DefaultSets,
                         DefautlRepsMin = e.DefaultRepsMin,
                         DefaultRepsMax = e.DefaultRepsMax,
@@ -182,7 +185,7 @@ public class UserSplitController : ApiControllerBase
     [HttpPost("custom")]
     public async Task<ActionResult<int>> CreateCustomSplit([FromBody] CreateSplitRequest request)
     {
-        var validationResult = ValidateRequest(request);
+        var validationResult = ValidateRequest(request) ?? await ValidateCatalogLinksAsync(request);
         if (validationResult is not null)
             return validationResult;
 
@@ -203,6 +206,7 @@ public class UserSplitController : ApiControllerBase
                 Exercise = p.Exercises.Select((e, ei) => new DbExercise
                 {
                     ExerciseName   = e.ExerciseName.Trim(),
+                    CatalogExerciseId = e.CatalogExerciseId,
                     DefaultSets    = e.DefaultSets,
                     DefautlRepsMin = e.RepsMin,
                     DefaultRepsMax = e.RepsMax,
@@ -223,7 +227,7 @@ public class UserSplitController : ApiControllerBase
     [HttpPut("my/{splitId:int}")]
     public async Task<IActionResult> UpdateMySplit(int splitId, [FromBody] CreateSplitRequest request)
     {
-        var validationResult = ValidateRequest(request);
+        var validationResult = ValidateRequest(request) ?? await ValidateCatalogLinksAsync(request);
         if (validationResult is not null)
             return validationResult;
 
@@ -299,6 +303,7 @@ public class UserSplitController : ApiControllerBase
                 }
 
                 exercise.ExerciseName = exerciseRequest.ExerciseName.Trim();
+                exercise.CatalogExerciseId = exerciseRequest.CatalogExerciseId;
                 exercise.DefaultSets = exerciseRequest.DefaultSets;
                 exercise.DefautlRepsMin = exerciseRequest.RepsMin;
                 exercise.DefaultRepsMax = exerciseRequest.RepsMax;
@@ -351,6 +356,7 @@ public class UserSplitController : ApiControllerBase
                             {
                                 ExerciseId = exercise.ExerciseId,
                                 ExerciseName = exercise.ExerciseName,
+                                CatalogExerciseId = exercise.CatalogExerciseId,
                                 DefaultSets = exercise.DefaultSets ?? 3,
                                 RepsMin = exercise.DefautlRepsMin ?? 8,
                                 RepsMax = exercise.DefaultRepsMax ?? 12,
@@ -399,6 +405,11 @@ public class UserSplitController : ApiControllerBase
 
         return NoContent();
     }
+
+    private async Task<ActionResult?> ValidateCatalogLinksAsync(CreateSplitRequest request) =>
+        await CatalogLinks.AllExistAsync(_context, request.Passes.SelectMany(p => p.Exercises).Select(e => e.CatalogExerciseId))
+            ? null
+            : BadRequest("En eller flera övningar pekar på en okänd katalogövning.");
 
     private ActionResult? ValidateRequest(CreateSplitRequest request)
     {

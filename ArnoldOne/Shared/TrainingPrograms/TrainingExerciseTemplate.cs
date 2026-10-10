@@ -12,6 +12,9 @@ public class TrainingExerciseTemplate
     /// <summary>Navigeringsegenskap till övningen.</summary>
     public Exercise Exercise { get; set; } = new();
 
+    /// <summary>Koppling till övningskatalogen (wger). Null för egen övning.</summary>
+    public int? CatalogExerciseId { get; set; }
+
     /// <summary>Rekommenderat antal set.</summary>
     public int DefaultSets { get; set; }
 

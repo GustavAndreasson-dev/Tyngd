@@ -53,6 +53,37 @@ public class ActivateSplitTests
         Assert.True(split.Visability);
     }
 
+    [Fact]
+    public async Task Activation_copies_the_catalog_link()
+    {
+        await using var context = CreateContext();
+        var templateId = await AddTemplateAsync(context, templateVisible: true);
+        var catalog = new ExerciseCatalog { WgerUuid = Guid.NewGuid(), NameEn = "Squat", SourceHash = "x", IsActive = true };
+        context.ExerciseCatalog.Add(catalog);
+        (await context.ExerciseTemplate.SingleAsync(e => e.ExerciseTemplateName == "Synlig övning", TestContext.Current.CancellationToken)).CatalogExercise = catalog;
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await Controller(context, Guid.NewGuid()).ActivateSplit(templateId);
+
+        var exercise = await context.Exercise.SingleAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(catalog.CatalogExerciseId, exercise.CatalogExerciseId);
+    }
+
+    [Fact]
+    public async Task Custom_split_with_unknown_catalog_id_is_rejected()
+    {
+        await using var context = CreateContext();
+
+        var result = await Controller(context, Guid.NewGuid()).CreateCustomSplit(new ArnoldOne.Shared.DTOs.CreateSplitRequest
+        {
+            SplitName = "Min split",
+            Passes = [new() { PassName = "A", Exercises = [new() { ExerciseName = "Knäböj", CatalogExerciseId = 999 }] }],
+        });
+
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal(0, await context.Split.CountAsync(TestContext.Current.CancellationToken));
+    }
+
     private static async Task<int> AddTemplateAsync(ArnoldContext context, bool templateVisible)
     {
         var template = new SplitTemplate
