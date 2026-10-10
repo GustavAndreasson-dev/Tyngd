@@ -58,6 +58,14 @@ public partial class PassPage : IDisposable
     [Inject]
     private PendingSyncState PendingSync { get; set; } = default!;
 
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!;
+
+    private Task ShowExerciseInfo(int catalogExerciseId) =>
+        DialogService.ShowAsync<ExerciseInfoDialog>(null,
+            new DialogParameters<ExerciseInfoDialog> { { dialog => dialog.CatalogExerciseId, catalogExerciseId } },
+            new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+
     private TrainingPassTemplate? pass;
     private int activeIndex;
     private int restRemaining;

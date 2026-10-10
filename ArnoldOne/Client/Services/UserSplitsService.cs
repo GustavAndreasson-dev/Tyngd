@@ -132,6 +132,7 @@ public class UserSplitsService
             Exercises = p.Exercises.Select(e => new CreateExerciseDto
             {
                 ExerciseName  = e.Exercise.ExerciseName,
+                CatalogExerciseId = e.CatalogExerciseId,
                 DefaultSets   = e.DefaultSets,
                 RepsMin       = e.DefaultRepsMin,
                 RepsMax       = e.DefaultRepsMax,
@@ -149,6 +150,7 @@ public class UserSplitsService
             Exercises = pass.Exercises.Select(exercise => new CreateExerciseDto
             {
                 ExerciseName = exercise.ExerciseName,
+                CatalogExerciseId = exercise.CatalogExerciseId,
                 DefaultSets = exercise.DefaultSets,
                 RepsMin = exercise.RepsMin,
                 RepsMax = exercise.RepsMax,
@@ -182,6 +184,7 @@ public class UserSplitsService
             {
                 ExerciseId = exercise.ExerciseId,
                 ExerciseName = exercise.ExerciseName,
+                CatalogExerciseId = exercise.CatalogExerciseId,
                 DefaultSets = exercise.DefaultSets,
                 RepsMin = exercise.RepsMin,
                 RepsMax = exercise.RepsMax,

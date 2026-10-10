@@ -1,0 +1,89 @@
+@using ArnoldOne.Shared.Catalog
+@using ArnoldOne.Client.Services
+@namespace ArnoldOne.Client.Shared
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_exercise?.Name ?? "Övning")</MudText>
+        @if (_exercise is not null && !string.Equals(_exercise.Name, _exercise.NameEn, StringComparison.OrdinalIgnoreCase))
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@_exercise.NameEn</MudText>
+        }
+    </TitleContent>
+    <DialogContent>
+        @if (_error is not null)
+        {
+            <MudText Color="Color.Error">@_error</MudText>
+        }
+        else if (_exercise is null)
+        {
+            <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+        }
+        else
+        {
+            @if (_exercise.ImageUrl is not null)
+            {
+                <img src="@_exercise.ImageUrl" alt="@_exercise.Name" loading="lazy"
+                     style="max-width:100%; max-height:220px; display:block; margin:0 auto 12px; border-radius:8px; background:#fff;" />
+            }
+            <div class="d-flex flex-wrap mb-3" style="gap:4px;">
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@_exercise.Category</MudChip>
+                @foreach (var muscle in _exercise.Muscles)
+                {
+                    <MudChip T="string" Size="Size.Small">@muscle</MudChip>
+                }
+                @foreach (var item in _exercise.Equipment)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@item</MudChip>
+                }
+            </div>
+            @if (string.IsNullOrWhiteSpace(_exercise.Description))
+            {
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Ingen beskrivning finns.</MudText>
+            }
+            else
+            {
+                @* Ren text från servern; pre-line behåller stycken och listrader. *@
+                <MudText Typo="Typo.body2" Style="white-space: pre-line;">@_exercise.Description</MudText>
+            }
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-4" Style="opacity:.75;">
+                Övningsdata från <a href="https://wger.de" target="_blank" rel="noopener">wger.de</a>
+                @if (!string.IsNullOrWhiteSpace(_exercise.License))
+                {
+                    <span> · @_exercise.License</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(_exercise.LicenseAuthor))
+                {
+                    <span> · @_exercise.LicenseAuthor</span>
+                }
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Close())">Stäng</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Inject] private CatalogService CatalogService { get; set; } = default!;
+
+    [Parameter] public int CatalogExerciseId { get; set; }
+
+    private CatalogExerciseDetailDto? _exercise;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _exercise = await CatalogService.GetAsync(CatalogExerciseId);
+            if (_exercise is null)
+                _error = "Övningen hittades inte.";
+        }
+        catch (HttpRequestException)
+        {
+            _error = "Kunde inte hämta övningen. Kontrollera anslutningen.";
+        }
+    }
+}

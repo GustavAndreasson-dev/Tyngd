@@ -39,6 +39,7 @@ public partial class AdminTemplateEditor : PageComponentBase
                     {
                         ExerciseTemplateId = exercise.ExerciseTemplateId,
                         ExerciseTemplateName = exercise.ExerciseTemplateName,
+                        CatalogExerciseId = exercise.CatalogExerciseId,
                         IsVisible = exercise.IsVisible,
                         DefaultSets = exercise.DefaultSets,
                         DefaultRepsMin = exercise.DefaultRepsMin,
@@ -101,5 +102,5 @@ public partial class AdminTemplateEditor : PageComponentBase
         ],
     };
 
-    private static UpsertAdminExerciseTemplateRequest NewExercise() => new() { ExerciseTemplateName = "Ny övning" };
+    private static UpsertAdminExerciseTemplateRequest NewExercise() => new();
 }
