@@ -155,11 +155,6 @@ public sealed class AdminController : AdminApiControllerBase
             if (userId == CurrentUserId)
                 return Conflict("Du kan inte ta bort din egen adminroll.");
 
-            var adminCount = (await _context.UserInfo.Select(item => item.Roles).ToListAsync())
-                .Count(value => ParseRoles(value).Contains(AppRoles.Admin, StringComparer.OrdinalIgnoreCase));
-            if (adminCount <= 1)
-                return Conflict("Den sista administratören kan inte tas bort.");
-
             roles.RemoveAll(role => role.Equals(AppRoles.Admin, StringComparison.OrdinalIgnoreCase));
         }
 

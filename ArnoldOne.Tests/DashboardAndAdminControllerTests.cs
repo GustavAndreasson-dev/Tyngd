@@ -71,6 +71,38 @@ public class DashboardAndAdminControllerTests
     }
 
     [Fact]
+    public async Task Only_admin_can_demote_a_regular_user_as_a_harmless_no_op()
+    {
+        await using var context = CreateContext();
+        var admin = NewUser($"{AppRoles.User},{AppRoles.Admin}");
+        var other = NewUser(AppRoles.User);
+        context.AddRange(admin, other);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var controller = WithUser(new AdminController(context), admin.UserId, AppRoles.Admin);
+
+        var result = await controller.SetAdminRole(other.UserId, new SetUserAdminRequest { IsAdmin = false });
+
+        Assert.IsType<NoContentResult>(result);
+    }
+
+    [Fact]
+    public async Task Admin_can_demote_another_admin_but_keeps_own_role()
+    {
+        await using var context = CreateContext();
+        var admin = NewUser($"{AppRoles.User},{AppRoles.Admin}");
+        var other = NewUser($"{AppRoles.User},{AppRoles.Admin}");
+        context.AddRange(admin, other);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var controller = WithUser(new AdminController(context), admin.UserId, AppRoles.Admin);
+
+        var result = await controller.SetAdminRole(other.UserId, new SetUserAdminRequest { IsAdmin = false });
+
+        Assert.IsType<NoContentResult>(result);
+        Assert.DoesNotContain(AppRoles.Admin, other.Roles);
+        Assert.Contains(AppRoles.Admin, admin.Roles);
+    }
+
+    [Fact]
     public async Task Template_update_preserves_ids_and_archives_removed_exercise()
     {
         await using var context = CreateContext();
