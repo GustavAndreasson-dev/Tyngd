@@ -156,3 +156,61 @@ h1:focus {
         z-index: 1201;
     }
 }
+
+/* ---------- Design tokens ---------- */
+:root {
+    --radius-card: 16px;
+    --radius-control: 12px;
+    --space-1: .5rem;
+    --space-2: 1rem;
+    --space-3: 1.5rem;
+    --tap: 44px;
+}
+
+body, .mud-typography, .mud-button-root, .mud-input {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif !important;
+}
+
+/* Flat surfaces: thin borders instead of shadows */
+.mud-paper, .mud-card { border-radius: var(--radius-card); }
+.mud-elevation-1, .mud-elevation-2, .mud-elevation-4 { box-shadow: none !important; }
+.mud-paper:not(.mud-appbar):not(.mud-drawer):not(.mud-popover-paper):not(.mud-dialog):not(.mud-snackbar) { border: 1px solid var(--mud-palette-lines-default); }
+.mud-button-root { border-radius: var(--radius-control); min-height: var(--tap); }
+
+:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 2px; }
+
+/* ---------- Shared UI ---------- */
+.ui-card { background: var(--mud-palette-surface); border: 1px solid var(--mud-palette-lines-default); border-radius: var(--radius-card); padding: 1.25rem; }
+.ui-label { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mud-palette-text-secondary); }
+.ui-sub { color: var(--mud-palette-text-secondary); font-size: .875rem; }
+.ui-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.ui-link { color: var(--mud-palette-primary); font-weight: 700; font-size: .875rem; text-decoration: none; min-height: var(--tap); display: inline-flex; align-items: center; }
+.ui-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 48px; padding: 0 1.5rem; border: 0; border-radius: var(--radius-control); background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); font: 700 1rem "Plus Jakarta Sans", sans-serif; text-decoration: none; cursor: pointer; transition: transform .15s, opacity .15s; }
+.ui-btn:active { transform: scale(.98); }
+.ui-btn:disabled { opacity: .5; cursor: default; }
+.ui-chip { display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 1rem; border-radius: var(--radius-control); border: 1px solid var(--mud-palette-lines-default); background: var(--mud-palette-background-gray); color: inherit; font-weight: 600; font-size: .875rem; text-decoration: none; transition: border-color .15s, color .15s; }
+.ui-chip:hover { border-color: var(--mud-palette-primary); color: var(--mud-palette-primary); }
+.ui-title { margin: 0; font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; }
+.ui-section-title { margin: 0 0 .75rem; font-size: 1.25rem; font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+}
+
+/* ---------- Navigation ---------- */
+.mud-appbar { box-shadow: none !important; border-bottom: 1px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface) !important; color: var(--mud-palette-text-primary) !important; }
+.app-wordmark { font-weight: 800; letter-spacing: -.02em; }
+.mud-drawer { border-right: 1px solid var(--mud-palette-lines-default); box-shadow: none !important; }
+.mud-nav-link { border-radius: var(--radius-control); margin: 2px 8px; min-height: var(--tap); }
+.mud-nav-link.active:not(.mud-nav-link-disabled) { background: color-mix(in srgb, var(--mud-palette-primary) 14%, transparent); color: var(--mud-palette-primary); }
+.bottom-nav { display: none; }
+.dash-hero .ui-btn { background: var(--mud-palette-primary-text); color: var(--mud-palette-primary); }
+
+@media (max-width: 959.95px) {
+    .mud-drawer { display: none !important; }
+    .mud-main-content { padding-left: 0 !important; padding-bottom: 76px; }
+    .app-menu-toggle { display: none !important; }
+    .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1300; display: flex; padding: 4px 8px calc(8px + env(safe-area-inset-bottom)); background: var(--mud-palette-surface); border-top: 1px solid var(--mud-palette-lines-default); }
+    .bottom-nav__tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--mud-palette-text-secondary); font-size: .6875rem; font-weight: 600; text-decoration: none; }
+    .bottom-nav__tab.active { color: var(--mud-palette-primary); }
+}

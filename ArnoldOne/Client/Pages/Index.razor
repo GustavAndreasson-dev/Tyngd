@@ -7,9 +7,9 @@
 @if (!LoginState.IsLoggedIn)
 {
     <section class="dash dash--guest">
-        <h1 class="dash-title">Arnold</h1>
-        <p class="dash-sub">Logga in för att se din översikt.</p>
-        <div class="dash-actions">
+        <h1 class="ui-title">Arnold</h1>
+        <p class="ui-sub">Logga in för att se din översikt.</p>
+        <div class="ui-actions">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="OpenLoginDialog">Logga in</MudButton>
             <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large" OnClick="OpenRegisterDialog">Skapa konto</MudButton>
         </div>
@@ -19,13 +19,13 @@ else
 {
     <div class="dash">
         <header class="dash-head">
-            <h1 class="dash-title">Översikt</h1>
-            <span class="dash-sub">@DateTime.Now.ToString("dddd d MMMM", new System.Globalization.CultureInfo("sv-SE"))</span>
+            <h1 class="ui-title">Översikt</h1>
+            <span class="ui-sub">@DateTime.Now.ToString("dddd d MMMM", new System.Globalization.CultureInfo("sv-SE"))</span>
         </header>
 
         @if (IsLoading || dashboard is null)
         {
-            <MudSkeleton Class="dash-card" Height="150px" SkeletonType="SkeletonType.Rectangle" />
+            <MudSkeleton Class="ui-card" Height="150px" SkeletonType="SkeletonType.Rectangle" />
         }
         else
         {
@@ -34,18 +34,18 @@ else
             {
                 <section class="dash-hero" aria-label="@(activePass is not null ? "Pågående pass" : "Nästa pass")">
                     <div class="dash-hero__text">
-                        <span class="dash-label">@(activePass is not null ? "Pågående pass" : "Nästa pass")</span>
+                        <span class="ui-label">@(activePass is not null ? "Pågående pass" : "Nästa pass")</span>
                         <h2 class="dash-hero__title">@hero.PassName</h2>
                         <span class="dash-hero__meta">@hero.SplitName</span>
                     </div>
-                    <a class="dash-btn" href="@PassUrl(hero, startNew: activePass is null)">@(activePass is not null ? "Fortsätt" : "Starta")</a>
+                    <a class="ui-btn" href="@PassUrl(hero, startNew: activePass is null)">@(activePass is not null ? "Fortsätt" : "Starta")</a>
                 </section>
             }
             else
             {
-                <section class="dash-card dash-empty">
-                    <h2 class="dash-section-title">Ingen aktiv split</h2>
-                    <div class="dash-actions">
+                <section class="ui-card dash-empty">
+                    <h2 class="ui-section-title">Ingen aktiv split</h2>
+                    <div class="ui-actions">
                         <MudButton Href="/create-split" Variant="Variant.Filled" Color="Color.Primary">Skapa split</MudButton>
                         <MudButton Href="/TP/templates" Variant="Variant.Outlined" Color="Color.Primary">Mallar</MudButton>
                     </div>
@@ -53,30 +53,30 @@ else
             }
 
             <section class="dash-stats" aria-label="Aktivitet">
-                <div class="dash-card dash-stat"><span class="dash-label">7 dagar</span><span class="dash-stat__n">@dashboard.CompletedSessionsLast7Days</span></div>
-                <div class="dash-card dash-stat"><span class="dash-label">30 dagar</span><span class="dash-stat__n">@dashboard.CompletedSessionsLast30Days</span></div>
-                <div class="dash-card dash-stat"><span class="dash-label">Totalt</span><span class="dash-stat__n">@dashboard.TotalCompletedSessions</span></div>
+                <div class="ui-card dash-stat"><span class="ui-label">7 dagar</span><span class="dash-stat__n">@dashboard.CompletedSessionsLast7Days</span></div>
+                <div class="ui-card dash-stat"><span class="ui-label">30 dagar</span><span class="dash-stat__n">@dashboard.CompletedSessionsLast30Days</span></div>
+                <div class="ui-card dash-stat"><span class="ui-label">Totalt</span><span class="dash-stat__n">@dashboard.TotalCompletedSessions</span></div>
             </section>
 
             @if (dashboard.ActiveSplits.Count > 0)
             {
                 <section aria-labelledby="splits-t">
                     <div class="dash-row">
-                        <h2 id="splits-t" class="dash-section-title">Aktiva splits</h2>
-                        <a class="dash-link" href="/TP/my-splits">Hantera</a>
+                        <h2 id="splits-t" class="ui-section-title">Aktiva splits</h2>
+                        <a class="ui-link" href="/TP/my-splits">Hantera</a>
                     </div>
                     <div class="dash-splits">
                         @foreach (var split in dashboard.ActiveSplits)
                         {
-                            <article class="dash-card dash-split">
+                            <article class="ui-card dash-split">
                                 <div class="dash-row">
                                     <h3 class="dash-split__name">@split.SplitName</h3>
-                                    <span class="dash-sub">@split.Passes.Count pass</span>
+                                    <span class="ui-sub">@split.Passes.Count pass</span>
                                 </div>
                                 <div class="dash-chips">
                                     @foreach (var pass in split.Passes)
                                     {
-                                        <a class="dash-chip" href="@($"/TP/split/{split.SplitId}/pass/{pass.PassId}")">@pass.PassName</a>
+                                        <a class="ui-chip" href="@($"/TP/split/{split.SplitId}/pass/{pass.PassId}")">@pass.PassName</a>
                                     }
                                 </div>
                             </article>
