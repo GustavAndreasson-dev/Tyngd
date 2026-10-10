@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+// Login and register are CPU-heavy (password hashing) and open to guessing: cap them per client IP.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+});
+
 // Registrera MVC, Razor Pages och Blazor WebAssembly-komponenter
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -63,6 +73,7 @@ app.UseHttpsRedirection();
 app.UseMiddleware<ErrorNotificationMiddleware>();
 
 app.UseRouting();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
