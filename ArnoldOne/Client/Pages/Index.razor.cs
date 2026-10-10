@@ -1,7 +1,10 @@
 using ArnoldOne.Client.Services;
 using ArnoldOne.Client.Shared;
+using ArnoldOne.Client.Models;
 using ArnoldOne.Shared.DTOs;
+using ArnoldOne.Shared.TrainingPrograms;
 using ArnoldOne.Shared.Users;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -12,8 +15,12 @@ public partial class Index : PageComponentBase, IDisposable
     [Inject] private DashboardService DashboardService { get; set; } = default!;
     [Inject] private LoginState LoginState { get; set; } = default!;
     [Inject] private IDialogService DialogService { get; set; } = default!;
+    [Inject] private ILocalStorageService LocalStorage { get; set; } = default!;
+    [Inject] private SessionState Session { get; set; } = default!;
 
     private UserDashboardDto? dashboard;
+    private DashboardPass? activePass;
+    private DashboardPass? nextPass;
 
     protected override async Task OnInitializedAsync()
     {
@@ -24,10 +31,17 @@ public partial class Index : PageComponentBase, IDisposable
     private async Task LoadDashboardAsync()
     {
         dashboard = null;
+        activePass = null;
+        nextPass = null;
         if (!LoginState.IsLoggedIn)
             return;
 
-        await TryAsync(async () => dashboard = await DashboardService.GetAsync(), "Kunde inte ladda din träningsöversikt");
+        await TryAsync(async () =>
+        {
+            dashboard = await DashboardService.GetAsync();
+            activePass = await FindActivePassAsync(dashboard);
+            nextPass = activePass is null ? FindNextPass(dashboard) : null;
+        }, "Kunde inte ladda din träningsöversikt");
     }
 
     private async void OnLoginChanged()
@@ -42,8 +56,95 @@ public partial class Index : PageComponentBase, IDisposable
 
     private async Task OpenLoginDialog() => await DialogService.ShowAsync<LoginDialog>("Logga in");
     private async Task OpenRegisterDialog() => await DialogService.ShowAsync<RegisterDialog>("Skapa konto");
-    private static string PassUrl(DashboardSessionDto session) => $"/TP/split/{session.SplitId}/pass/{session.PassId}";
-    private static string FormatDate(DateTimeOffset value) => value.ToLocalTime().ToString("d MMM yyyy, HH:mm");
+    private static string PassUrl(DashboardPass pass, bool startNew = false) =>
+        $"/TP/split/{pass.SplitId}/pass/{pass.PassId}{(startNew ? "?new=1" : string.Empty)}";
+
+    private async Task<DashboardPass?> FindActivePassAsync(UserDashboardDto currentDashboard)
+    {
+        if (Session.IsActive)
+        {
+            var sessionPass = FindPass(currentDashboard, Session.ActiveSplitId, Session.ActivePassId);
+            if (sessionPass is not null)
+                return sessionPass;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        DashboardPass? latestPass = null;
+        DateTimeOffset? latestStartedAt = null;
+
+        foreach (var key in await LocalStorage.KeysAsync())
+        {
+            if (!TryParsePassKey(key, out var splitId, out var passId))
+                continue;
+
+            PassData? data;
+            try
+            {
+                data = await LocalStorage.GetItemAsync<PassData>(key);
+            }
+            catch
+            {
+                continue;
+            }
+
+            if (!PassResumePolicy.ShouldResume(data, now))
+                continue;
+
+            var storedPass = FindPass(currentDashboard, splitId, passId);
+            var startedAt = data!.StartedAtUtc!.Value;
+            if (storedPass is null || latestStartedAt.HasValue && startedAt <= latestStartedAt.Value)
+                continue;
+
+            latestPass = storedPass;
+            latestStartedAt = startedAt;
+        }
+
+        return latestPass;
+    }
+
+    private static DashboardPass? FindNextPass(UserDashboardDto currentDashboard)
+    {
+        var firstPass = currentDashboard.ActiveSplits
+            .SelectMany(split => split.Passes.Select(pass => ToDashboardPass(split, pass)))
+            .FirstOrDefault();
+
+        if (currentDashboard.LastCompletedSession is not { } lastSession)
+            return firstPass;
+
+        var split = currentDashboard.ActiveSplits.FirstOrDefault(item => item.SplitId == lastSession.SplitId);
+        if (split is null || split.Passes.Count == 0)
+            return firstPass;
+
+        var lastPassIndex = split.Passes.FindIndex(pass => pass.PassId == lastSession.PassId);
+        if (lastPassIndex < 0)
+            return firstPass;
+
+        var nextPassIndex = (lastPassIndex + 1) % split.Passes.Count;
+        return ToDashboardPass(split, split.Passes[nextPassIndex]);
+    }
+
+    private static DashboardPass? FindPass(UserDashboardDto currentDashboard, int splitId, int passId)
+    {
+        var split = currentDashboard.ActiveSplits.FirstOrDefault(item => item.SplitId == splitId);
+        var pass = split?.Passes.FirstOrDefault(item => item.PassId == passId);
+        return split is not null && pass is not null ? ToDashboardPass(split, pass) : null;
+    }
+
+    private static DashboardPass ToDashboardPass(TrainingSplit split, TrainingPass pass) =>
+        new(split.SplitId, split.SplitName, pass.PassId, pass.PassName);
+
+    private static bool TryParsePassKey(string key, out int splitId, out int passId)
+    {
+        splitId = 0;
+        passId = 0;
+        var parts = key.Split('-', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 3
+            && parts[0] == "pass"
+            && int.TryParse(parts[1], out splitId)
+            && int.TryParse(parts[2], out passId);
+    }
 
     public void Dispose() => LoginState.OnChange -= OnLoginChanged;
+
+    private sealed record DashboardPass(int SplitId, string SplitName, int PassId, string PassName);
 }
