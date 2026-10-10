@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using DbUserInfo = DbArnold.DbArnold.models.UserInfo;
 
 namespace ArnoldOne.Tests;
@@ -188,6 +189,8 @@ public class DashboardAndAdminControllerTests
     {
         var options = new DbContextOptionsBuilder<ArnoldContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            // The in-memory provider has no transactions; let the real transaction calls through.
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
         return new ArnoldContext(options);
     }

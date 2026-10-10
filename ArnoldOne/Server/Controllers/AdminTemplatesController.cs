@@ -2,7 +2,6 @@ using ArnoldOne.Shared.DTOs;
 using DbArnold.DbArnold.models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ArnoldOne.Server.Controllers;
 
@@ -66,7 +65,7 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
         if (request.Passes.Any(pass => pass.PassTemplateId.HasValue || pass.Exercises.Any(exercise => exercise.ExerciseTemplateId.HasValue)))
             return BadRequest("Nya mallar får inte innehålla befintliga id:n.");
 
-        await using var transaction = await BeginTransactionIfSupportedAsync();
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         var split = new SplitTemplate
         {
             SplitTemplateName = request.SplitTemplateName.Trim(),
@@ -75,8 +74,7 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
         _context.SplitTemplate.Add(split);
         await _context.SaveChangesAsync();
         await UpsertChildrenAsync(split.SplitTemplateId, request.Passes, archiveMissing: false);
-        if (transaction is not null)
-            await transaction.CommitAsync();
+        await transaction.CommitAsync();
         return CreatedAtAction(nameof(Get), new { templateId = split.SplitTemplateId }, split.SplitTemplateId);
     }
 
@@ -90,20 +88,18 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
         if (split is null)
             return NotFound();
 
-        await using var transaction = await BeginTransactionIfSupportedAsync();
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         split.SplitTemplateName = request.SplitTemplateName.Trim();
         split.Visability = request.IsVisible;
 
         try
         {
             await UpsertChildrenAsync(templateId, request.Passes, archiveMissing: true);
-            if (transaction is not null)
-                await transaction.CommitAsync();
+            await transaction.CommitAsync();
         }
         catch (InvalidOperationException exception)
         {
-            if (transaction is not null)
-                await transaction.RollbackAsync();
+            await transaction.RollbackAsync();
             return BadRequest(exception.Message);
         }
 
@@ -204,9 +200,6 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
 
         await _context.SaveChangesAsync();
     }
-
-    private async Task<IDbContextTransaction?> BeginTransactionIfSupportedAsync() =>
-        _context.Database.IsRelational() ? await _context.Database.BeginTransactionAsync() : null;
 
     private static string? Validate(UpsertAdminSplitTemplateRequest request)
     {
