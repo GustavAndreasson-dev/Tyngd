@@ -2,6 +2,7 @@ using ArnoldOne.Shared.DTOs;
 using DbArnold.DbArnold.models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using DbExercise = DbArnold.DbArnold.models.Exercise;
 
 namespace ArnoldOne.Server.Controllers;
 
@@ -42,8 +43,9 @@ public class SessionController : ApiControllerBase
         if (session.CompletedAtUtc is not null)
             return request.CompleteSession ? Ok() : Conflict("Sessionen är redan avslutad och kan inte ändras.");
 
+        var state = await LoadExerciseStateAsync(session, exerciseIds);
         foreach (var ex in request.Exercises)
-            await ReplaceExerciseLogAsync(session, ex.ExerciseId, ex.NoteText, ex.Weight, ex.Sets);
+            ReplaceExerciseLog(session, state, ex.ExerciseId, ex.NoteText, ex.Weight, ex.Sets);
 
         if (request.CompleteSession)
             session.CompletedAtUtc = DateTimeOffset.UtcNow;
@@ -139,7 +141,8 @@ public class SessionController : ApiControllerBase
         if (session.CompletedAtUtc is not null)
             return Conflict("Sessionen är redan avslutad och kan inte ändras.");
 
-        await ReplaceExerciseLogAsync(session, request.ExerciseId, request.NoteText, request.Weight, request.Sets);
+        var state = await LoadExerciseStateAsync(session, new[] { request.ExerciseId });
+        ReplaceExerciseLog(session, state, request.ExerciseId, request.NoteText, request.Weight, request.Sets);
 
         return await SaveOrConflictAsync();
     }
@@ -174,18 +177,30 @@ public class SessionController : ApiControllerBase
         }
     }
 
-    /// <summary>Ersätter övningens utförda set och anteckning, och sparar vikten som ny standardvikt.</summary>
-    private async Task ReplaceExerciseLogAsync(
-        Session session, int exerciseId, string noteText, decimal weight, IEnumerable<SaveSessionSetDto> sets)
-    {
-        var exerciseLog = await _context.ExerciseLog
-            .Include(e => e.SetLog)
-            .FirstOrDefaultAsync(e => e.SessionId == session.SessionId && e.ExerciseId == exerciseId);
+    private sealed record ExerciseState(Dictionary<int, ExerciseLog> Logs, Dictionary<int, DbExercise> Exercises);
 
-        if (exerciseLog is null)
+    /// <summary>Läser sessionens befintliga övningsloggar (med set) och övningarna i två frågor, oavsett antal övningar.</summary>
+    private async Task<ExerciseState> LoadExerciseStateAsync(Session session, IReadOnlyCollection<int> exerciseIds)
+    {
+        var logs = await _context.ExerciseLog
+            .Include(e => e.SetLog)
+            .Where(e => e.SessionId == session.SessionId && exerciseIds.Contains(e.ExerciseId))
+            .ToDictionaryAsync(e => e.ExerciseId);
+        var exercises = await _context.Exercise
+            .Where(e => exerciseIds.Contains(e.ExerciseId))
+            .ToDictionaryAsync(e => e.ExerciseId);
+        return new ExerciseState(logs, exercises);
+    }
+
+    /// <summary>Ersätter övningens utförda set och anteckning, och sparar vikten som ny standardvikt.</summary>
+    private void ReplaceExerciseLog(
+        Session session, ExerciseState state, int exerciseId, string noteText, decimal weight, IEnumerable<SaveSessionSetDto> sets)
+    {
+        if (!state.Logs.TryGetValue(exerciseId, out var exerciseLog))
         {
             exerciseLog = new ExerciseLog { SessionId = session.SessionId, ExerciseId = exerciseId };
             _context.ExerciseLog.Add(exerciseLog);
+            state.Logs[exerciseId] = exerciseLog;
         }
 
         exerciseLog.NoteText = noteText;
@@ -203,8 +218,7 @@ public class SessionController : ApiControllerBase
             });
         }
 
-        var exercise = await _context.Exercise.FindAsync(exerciseId);
-        if (exercise is not null)
+        if (state.Exercises.TryGetValue(exerciseId, out var exercise))
             exercise.DefaultWeight = weight;
     }
 
