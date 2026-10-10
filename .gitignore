@@ -367,3 +367,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /.github/copilot-instructions.md
+
+# Dev settings hold the DB password; use user-secrets or this local file
+**/appsettings.Development.json
