@@ -15,12 +15,6 @@ public abstract class AdminApiControllerBase : ApiControllerBase
             .Select(user => user.Roles)
             .SingleOrDefaultAsync();
 
-        return ParseRoles(roles).Contains(AppRoles.Admin, StringComparer.OrdinalIgnoreCase);
+        return AppRoles.Parse(roles).Contains(AppRoles.Admin, StringComparer.OrdinalIgnoreCase);
     }
-
-    protected static List<string> ParseRoles(string? roles) =>
-        roles?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList()
-        ?? new List<string>();
 }

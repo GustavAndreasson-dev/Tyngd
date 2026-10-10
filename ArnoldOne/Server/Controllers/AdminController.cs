@@ -78,7 +78,7 @@ public sealed class AdminController : AdminApiControllerBase
                 UserName = user.UserName,
                 Email = user.Email,
                 CreatedAt = user.CreatedAt,
-                Roles = ParseRoles(user.Roles),
+                Roles = AppRoles.Parse(user.Roles),
             }).ToList(),
             RecentSessions = recentSessions,
         });
@@ -129,7 +129,7 @@ public sealed class AdminController : AdminApiControllerBase
                 UserName = user.UserName,
                 Email = user.Email,
                 CreatedAt = user.CreatedAt,
-                Roles = ParseRoles(user.Roles),
+                Roles = AppRoles.Parse(user.Roles),
             }).ToList(),
         });
     }
@@ -144,7 +144,7 @@ public sealed class AdminController : AdminApiControllerBase
         if (user is null)
             return NotFound();
 
-        var roles = ParseRoles(user.Roles);
+        var roles = AppRoles.Parse(user.Roles);
         if (request.IsAdmin)
         {
             if (!roles.Contains(AppRoles.Admin, StringComparer.OrdinalIgnoreCase))

@@ -100,14 +100,13 @@ public class AuthController : ControllerBase
         var key     = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var creds   = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expiry  = DateTime.UtcNow.AddMinutes(double.Parse(_config["Jwt:ExpiryMinutes"]!));
-        var roles   = user.Roles.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, user.UserName),
         };
-        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r.Trim())));
+        claims.AddRange(AppRoles.Parse(user.Roles).Select(r => new Claim(ClaimTypes.Role, r)));
 
         var token = new JwtSecurityToken(
             issuer:   _config["Jwt:Issuer"],
@@ -154,7 +153,7 @@ public class AuthController : ControllerBase
             UserName  = user.UserName,
             Email     = user.Email,
             CreatedAt = user.CreatedAt,
-            Roles     = user.Roles.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(r => r.Trim()).ToList(),
+            Roles     = AppRoles.Parse(user.Roles),
         };
 
     private const int LegacyIterations = 100_000;
