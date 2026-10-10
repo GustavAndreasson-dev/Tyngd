@@ -31,18 +31,7 @@ public sealed class DashboardController : ApiControllerBase
 
         var result = new UserDashboardDto
         {
-            ActiveSplits = splits.Select(split => new TrainingSplit
-            {
-                SplitId = split.SplitId,
-                SplitName = split.SplitName,
-                UserId = split.UserId.ToString(),
-                Passes = split.Pass.Select(pass => new TrainingPass
-                {
-                    PassId = pass.PassId,
-                    SplitId = split.SplitId,
-                    PassName = pass.PassName,
-                }).ToList(),
-            }).ToList(),
+            ActiveSplits = splits.Select(split => split.ToTrainingSplit()).ToList(),
             CompletedSessionsLast7Days = await completed.CountAsync(session => session.CompletedAtUtc >= sevenDaysAgo),
             CompletedSessionsLast30Days = await completed.CountAsync(session => session.CompletedAtUtc >= thirtyDaysAgo),
             TotalCompletedSessions = await completed.CountAsync(),
