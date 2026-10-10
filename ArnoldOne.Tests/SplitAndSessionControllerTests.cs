@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using ArnoldOne.Server.Controllers;
 using ArnoldOne.Shared.DTOs;
 using DbArnold.DbArnold.models;
@@ -208,6 +208,59 @@ public class SplitAndSessionControllerTests
         });
 
         Assert.Equal(2, await context.Session.CountAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData(-1, 10)]
+    [InlineData(10000, 10)]
+    [InlineData(50, 501)]
+    public async Task Upsert_rejects_out_of_range_weight_or_reps(double weight, int reps)
+    {
+        await using var context = CreateContext();
+        var userId = Guid.NewGuid();
+        var split = CreateSplit(userId);
+        context.Add(split);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var pass = split.Pass.Single();
+        var controller = WithUser(new SessionController(context), userId);
+
+        var result = await controller.UpsertExercise(new UpsertExerciseRequest
+        {
+            SessionKey = Guid.NewGuid(), PassId = pass.PassId, Date = new DateOnly(2026, 7, 15),
+            StartedAtUtc = DateTimeOffset.UtcNow, ExerciseId = pass.Exercise.First().ExerciseId,
+            Weight = (decimal)weight,
+            Sets = [new SaveSessionSetDto { SetIndex = 0, Reps = reps, IsDone = true, Weight = (decimal)weight }],
+        });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(0, await context.Session.CountAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Saving_the_same_exercise_twice_replaces_sets_without_duplicating_logs()
+    {
+        await using var context = CreateContext();
+        var userId = Guid.NewGuid();
+        var split = CreateSplit(userId);
+        context.Add(split);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var pass = split.Pass.Single();
+        var controller = WithUser(new SessionController(context), userId);
+        var request = new UpsertExerciseRequest
+        {
+            SessionKey = Guid.NewGuid(), PassId = pass.PassId, Date = new DateOnly(2026, 7, 15),
+            StartedAtUtc = DateTimeOffset.UtcNow, ExerciseId = pass.Exercise.First().ExerciseId, Weight = 60,
+            Sets = [new SaveSessionSetDto { SetIndex = 0, Reps = 8, IsDone = true, Weight = 60 }],
+        };
+
+        Assert.IsType<OkResult>(await controller.UpsertExercise(request));
+        request.Sets = [new SaveSessionSetDto { SetIndex = 0, Reps = 9, IsDone = true, Weight = 62.5m }];
+        Assert.IsType<OkResult>(await controller.UpsertExercise(request));
+
+        Assert.Equal(1, await context.Session.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(1, await context.ExerciseLog.CountAsync(TestContext.Current.CancellationToken));
+        var set = await context.SetLog.SingleAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(9, set.Reps);
     }
 
     private static ArnoldContext CreateContext()
