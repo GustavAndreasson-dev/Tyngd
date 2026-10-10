@@ -36,6 +36,7 @@ public partial class ArnoldContext
             entity.Property(e => e.SourceHash).IsRequired().HasMaxLength(64).IsFixedLength().IsUnicode(false);
             entity.Property(e => e.Category).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Muscles).IsRequired().HasMaxLength(400);
+            entity.Property(e => e.MusclesSecondary).IsRequired().HasMaxLength(400).HasDefaultValue("");
             entity.Property(e => e.Equipment).IsRequired().HasMaxLength(400);
             entity.Property(e => e.Aliases).IsRequired().HasMaxLength(1000);
             entity.Property(e => e.ImageUrl).HasMaxLength(400);

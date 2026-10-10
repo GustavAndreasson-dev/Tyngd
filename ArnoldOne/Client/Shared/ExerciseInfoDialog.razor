@@ -37,6 +37,9 @@
                     <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@item</MudChip>
                 }
             </div>
+            <div class="mb-3">
+                <MuscleMap Load="_load" EmptyText="wger anger inga muskler för övningen." />
+            </div>
             @if (string.IsNullOrWhiteSpace(_exercise.Description))
             {
                 <MudText Typo="Typo.body2" Class="mud-text-secondary">Ingen beskrivning finns.</MudText>
@@ -71,6 +74,7 @@
     [Parameter] public int CatalogExerciseId { get; set; }
 
     private CatalogExerciseDetailDto? _exercise;
+    private Dictionary<string, double>? _load;
     private string? _error;
 
     protected override async Task OnInitializedAsync()
@@ -80,6 +84,8 @@
             _exercise = await CatalogService.GetAsync(CatalogExerciseId);
             if (_exercise is null)
                 _error = "Övningen hittades inte.";
+            else
+                _load = MuscleLoad.Sum([(_exercise.PrimaryMuscles, _exercise.SecondaryMuscles)]);
         }
         catch (HttpRequestException)
         {

@@ -9,6 +9,7 @@
     [SourceHash]        CHAR (64)        NOT NULL,
     [Category]          NVARCHAR (50)    NOT NULL,
     [Muscles]           NVARCHAR (400)   NOT NULL,
+    [MusclesSecondary]  NVARCHAR (400)   CONSTRAINT [DF_ExerciseCatalog_MusclesSecondary] DEFAULT (N'') NOT NULL,
     [Equipment]         NVARCHAR (400)   NOT NULL,
     [Aliases]           NVARCHAR (1000)  NOT NULL,
     [ImageUrl]          NVARCHAR (400)   NULL,

@@ -61,6 +61,28 @@ public partial class PassPage : IDisposable
     [Inject]
     private IDialogService DialogService { get; set; } = default!;
 
+    [Inject]
+    private CatalogService CatalogService { get; set; } = default!;
+
+    private bool showMuscles;
+    private Dictionary<string, double>? passMuscleLoad;
+
+    private async Task ToggleMuscles()
+    {
+        showMuscles = !showMuscles;
+        if (!showMuscles || passMuscleLoad is not null || pass is null)
+            return;
+
+        try
+        {
+            passMuscleLoad = await CatalogService.MuscleLoadForAsync(pass.Exercises.Select(exercise => exercise.CatalogExerciseId));
+        }
+        catch (HttpRequestException)
+        {
+            passMuscleLoad = new();
+        }
+    }
+
     private Task ShowExerciseInfo(int catalogExerciseId) =>
         DialogService.ShowAsync<ExerciseInfoDialog>(null,
             new DialogParameters<ExerciseInfoDialog> { { dialog => dialog.CatalogExerciseId, catalogExerciseId } },

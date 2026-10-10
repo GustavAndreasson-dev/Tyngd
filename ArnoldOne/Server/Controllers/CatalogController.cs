@@ -15,7 +15,7 @@ public sealed class CatalogController(ArnoldContext context) : ApiControllerBase
     {
         var rows = await context.ExerciseCatalog.AsNoTracking()
             .Where(row => row.IsActive)
-            .Select(row => new { row.CatalogExerciseId, row.NameSv, row.NameEn, row.Aliases, row.Category, row.Muscles, row.Equipment, row.ImageUrl })
+            .Select(row => new { row.CatalogExerciseId, row.NameSv, row.NameEn, row.Aliases, row.Category, row.Muscles, row.MusclesSecondary, row.Equipment, row.ImageUrl })
             .ToListAsync();
 
         return Ok(rows
@@ -26,7 +26,9 @@ public sealed class CatalogController(ArnoldContext context) : ApiControllerBase
                 NameEn = row.NameEn,
                 Aliases = row.Aliases.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList(),
                 Category = CatalogNames.Sv(row.Category),
-                Muscles = CatalogNames.SvList(row.Muscles),
+                Muscles = CatalogNames.SvList(row.Muscles + "," + row.MusclesSecondary),
+                PrimaryMuscles = Muscles.ParseKeys(row.Muscles),
+                SecondaryMuscles = Muscles.ParseKeys(row.MusclesSecondary),
                 Equipment = CatalogNames.SvList(row.Equipment),
                 ImageUrl = row.ImageUrl,
             })
@@ -51,7 +53,9 @@ public sealed class CatalogController(ArnoldContext context) : ApiControllerBase
             NameEn = row.NameEn,
             Description = CatalogText.ToPlainText(hasSwedish && !string.IsNullOrWhiteSpace(row.DescriptionSv) ? row.DescriptionSv : row.DescriptionEn),
             Category = CatalogNames.Sv(row.Category),
-            Muscles = CatalogNames.SvList(row.Muscles),
+            Muscles = CatalogNames.SvList(row.Muscles + "," + row.MusclesSecondary),
+            PrimaryMuscles = Muscles.ParseKeys(row.Muscles),
+            SecondaryMuscles = Muscles.ParseKeys(row.MusclesSecondary),
             Equipment = CatalogNames.SvList(row.Equipment),
             ImageUrl = row.ImageUrl,
             License = row.License,

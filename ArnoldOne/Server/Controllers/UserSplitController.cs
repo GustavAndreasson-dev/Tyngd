@@ -2,6 +2,7 @@ using ArnoldOne.Shared.DTOs;
 using ArnoldOne.Shared.TrainingPrograms;
 using DbArnold.DbArnold.models;
 using ArnoldOne.Server.Catalog;
+using ArnoldOne.Shared.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DbExercise = DbArnold.DbArnold.models.Exercise;
@@ -71,6 +72,29 @@ public class UserSplitController : ApiControllerBase
         };
 
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Summerad muskelbelastning för en split: synliga övningar i synliga pass som är kopplade till katalogen.
+    /// Primär muskel ger 1 per övning, sekundär 0,5.
+    /// </summary>
+    [HttpGet("{splitId:int}/muscles")]
+    public async Task<ActionResult<Dictionary<string, double>>> GetSplitMuscles(int splitId)
+    {
+        var userId = CurrentUserId;
+        if (!await _context.Split.AnyAsync(s => s.SplitId == splitId && s.UserId == userId && s.Visability))
+            return NotFound();
+
+        var rows = await _context.Exercise
+            .Where(e => e.Visability
+                && e.Pass.SplitId == splitId
+                && e.Pass.Visability == 1
+                && e.CatalogExercise != null)
+            .Select(e => new { e.CatalogExercise!.Muscles, e.CatalogExercise.MusclesSecondary })
+            .ToListAsync();
+
+        return Ok(MuscleLoad.Sum(rows.Select(row =>
+            ((IEnumerable<string>)Muscles.ParseKeys(row.Muscles), (IEnumerable<string>)Muscles.ParseKeys(row.MusclesSecondary)))));
     }
 
     /// <summary>Returnerar SplitTemplateId för alla aktiva splits för inloggad användare.</summary>
