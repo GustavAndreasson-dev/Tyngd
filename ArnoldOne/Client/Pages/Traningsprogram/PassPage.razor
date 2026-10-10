@@ -71,6 +71,15 @@
                     }
                 </div>
 
+                <MudTextField T="string"
+                              Label="Anteckningar"
+                              Lines="2"
+                              Variant="Variant.Outlined"
+                              Value="@GetNote(exercise.ExerciseId)"
+                              ValueChanged="v => SetNote(exercise.ExerciseId, v)"
+                              OnBlur="OnNoteChanged"
+                              Class="note-field" />
+
                 @{ var points = ActiveProgress; }
                 @if (points.Count >= 2)
                 {
@@ -85,15 +94,6 @@
                         </svg>
                     </div>
                 }
-
-                <MudTextField T="string"
-                              Label="Anteckningar"
-                              Lines="2"
-                              Variant="Variant.Outlined"
-                              Value="@GetNote(exercise.ExerciseId)"
-                              ValueChanged="v => SetNote(exercise.ExerciseId, v)"
-                              OnBlur="OnNoteChanged"
-                              Class="note-field" />
             </section>
         }
     </div>

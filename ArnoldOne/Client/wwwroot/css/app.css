@@ -109,5 +109,17 @@ body, .mud-typography, .mud-button-root, .mud-input {
 
 .mud-main-content { padding-inline: 1rem; }
 @media (min-width: 960px) { .mud-main-content { padding-inline: 2rem; } }
-.mud-switch-track { opacity: 1 !important; background-color: var(--mud-palette-lines-inputs) !important; }
-.mud-switch-base.mud-checked + .mud-switch-track { background-color: var(--mud-palette-primary) !important; opacity: .5 !important; }
+
+/* ---------- Toggle switch ---------- */
+.ui-switch { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 48px; cursor: pointer; font-weight: 600; }
+.ui-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.ui-switch__track { position: relative; flex: 0 0 auto; width: 48px; height: 28px; border-radius: 14px; background: var(--mud-palette-lines-inputs); transition: background .2s; }
+.ui-switch__track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .2s; }
+.ui-switch input:checked + .ui-switch__track { background: var(--mud-palette-primary); }
+.ui-switch input:checked + .ui-switch__track::after { transform: translateX(20px); }
+.ui-switch input:focus-visible + .ui-switch__track { outline: 2px solid var(--mud-palette-primary); outline-offset: 2px; }
+
+/* ---------- Fullscreen / installed app: keep content out of notch and system bars ---------- */
+.mud-appbar { padding-top: env(safe-area-inset-top); height: calc(64px + env(safe-area-inset-top)) !important; }
+.mud-main-content { padding-top: calc(64px + env(safe-area-inset-top)) !important; }
+@media (max-width: 599.95px) { .mud-appbar { height: calc(56px + env(safe-area-inset-top)) !important; } .mud-main-content { padding-top: calc(56px + env(safe-area-inset-top)) !important; } }

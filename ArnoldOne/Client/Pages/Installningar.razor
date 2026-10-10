@@ -3,7 +3,7 @@
 
 <PageTitle>Inställningar</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-6">Inställningar</MudText>
+<MudText Typo="Typo.h4" Class="mb-6 pt-2">Inställningar</MudText>
 
 @if (!string.IsNullOrWhiteSpace(successMessage))
 {
@@ -13,20 +13,20 @@
 }
 
 <MudPaper Class="pa-4 mb-4" Elevation="2">
-    <MudSwitch T="bool"
-               Value="@ThemeState.IsDarkMode"
-               ValueChanged="OnDarkModeChanged"
-               Color="Color.Primary"
-               Label="Mörkt läge" />
+    <label class="ui-switch">
+        Mörkt läge
+        <input type="checkbox" role="switch" checked="@ThemeState.IsDarkMode" @onchange="e => OnDarkModeChanged((bool)e.Value!)" />
+        <span class="ui-switch__track"></span>
+    </label>
 </MudPaper>
 
 <MudPaper Class="pa-4 mb-4" Elevation="2">
     <MudText Typo="Typo.subtitle1" Class="mb-3">Vilotimer</MudText>
-    <MudSwitch T="bool"
-               Value="@RestTimer.IsEnabled"
-               ValueChanged="OnRestTimerEnabledChanged"
-               Color="Color.Primary"
-               Label="Aktivera vilotimer" />
+    <label class="ui-switch">
+        Aktivera vilotimer
+        <input type="checkbox" role="switch" checked="@RestTimer.IsEnabled" @onchange="e => OnRestTimerEnabledChanged((bool)e.Value!)" />
+        <span class="ui-switch__track"></span>
+    </label>
     <MudNumericField T="int"
                      Label="Vilotid (minuter)"
                      Value="@_restTimerMinutes"
