@@ -3,8 +3,6 @@ using ArnoldOne.Shared.TrainingPrograms;
 using DbArnold.DbArnold.models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
-using System.Diagnostics;
 using DbExercise = DbArnold.DbArnold.models.Exercise;
 using SharedExercise = ArnoldOne.Shared.TrainingPrograms.Exercise;
 
@@ -14,12 +12,10 @@ namespace ArnoldOne.Server.Controllers;
 public class UserSplitController : ApiControllerBase
 {
     private readonly ArnoldContext _context;
-    private readonly ILogger<UserSplitController> _logger;
 
-    public UserSplitController(ArnoldContext context, ILogger<UserSplitController>? logger = null)
+    public UserSplitController(ArnoldContext context)
     {
         _context = context;
-        _logger = logger ?? NullLogger<UserSplitController>.Instance;
     }
 
     /// <summary>Returnerar alla aktiva splits för inloggad användare med riktiga Pass.PassId.</summary>
@@ -331,8 +327,6 @@ public class UserSplitController : ApiControllerBase
     [HttpGet("my/{splitId:int}/full")]
     public async Task<ActionResult<CreateSplitRequest>> GetMySplitFull(int splitId)
     {
-        var started = Stopwatch.GetTimestamp();
-        var cancellationToken = HttpContext?.RequestAborted ?? CancellationToken.None;
         var result = await _context.Split
             .AsNoTracking()
             .Where(s => s.SplitId == splitId
@@ -364,18 +358,7 @@ public class UserSplitController : ApiControllerBase
                             }).ToList(),
                     }).ToList(),
             })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var elapsed = Stopwatch.GetElapsedTime(started);
-        if (HttpContext is not null)
-            Response.Headers["Server-Timing"] = $"editSplit;dur={elapsed.TotalMilliseconds:0.0}";
-
-        _logger.LogInformation(
-            "Loaded editable split {SplitId} with {PassCount} passes and {ExerciseCount} exercises in {ElapsedMilliseconds} ms",
-            splitId,
-            result?.Passes.Count ?? 0,
-            result?.Passes.Sum(pass => pass.Exercises.Count) ?? 0,
-            elapsed.TotalMilliseconds);
+            .FirstOrDefaultAsync(HttpContext.RequestAborted);
 
         if (result is null)
             return NotFound();
