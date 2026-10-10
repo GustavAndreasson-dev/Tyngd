@@ -7,6 +7,8 @@ public sealed class ErrorNotificationOptions
     public bool Enabled { get; set; }
     public string[] To { get; set; } = [];
     public int ThrottleMinutes { get; set; } = 10;
+    /// <summary>Hard cap on emails per hour across all errors; stops floods of unique messages. 0 = no cap.</summary>
+    public int MaxPerHour { get; set; } = 20;
     public SmtpOptions Smtp { get; set; } = new();
 
     public sealed class SmtpOptions

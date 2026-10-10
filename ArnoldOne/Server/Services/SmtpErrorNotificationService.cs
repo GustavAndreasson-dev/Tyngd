@@ -11,6 +11,9 @@ public sealed class SmtpErrorNotificationService : IErrorNotificationService
     private readonly IOptionsMonitor<ErrorNotificationOptions> _options;
     private readonly ILogger<SmtpErrorNotificationService> _logger;
     private readonly ConcurrentDictionary<string, DateTimeOffset> _lastSentByFingerprint = new();
+    private readonly object _capLock = new();
+    private DateTimeOffset _capWindowStart = DateTimeOffset.MinValue;
+    private int _sentInWindow;
 
     public SmtpErrorNotificationService(
         IOptionsMonitor<ErrorNotificationOptions> options,
@@ -38,7 +41,7 @@ public sealed class SmtpErrorNotificationService : IErrorNotificationService
             return;
         }
 
-        if (IsThrottled(message, options.ThrottleMinutes))
+        if (IsThrottled(message, options.ThrottleMinutes) || IsOverHourlyCap(options.MaxPerHour))
             return;
 
         using var mailMessage = new MailMessage
@@ -85,13 +88,48 @@ public sealed class SmtpErrorNotificationService : IErrorNotificationService
             return true;
         }
 
+        // Unique messages would otherwise grow this dictionary forever.
+        if (_lastSentByFingerprint.Count >= MaxTrackedFingerprints)
+        {
+            var cutoff = now - TimeSpan.FromMinutes(throttleMinutes);
+            foreach (var entry in _lastSentByFingerprint.Where(e => e.Value < cutoff))
+                _lastSentByFingerprint.TryRemove(entry.Key, out _);
+            if (_lastSentByFingerprint.Count >= MaxTrackedFingerprints)
+                _lastSentByFingerprint.Clear();
+        }
+
         _lastSentByFingerprint[fingerprint] = now;
         return false;
     }
 
+    private const int MaxTrackedFingerprints = 1000;
+
+    private bool IsOverHourlyCap(int maxPerHour)
+    {
+        if (maxPerHour <= 0)
+            return false;
+
+        lock (_capLock)
+        {
+            var now = DateTimeOffset.UtcNow;
+            if (now - _capWindowStart >= TimeSpan.FromHours(1))
+            {
+                _capWindowStart = now;
+                _sentInWindow = 0;
+            }
+
+            if (_sentInWindow >= maxPerHour)
+                return true;
+
+            _sentInWindow++;
+            return false;
+        }
+    }
+
     private static string BuildSubject(ErrorNotificationMessage message)
     {
-        var subject = $"ArnoldOne - {message.Source} error - {message.ExceptionType}";
+        // ExceptionType comes from anonymous clients; CR/LF in a subject would throw.
+        var subject = $"ArnoldOne - {message.Source} error - {message.ExceptionType}".ReplaceLineEndings(" ");
         return subject.Length <= 180 ? subject : subject[..180];
     }
 
