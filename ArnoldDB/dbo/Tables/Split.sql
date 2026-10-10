@@ -8,3 +8,9 @@
     CONSTRAINT [FK_Split_UserInfo] FOREIGN KEY ([UserId]) REFERENCES [dbo].[UserInfo] ([UserId])
 );
 
+
+GO
+
+CREATE UNIQUE INDEX [UX_Split_UserId_SplitTemplateId]
+    ON [dbo].[Split]([UserId], [SplitTemplateId])
+    WHERE [SplitTemplateId] IS NOT NULL;

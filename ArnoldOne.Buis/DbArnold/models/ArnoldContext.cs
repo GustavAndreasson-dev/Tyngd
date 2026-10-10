@@ -153,6 +153,10 @@ public partial class ArnoldContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.Visability).HasDefaultValue(true, "DF_Split_Visability");
 
+            entity.HasIndex(e => new { e.UserId, e.SplitTemplateId }, "UX_Split_UserId_SplitTemplateId")
+                .IsUnique()
+                .HasFilter("[SplitTemplateId] IS NOT NULL");
+
             entity.HasOne(d => d.User).WithMany(p => p.Split)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
