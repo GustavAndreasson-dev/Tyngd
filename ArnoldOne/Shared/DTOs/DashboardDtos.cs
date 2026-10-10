@@ -8,8 +8,13 @@ public sealed class UserDashboardDto
     public int CompletedSessionsLast7Days { get; set; }
     public int CompletedSessionsLast30Days { get; set; }
     public int TotalCompletedSessions { get; set; }
+    /// <summary>Slutförandetid för pass de senaste 7 dagarna (veckovyn).</summary>
+    public List<DateTimeOffset> RecentCompletedAtUtc { get; set; } = new();
     public DashboardSessionDto? LastCompletedSession { get; set; }
 }
+
+/// <summary>En punkt i viktutvecklingen för en övning.</summary>
+public sealed record ExerciseProgressPointDto(DateOnly Date, decimal Weight);
 
 public sealed class DashboardSessionDto
 {
