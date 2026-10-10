@@ -16,9 +16,6 @@ public sealed class AdminController : AdminApiControllerBase
     [HttpGet("overview")]
     public async Task<ActionResult<AdminOverviewDto>> GetOverview()
     {
-        if (!await IsCurrentAdminAsync(_context))
-            return Forbid();
-
         var now = DateTimeOffset.UtcNow;
         var sevenDaysAgo = now.AddDays(-7);
         var thirtyDaysAgo = now.AddDays(-30);
@@ -78,7 +75,7 @@ public sealed class AdminController : AdminApiControllerBase
                 UserName = user.UserName,
                 Email = user.Email,
                 CreatedAt = user.CreatedAt,
-                Roles = ParseRoles(user.Roles),
+                Roles = AppRoles.Parse(user.Roles),
             }).ToList(),
             RecentSessions = recentSessions,
         });
@@ -90,9 +87,6 @@ public sealed class AdminController : AdminApiControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25)
     {
-        if (!await IsCurrentAdminAsync(_context))
-            return Forbid();
-
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
         var query = _context.UserInfo.AsNoTracking();
@@ -129,7 +123,7 @@ public sealed class AdminController : AdminApiControllerBase
                 UserName = user.UserName,
                 Email = user.Email,
                 CreatedAt = user.CreatedAt,
-                Roles = ParseRoles(user.Roles),
+                Roles = AppRoles.Parse(user.Roles),
             }).ToList(),
         });
     }
@@ -137,14 +131,11 @@ public sealed class AdminController : AdminApiControllerBase
     [HttpPut("users/{userId:guid}/admin-role")]
     public async Task<IActionResult> SetAdminRole(Guid userId, SetUserAdminRequest request)
     {
-        if (!await IsCurrentAdminAsync(_context))
-            return Forbid();
-
         var user = await _context.UserInfo.FindAsync(userId);
         if (user is null)
             return NotFound();
 
-        var roles = ParseRoles(user.Roles);
+        var roles = AppRoles.Parse(user.Roles);
         if (request.IsAdmin)
         {
             if (!roles.Contains(AppRoles.Admin, StringComparer.OrdinalIgnoreCase))
