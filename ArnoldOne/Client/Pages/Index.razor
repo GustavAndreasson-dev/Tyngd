@@ -81,7 +81,10 @@ else
                 <section aria-labelledby="splits-t">
                     <div class="dash-row">
                         <h2 id="splits-t" class="ui-section-title">Aktiva splits</h2>
-                        <a class="ui-link" href="/TP/my-splits">Hantera</a>
+                        <span class="ui-actions">
+                            <a class="ui-link" href="/create-split">Ny split</a>
+                            <a class="ui-link" href="/TP/my-splits">Hantera</a>
+                        </span>
                     </div>
                     <div class="dash-splits">
                         @foreach (var split in dashboard.ActiveSplits)

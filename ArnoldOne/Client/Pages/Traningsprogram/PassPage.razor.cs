@@ -61,6 +61,7 @@ public partial class PassPage : IDisposable
     private TrainingPassTemplate? pass;
     private int activeIndex;
     private int restRemaining;
+    private int _handlerIndex = -1;
     private readonly Dictionary<int, List<ArnoldOne.Shared.DTOs.ExerciseProgressPointDto>> _progress = new();
 
     private Dictionary<int, decimal> _weights = new();
@@ -131,7 +132,12 @@ public partial class PassPage : IDisposable
             StateHasChanged();
         }
 
-        await JSRuntime.InvokeVoidAsync("arnoldOne.attachNoteKeyHandler");
+        // Vilotimern renderar om varje sekund; koppla bara när övningen byts.
+        if (_handlerIndex != activeIndex)
+        {
+            _handlerIndex = activeIndex;
+            await JSRuntime.InvokeVoidAsync("arnoldOne.attachNoteKeyHandler");
+        }
         await EnsureProgressLoadedAsync();
     }
 
