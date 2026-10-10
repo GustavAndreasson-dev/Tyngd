@@ -56,7 +56,17 @@ public partial class Index : PageComponentBase, IDisposable
 
     private async Task OpenLoginDialog() => await DialogService.ShowAsync<LoginDialog>("Logga in");
     private async Task OpenRegisterDialog() => await DialogService.ShowAsync<RegisterDialog>("Skapa konto");
-    private static readonly string[] DayLabels = ["M", "T", "O", "T", "F", "L", "S"];
+    // Egna namn: WASM har ingen sv-SE-kulturdata, så ToString("dddd") blir engelska.
+    private static readonly string[] DayNames = ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"];
+    private static readonly string[] MonthNames = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
+
+    private static string Today()
+    {
+        var now = DateTime.Now;
+        return $"{DayNames[(int)now.DayOfWeek]} {now.Day} {MonthNames[now.Month - 1]}";
+    }
+
+    private static readonly string[] DayLabels =["M", "T", "O", "T", "F", "L", "S"];
 
     /// <summary>Måndag–söndag för innevarande vecka, med markering för dagar där ett pass slutförts.</summary>
     private IEnumerable<(string Label, bool Done, bool Today)> WeekDays()

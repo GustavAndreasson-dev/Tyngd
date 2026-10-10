@@ -14,7 +14,16 @@
 }
 
 @code {
-    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
-    private void OnLocationChanged(object? s, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
-    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        LoginState.OnChange += Refresh;
+    }
+    private void OnLocationChanged(object? s, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => Refresh();
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+        LoginState.OnChange -= Refresh;
+    }
 }

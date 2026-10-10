@@ -20,12 +20,18 @@ else
     <div class="dash">
         <header class="dash-head">
             <h1 class="ui-title">Översikt</h1>
-            <span class="ui-sub">@DateTime.Now.ToString("dddd d MMMM", new System.Globalization.CultureInfo("sv-SE"))</span>
+            <span class="ui-sub">@Today()</span>
         </header>
 
         @if (IsLoading || dashboard is null)
         {
-            <MudSkeleton Class="ui-card" Height="150px" SkeletonType="SkeletonType.Rectangle" />
+            <MudSkeleton Class="dash-skel" Height="140px" SkeletonType="SkeletonType.Rectangle" />
+            <div class="dash-stats">
+                <MudSkeleton Class="dash-skel" Height="96px" SkeletonType="SkeletonType.Rectangle" />
+                <MudSkeleton Class="dash-skel" Height="96px" SkeletonType="SkeletonType.Rectangle" />
+                <MudSkeleton Class="dash-skel" Height="96px" SkeletonType="SkeletonType.Rectangle" />
+            </div>
+            <MudSkeleton Class="dash-skel" Height="120px" SkeletonType="SkeletonType.Rectangle" />
         }
         else
         {

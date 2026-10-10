@@ -64,7 +64,7 @@
                                 <span class="pass-set__count">@((int)GetReps(currentExercise.ExerciseId, setIndex))<small>reps</small></span>
                                 <button type="button" class="pass-step" aria-label="Öka reps" @onclick="() => AdjustReps(currentExercise.ExerciseId, setIndex, 1)">+</button>
                             </div>
-                            <button type="button" class="pass-check" aria-pressed="@done" aria-label="@(done ? "Ångra set klart" : "Markera set klart")" @onclick="() => ToggleSet(currentExercise.ExerciseId, setIndex)">
+                            <button type="button" class="pass-check @(done ? "pass-check--on" : "")" aria-pressed="@(done ? "true" : "false")" aria-label="@(done ? "Ångra set klart" : "Markera set klart")" @onclick="() => ToggleSet(currentExercise.ExerciseId, setIndex)">
                                 <MudIcon Icon="@Icons.Material.Filled.Check" />
                             </button>
                         </div>
