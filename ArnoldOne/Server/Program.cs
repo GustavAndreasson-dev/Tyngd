@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.ResponseCompression;
 using ArnoldOne.Server;
+using ArnoldOne.Server.Catalog;
 using ArnoldOne.Server.Middleware;
 using ArnoldOne.Server.Services;
 using DbArnold.DbArnold.models;
@@ -18,6 +19,13 @@ builder.Services.AddDbContext<ArnoldContext>(options =>
 builder.Services.Configure<ErrorNotificationOptions>(
     builder.Configuration.GetSection(ErrorNotificationOptions.SectionName));
 builder.Services.AddSingleton<IErrorNotificationService, SmtpErrorNotificationService>();
+
+builder.Services.AddSingleton(CatalogSeed.LoadEmbedded());
+builder.Services.AddHttpClient<WgerCatalogSync>(client =>
+{
+    client.BaseAddress = new Uri("https://wger.de/");
+    client.Timeout = TimeSpan.FromMinutes(2);
+});
 
 // JWT-autentisering
 var jwtKey = builder.Configuration["Jwt:Key"];
