@@ -56,6 +56,17 @@ public partial class Index : PageComponentBase, IDisposable
 
     private async Task OpenLoginDialog() => await DialogService.ShowAsync<LoginDialog>("Logga in");
     private async Task OpenRegisterDialog() => await DialogService.ShowAsync<RegisterDialog>("Skapa konto");
+    private static readonly string[] DayLabels = ["M", "T", "O", "T", "F", "L", "S"];
+
+    /// <summary>Måndag–söndag för innevarande vecka, med markering för dagar där ett pass slutförts.</summary>
+    private IEnumerable<(string Label, bool Done, bool Today)> WeekDays()
+    {
+        var today = DateTime.Now.Date;
+        var monday = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
+        var done = dashboard!.RecentCompletedAtUtc.Select(d => d.ToLocalTime().Date).ToHashSet();
+        return Enumerable.Range(0, 7).Select(i => (DayLabels[i], done.Contains(monday.AddDays(i)), monday.AddDays(i) == today));
+    }
+
     private static string PassUrl(DashboardPass pass, bool startNew = false) =>
         $"/TP/split/{pass.SplitId}/pass/{pass.PassId}{(startNew ? "?new=1" : string.Empty)}";
 

@@ -58,6 +58,18 @@ else
                 <div class="ui-card dash-stat"><span class="ui-label">Totalt</span><span class="dash-stat__n">@dashboard.TotalCompletedSessions</span></div>
             </section>
 
+            <section class="ui-card" aria-label="Denna vecka">
+                <span class="ui-label">Denna vecka</span>
+                <div class="dash-week">
+                    @foreach (var day in WeekDays())
+                    {
+                        <div class="dash-day @(day.Done ? "dash-day--on" : "") @(day.Today ? "dash-day--today" : "")" aria-label="@(day.Done ? day.Label + ", tränat" : day.Label)">
+                            <i></i>@day.Label
+                        </div>
+                    }
+                </div>
+            </section>
+
             @if (dashboard.ActiveSplits.Count > 0)
             {
                 <section aria-labelledby="splits-t">
