@@ -5,6 +5,7 @@ using ArnoldOne.Shared.Users;
 using DbArnold.DbArnold.models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using DbUserInfo = DbArnold.DbArnold.models.UserInfo;
 
@@ -41,19 +42,40 @@ public class DashboardAndAdminControllerTests
         Assert.Equal("Min split", dto.LastCompletedSession!.SplitName);
     }
 
-    [Fact]
-    public async Task Admin_endpoint_rechecks_role_from_database()
+    [Theory]
+    [InlineData(AppRoles.User, false)]
+    [InlineData($"{AppRoles.User},{AppRoles.Admin}", true)]
+    public async Task Admin_filter_rechecks_role_from_database_even_if_token_says_admin(string dbRoles, bool allowed)
     {
         await using var context = CreateContext();
-        var user = NewUser(AppRoles.User);
+        var user = NewUser(dbRoles);
         context.Add(user);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         var controller = WithUser(new AdminController(context), user.UserId, AppRoles.Admin);
+        var executing = new ActionExecutingContext(
+            new ActionContext(controller.HttpContext, new Microsoft.AspNetCore.Routing.RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor()),
+            [], new Dictionary<string, object?>(), controller);
+        var nextCalled = false;
 
-        var result = await controller.GetOverview();
+        await new AdminOnlyFilter(context).OnActionExecutionAsync(executing, () =>
+        {
+            nextCalled = true;
+            return Task.FromResult(new ActionExecutedContext(executing, [], controller));
+        });
 
-        Assert.IsType<ForbidResult>(result.Result);
+        Assert.Equal(allowed, nextCalled);
+        Assert.Equal(allowed, executing.Result is null);
+        if (!allowed)
+            Assert.IsType<ForbidResult>(executing.Result);
     }
+
+    [Theory]
+    [InlineData(typeof(AdminController))]
+    [InlineData(typeof(AdminTemplatesController))]
+    public void Admin_controllers_are_covered_by_the_admin_filter(Type controller) =>
+        Assert.Contains(
+            controller.GetCustomAttributes(inherit: true).OfType<TypeFilterAttribute>(),
+            filter => filter.ImplementationType == typeof(AdminOnlyFilter));
 
     [Fact]
     public async Task Admin_cannot_remove_own_admin_role()

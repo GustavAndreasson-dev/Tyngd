@@ -16,9 +16,6 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
     [HttpGet]
     public async Task<ActionResult<List<AdminSplitTemplateDto>>> GetAll([FromQuery] bool includeArchived = true)
     {
-        if (!await IsCurrentAdminAsync(_context))
-            return Forbid();
-
         var splits = await _context.SplitTemplate
             .Where(template => includeArchived || template.Visability)
             .OrderBy(template => template.SplitTemplateName)
@@ -43,9 +40,6 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
     [HttpGet("{templateId:int}")]
     public async Task<ActionResult<AdminSplitTemplateDto>> Get(int templateId)
     {
-        if (!await IsCurrentAdminAsync(_context))
-            return Forbid();
-
         var split = await _context.SplitTemplate.AsNoTracking()
             .SingleOrDefaultAsync(template => template.SplitTemplateId == templateId);
         if (split is null)
@@ -67,8 +61,6 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
     [HttpPost]
     public async Task<ActionResult<int>> Create(UpsertAdminSplitTemplateRequest request)
     {
-        if (!await IsCurrentAdminAsync(_context))
-            return Forbid();
         if (Validate(request) is { } validationError)
             return BadRequest(validationError);
         if (request.Passes.Any(pass => pass.PassTemplateId.HasValue || pass.Exercises.Any(exercise => exercise.ExerciseTemplateId.HasValue)))
@@ -91,8 +83,6 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
     [HttpPut("{templateId:int}")]
     public async Task<IActionResult> Update(int templateId, UpsertAdminSplitTemplateRequest request)
     {
-        if (!await IsCurrentAdminAsync(_context))
-            return Forbid();
         if (Validate(request) is { } validationError)
             return BadRequest(validationError);
 
@@ -123,9 +113,6 @@ public sealed class AdminTemplatesController : AdminApiControllerBase
     [HttpPatch("{templateId:int}/visibility")]
     public async Task<IActionResult> SetVisibility(int templateId, SetVisibilityRequest request)
     {
-        if (!await IsCurrentAdminAsync(_context))
-            return Forbid();
-
         var split = await _context.SplitTemplate.FindAsync(templateId);
         if (split is null)
             return NotFound();
