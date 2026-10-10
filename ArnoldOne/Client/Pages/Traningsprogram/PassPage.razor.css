@@ -1,0 +1,34 @@
+.pass { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem 7rem; display: flex; flex-direction: column; gap: 1rem; }
+.pass-head, .pass-row, .pass-exercise__top { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+.pass-progress { height: 6px; border-radius: 3px; background: var(--mud-palette-background-gray); overflow: hidden; }
+.pass-progress div { height: 100%; background: var(--mud-palette-primary); transition: width .3s; }
+.pass-chips { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: none; }
+.pass-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; padding: 0 .875rem 0 .5rem; border-radius: 12px; border: 1px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface); color: var(--mud-palette-text-primary); font: 600 .875rem inherit; cursor: pointer; white-space: nowrap; }
+.pass-chip__n { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: var(--mud-palette-background-gray); font-size: .8rem; }
+.pass-chip--active { border-color: var(--mud-palette-primary); }
+.pass-chip--active .pass-chip__n { background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); }
+.pass-chip--done .pass-chip__n { background: var(--mud-palette-success); color: var(--mud-palette-success-text); }
+.pass-exercise { display: flex; flex-direction: column; gap: 1.25rem; }
+.pass-exercise__name { margin: 0; font-size: 1.375rem; font-weight: 800; letter-spacing: -.02em; }
+.pass-exercise ::deep .pass-weight { max-width: 8.5rem; }
+.pass-sets { display: flex; flex-direction: column; gap: .625rem; }
+.pass-set { display: flex; align-items: center; gap: .75rem; padding: .5rem .5rem .5rem 1rem; border-radius: 14px; background: var(--mud-palette-background-gray); transition: background .2s; }
+.pass-set--done { background: color-mix(in srgb, var(--mud-palette-success) 16%, transparent); }
+.pass-set__n { font-weight: 700; font-size: .875rem; min-width: 3rem; }
+.pass-set__reps { flex: 1; display: flex; align-items: center; justify-content: center; gap: .75rem; }
+.pass-set__count { min-width: 3.5rem; text-align: center; font-size: 1.5rem; font-weight: 800; }
+.pass-set__count small { display: block; font-size: .6875rem; font-weight: 600; color: var(--mud-palette-text-secondary); }
+.pass-step { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface); color: var(--mud-palette-text-primary); font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.pass-check { width: 48px; height: 48px; border-radius: 12px; border: 2px solid var(--mud-palette-lines-default); background: transparent; color: transparent; cursor: pointer; transition: background .15s, color .15s, border-color .15s, transform .15s; }
+.pass-check[aria-pressed="true"] { background: var(--mud-palette-success); border-color: var(--mud-palette-success); color: var(--mud-palette-success-text); transform: scale(1.05); }
+.pass-progress-card { padding: .875rem 1rem; border-radius: 14px; border: 1px solid var(--mud-palette-lines-default); color: var(--mud-palette-primary); }
+.pass-progress-card svg { display: block; width: 100%; height: 72px; margin-top: .5rem; }
+.pass-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1300; display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom)); background: var(--mud-palette-surface); border-top: 1px solid var(--mud-palette-lines-default); }
+.pass-bar__mid { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .25rem; min-width: 0; }
+.pass-bar__side { min-width: 48px; padding: 0 1rem; font-size: 1.5rem; background: var(--mud-palette-background-gray); color: var(--mud-palette-text-primary); }
+.pass-bar__main { width: 100%; background: var(--mud-palette-success); color: var(--mud-palette-success-text); }
+.pass-rest { font-size: .875rem; color: var(--mud-palette-text-secondary); }
+.pass-rest b { font-size: 1.25rem; color: var(--mud-palette-text-primary); font-variant-numeric: tabular-nums; }
+@media (min-width: 960px) {
+  .pass-bar { left: 240px; }
+}

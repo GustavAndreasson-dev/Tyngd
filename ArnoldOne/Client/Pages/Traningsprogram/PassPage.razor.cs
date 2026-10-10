@@ -59,8 +59,9 @@ public partial class PassPage : IDisposable
     private PendingSyncState PendingSync { get; set; } = default!;
 
     private TrainingPassTemplate? pass;
-    private Transition transition = Transition.None;
     private int activeIndex;
+    private int restRemaining;
+    private readonly Dictionary<int, List<ArnoldOne.Shared.DTOs.ExerciseProgressPointDto>> _progress = new();
 
     private Dictionary<int, decimal> _weights = new();
     private PassData data = new();
@@ -71,7 +72,6 @@ public partial class PassPage : IDisposable
     private int _lastPassId = -1;
     private int _lastSplitId = -1;
     private bool _isNewPassData;
-    private bool _navOpen;
     private string? saveStatusMessage;
     private Severity saveStatusSeverity = Severity.Info;
 
@@ -132,7 +132,41 @@ public partial class PassPage : IDisposable
         }
 
         await JSRuntime.InvokeVoidAsync("arnoldOne.attachNoteKeyHandler");
+        await EnsureProgressLoadedAsync();
     }
+
+    /// <summary>Hämtar viktutvecklingen för aktiv övning en gång per övning; fel ger bara ingen graf.</summary>
+    private async Task EnsureProgressLoadedAsync()
+    {
+        if (pass is null || activeIndex < 0 || activeIndex >= pass.Exercises.Count)
+            return;
+
+        var id = pass.Exercises[activeIndex].ExerciseId;
+        if (_progress.ContainsKey(id))
+            return;
+
+        _progress[id] = new();
+        try { _progress[id] = await PassLogService.GetProgressAsync(id); }
+        catch { }
+        StateHasChanged();
+    }
+
+    private List<ArnoldOne.Shared.DTOs.ExerciseProgressPointDto> ActiveProgress =>
+        pass is not null && activeIndex >= 0 && activeIndex < pass.Exercises.Count
+        && _progress.TryGetValue(pass.Exercises[activeIndex].ExerciseId, out var p) ? p : new();
+
+    /// <summary>Punkter för en 300x80 SVG-polyline; vikter skalas mellan min och max.</summary>
+    private static string SparkPoints(List<ArnoldOne.Shared.DTOs.ExerciseProgressPointDto> pts)
+    {
+        var min = pts.Min(p => p.Weight);
+        var range = Math.Max(pts.Max(p => p.Weight) - min, 1m);
+        return string.Join(" ", pts.Select((p, i) => FormattableString.Invariant(
+            $"{8 + i * 284.0 / Math.Max(pts.Count - 1, 1):0.#},{72 - (double)((p.Weight - min) / range) * 64:0.#}")));
+    }
+
+    private int TotalSets => pass?.Exercises.Sum(e => e.DefaultSets) ?? 0;
+    private int DoneSets => pass is null ? 0 : pass.Exercises.Sum(e => Enumerable.Range(0, e.DefaultSets).Count(i => IsSetDone(e.ExerciseId, i)));
+    private bool ExerciseDone(int idx) => pass is not null && Enumerable.Range(0, pass.Exercises[idx].DefaultSets).All(i => IsSetDone(pass.Exercises[idx].ExerciseId, i));
 
     private async Task InitializePassDataAsync(bool forceNewSession)
     {
@@ -463,16 +497,18 @@ public partial class PassPage : IDisposable
         CancelRestTimer();
         _restTimerCts = new CancellationTokenSource();
         var token = _restTimerCts.Token;
-        var remainingSeconds = RestTimer.Seconds;
+        restRemaining = RestTimer.Seconds;
+        StateHasChanged();
 
         _ = Task.Run(async () =>
         {
             try
             {
-                while (remainingSeconds > 0)
+                while (restRemaining > 0)
                 {
                     await Task.Delay(1000, token);
-                    remainingSeconds--;
+                    restRemaining--;
+                    await InvokeAsync(StateHasChanged);
                 }
 
                 await JSRuntime.InvokeVoidAsync("arnoldOne.flashScreen", token);
@@ -487,6 +523,7 @@ public partial class PassPage : IDisposable
         _restTimerCts?.Cancel();
         _restTimerCts?.Dispose();
         _restTimerCts = null;
+        restRemaining = 0;
     }
 
     /// <summary>Tom – vikter sparas nu till DB vid övningsbyte och avslutat pass.</summary>
@@ -587,25 +624,14 @@ public partial class PassPage : IDisposable
         return $"{exercise.DefaultSets}x{reps}";
     }
 
-    private string NavClass => _navOpen ? "pass-nav pass-nav--open" : "pass-nav";
-
-    private string StepClass(int idx) => activeIndex == idx ? "pass-step pass-step--active" : "pass-step";
-
-    private void ToggleNav() => _navOpen = !_navOpen;
-
-    private async Task OnCarouselIndexChanged(int idx)
-    {
-        if (pass is not null && activeIndex >= 0 && activeIndex < pass.Exercises.Count && idx != activeIndex)
-            await TryAsync(() => SaveCurrentExerciseAsync(pass.Exercises[activeIndex].ExerciseId), "Kunde inte spara övningen");
-        activeIndex = idx;
-    }
+    private string ChipClass(int idx) =>
+        "pass-chip" + (activeIndex == idx ? " pass-chip--active" : "") + (ExerciseDone(idx) ? " pass-chip--done" : "");
 
     private async Task NavigateToExercise(int idx)
     {
         if (pass is not null && activeIndex >= 0 && activeIndex < pass.Exercises.Count && idx != activeIndex)
             await TryAsync(() => SaveCurrentExerciseAsync(pass.Exercises[activeIndex].ExerciseId), "Kunde inte spara övningen");
         activeIndex = idx;
-        _navOpen = false;
     }
 
     private void SetSaveStatus(string message, Severity severity)
