@@ -109,27 +109,28 @@ public class UserSplitController : ApiControllerBase
         var existing = await _context.Split
             .FirstOrDefaultAsync(s => s.UserId == userId && s.SplitTemplateId == splitTemplateId);
 
+        if (existing is { Visability: true })
+            return Ok();
+
+        // Dolda (arkiverade) mallar får inte aktiveras, och deras dolda pass/övningar kopieras inte.
+        var template = await _context.SplitTemplate
+            .Include(s => s.PassTemplate)
+            .FirstOrDefaultAsync(s => s.SplitTemplateId == splitTemplateId && s.Visability);
+
+        if (template is null)
+            return NotFound();
+
         if (existing is not null)
         {
-            if (existing.Visability)
-                return Ok();
-
             existing.Visability = true;
             await _context.SaveChangesAsync();
             return Ok();
         }
 
-        // Hämta mallen med pass och övningar
-        var template = await _context.SplitTemplate
-            .Include(s => s.PassTemplate)
-            .FirstOrDefaultAsync(s => s.SplitTemplateId == splitTemplateId);
-
-        if (template is null)
-            return NotFound();
-
-        var passTemplateIds = template.PassTemplate.Select(p => p.PassTemplateId).ToList();
+        var visiblePassTemplates = template.PassTemplate.Where(p => p.Visability).ToList();
+        var passTemplateIds = visiblePassTemplates.Select(p => p.PassTemplateId).ToList();
         var exercises = await _context.ExerciseTemplate
-            .Where(e => passTemplateIds.Contains(e.PassTemplateId))
+            .Where(e => passTemplateIds.Contains(e.PassTemplateId) && e.Visability)
             .ToListAsync();
 
         // Skapa Split – låt IDENTITY generera SplitId
@@ -139,7 +140,7 @@ public class UserSplitController : ApiControllerBase
             SplitName       = template.SplitTemplateName,
             UserId          = userId,
             Visability      = true,
-            Pass = template.PassTemplate.OrderBy(p => p.Ordning).Select(p => new Pass
+            Pass = visiblePassTemplates.OrderBy(p => p.Ordning).Select(p => new Pass
             {
                 PassTemplateId = p.PassTemplateId,
                 PassName       = p.PassTemplateName,
@@ -162,7 +163,14 @@ public class UserSplitController : ApiControllerBase
         };
 
         _context.Split.Add(split);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (DbExceptions.IsUniqueViolation(ex))
+        {
+            // Dubbelklick: ett samtidigt anrop hann aktivera samma mall först.
+        }
 
         return Ok();
     }
