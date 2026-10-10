@@ -8,3 +8,8 @@
     CONSTRAINT [FK_ExerciseLogId_Session] FOREIGN KEY ([SessionId]) REFERENCES [dbo].[Session] ([SessionId])
 );
 
+
+GO
+
+CREATE UNIQUE INDEX [UX_ExerciseLog_SessionId_ExerciseId]
+    ON [dbo].[ExerciseLog]([SessionId], [ExerciseId]);

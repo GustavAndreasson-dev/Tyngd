@@ -8,6 +8,8 @@ namespace ArnoldOne.Server.Controllers;
 [Route("api/[controller]")]
 public class SessionController : ApiControllerBase
 {
+    private const int MaxExercises = 100;
+
     private readonly ArnoldContext _context;
 
     public SessionController(ArnoldContext context)
@@ -22,6 +24,10 @@ public class SessionController : ApiControllerBase
         if (request.SessionKey == Guid.Empty || request.StartedAtUtc == default)
             return BadRequest("SessionKey och StartedAtUtc måste anges.");
 
+        if (request.Exercises.Count > MaxExercises
+            || request.Exercises.Any(e => ValidateExercise(e.NoteText, e.Weight, e.Sets) is not null))
+            return BadRequest("Ogiltiga värden för övning, set, reps, vikt eller anteckning.");
+
         if (!await UserOwnsPassAsync(request.PassId))
             return Forbid();
 
@@ -29,72 +35,20 @@ public class SessionController : ApiControllerBase
         if (exerciseIds.Count > 0 && !await AllExercisesBelongToPassAsync(request.PassId, exerciseIds))
             return Forbid();
 
-        var session = await _context.Session
-            .FirstOrDefaultAsync(s => s.SessionKey == request.SessionKey);
-
-        if (session is not null && session.PassId != request.PassId)
+        var session = await GetOrCreateSessionAsync(request.SessionKey, request.PassId, request.Date, request.StartedAtUtc);
+        if (session.PassId != request.PassId)
             return Forbid();
 
-        if (session?.CompletedAtUtc is not null)
+        if (session.CompletedAtUtc is not null)
             return request.CompleteSession ? Ok() : Conflict("Sessionen är redan avslutad och kan inte ändras.");
 
-        if (session is null)
-        {
-            session = new Session
-            {
-                SessionKey = request.SessionKey,
-                PassId = request.PassId,
-                Date = request.Date,
-                StartedAtUtc = request.StartedAtUtc.ToUniversalTime(),
-            };
-            _context.Session.Add(session);
-            await _context.SaveChangesAsync();
-        }
-
         foreach (var ex in request.Exercises)
-        {
-            // Hämta eller skapa ExerciseLog
-            var exerciseLog = await _context.ExerciseLog
-                .Include(e => e.SetLog)
-                .FirstOrDefaultAsync(e => e.SessionId == session.SessionId && e.ExerciseId == ex.ExerciseId);
-
-            if (exerciseLog is null)
-            {
-                exerciseLog = new ExerciseLog
-                {
-                    SessionId  = session.SessionId,
-                    ExerciseId = ex.ExerciseId,
-                };
-                _context.ExerciseLog.Add(exerciseLog);
-                await _context.SaveChangesAsync();
-            }
-
-            exerciseLog.NoteText = ex.NoteText;
-
-            _context.SetLog.RemoveRange(exerciseLog.SetLog);
-
-            foreach (var s in ex.Sets.Where(s => s.IsDone))
-            {
-                _context.SetLog.Add(new SetLog
-                {
-                    ExerciseLogID = exerciseLog.ExerciseLogId,
-                    SetIndex      = s.SetIndex,
-                    Reps          = s.Reps,
-                    IsDone        = true,
-                    Weight        = s.Weight,
-                });
-            }
-
-            var exercise = await _context.Exercise.FindAsync(ex.ExerciseId);
-            if (exercise is not null)
-                exercise.DefaultWeight = ex.Weight;
-        }
+            await ReplaceExerciseLogAsync(session, ex.ExerciseId, ex.NoteText, ex.Weight, ex.Sets);
 
         if (request.CompleteSession)
             session.CompletedAtUtc = DateTimeOffset.UtcNow;
 
-        await _context.SaveChangesAsync();
-        return Ok();
+        return await SaveOrConflictAsync();
     }
 
     /// <summary>Hämtar senaste sparade data för ett pass (vikt, reps, anteckningar).</summary>
@@ -169,74 +123,117 @@ public class SessionController : ApiControllerBase
         if (request.SessionKey == Guid.Empty || request.StartedAtUtc == default)
             return BadRequest("SessionKey och StartedAtUtc måste anges.");
 
+        if (ValidateExercise(request.NoteText, request.Weight, request.Sets) is { } invalid)
+            return BadRequest(invalid);
+
         if (!await UserOwnsPassAsync(request.PassId))
             return Forbid();
 
         if (!await AllExercisesBelongToPassAsync(request.PassId, new[] { request.ExerciseId }))
             return Forbid();
 
-        var session = await _context.Session
-            .FirstOrDefaultAsync(s => s.SessionKey == request.SessionKey);
-
-        if (session is not null && session.PassId != request.PassId)
+        var session = await GetOrCreateSessionAsync(request.SessionKey, request.PassId, request.Date, request.StartedAtUtc);
+        if (session.PassId != request.PassId)
             return Forbid();
 
-        if (session?.CompletedAtUtc is not null)
+        if (session.CompletedAtUtc is not null)
             return Conflict("Sessionen är redan avslutad och kan inte ändras.");
 
-        if (session is null)
-        {
-            session = new Session
-            {
-                SessionKey = request.SessionKey,
-                PassId = request.PassId,
-                Date = request.Date,
-                StartedAtUtc = request.StartedAtUtc.ToUniversalTime(),
-            };
-            _context.Session.Add(session);
-            await _context.SaveChangesAsync();
-        }
+        await ReplaceExerciseLogAsync(session, request.ExerciseId, request.NoteText, request.Weight, request.Sets);
 
-        // Hämta eller skapa ExerciseLog för övningen
+        return await SaveOrConflictAsync();
+    }
+
+    /// <summary>
+    /// Hämtar sessionen eller skapar den. Två samtidiga anrop med samma SessionKey (t.ex. en omförsökt
+    /// synk) kan båda försöka skapa den; den som förlorar mot det unika indexet läser om vinnarens rad.
+    /// </summary>
+    private async Task<Session> GetOrCreateSessionAsync(Guid sessionKey, int passId, DateOnly date, DateTimeOffset startedAtUtc)
+    {
+        var session = await _context.Session.FirstOrDefaultAsync(s => s.SessionKey == sessionKey);
+        if (session is not null)
+            return session;
+
+        session = new Session
+        {
+            SessionKey = sessionKey,
+            PassId = passId,
+            Date = date,
+            StartedAtUtc = startedAtUtc.ToUniversalTime(),
+        };
+        _context.Session.Add(session);
+        try
+        {
+            await _context.SaveChangesAsync();
+            return session;
+        }
+        catch (DbUpdateException ex) when (DbExceptions.IsUniqueViolation(ex))
+        {
+            _context.Entry(session).State = EntityState.Detached;
+            return await _context.Session.FirstAsync(s => s.SessionKey == sessionKey);
+        }
+    }
+
+    /// <summary>Ersätter övningens utförda set och anteckning, och sparar vikten som ny standardvikt.</summary>
+    private async Task ReplaceExerciseLogAsync(
+        Session session, int exerciseId, string noteText, decimal weight, IEnumerable<SaveSessionSetDto> sets)
+    {
         var exerciseLog = await _context.ExerciseLog
             .Include(e => e.SetLog)
-            .FirstOrDefaultAsync(e => e.SessionId == session.SessionId && e.ExerciseId == request.ExerciseId);
+            .FirstOrDefaultAsync(e => e.SessionId == session.SessionId && e.ExerciseId == exerciseId);
 
         if (exerciseLog is null)
         {
-            exerciseLog = new ExerciseLog
-            {
-                SessionId  = session.SessionId,
-                ExerciseId = request.ExerciseId,
-            };
+            exerciseLog = new ExerciseLog { SessionId = session.SessionId, ExerciseId = exerciseId };
             _context.ExerciseLog.Add(exerciseLog);
-            await _context.SaveChangesAsync();
         }
 
-        exerciseLog.NoteText = request.NoteText;
-
-        // Ta bort gamla sets och ersätt med nya (bara utförda)
+        exerciseLog.NoteText = noteText;
         _context.SetLog.RemoveRange(exerciseLog.SetLog);
 
-        foreach (var s in request.Sets.Where(s => s.IsDone))
+        // Genom navigeringen sätts ExerciseLogID när loggen sparas, även för en ny rad.
+        foreach (var s in sets.Where(s => s.IsDone))
         {
-            _context.SetLog.Add(new SetLog
+            exerciseLog.SetLog.Add(new SetLog
             {
-                ExerciseLogID = exerciseLog.ExerciseLogId,
-                SetIndex      = s.SetIndex,
-                Reps          = s.Reps,
-                IsDone        = true,
-                Weight        = s.Weight,
+                SetIndex = s.SetIndex,
+                Reps     = s.Reps,
+                IsDone   = true,
+                Weight   = s.Weight,
             });
         }
 
-        // Uppdatera defaultvikt på övningen
-        var exercise = await _context.Exercise.FindAsync(request.ExerciseId);
+        var exercise = await _context.Exercise.FindAsync(exerciseId);
         if (exercise is not null)
-            exercise.DefaultWeight = request.Weight;
+            exercise.DefaultWeight = weight;
+    }
 
-        await _context.SaveChangesAsync();
-        return Ok();
+    /// <summary>Sparar. Om två anrop skapade samma övningslogg samtidigt vinner ett; det andra får 409 och klienten försöker igen.</summary>
+    private async Task<IActionResult> SaveOrConflictAsync()
+    {
+        try
+        {
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+        catch (DbUpdateException ex) when (DbExceptions.IsUniqueViolation(ex))
+        {
+            return Conflict("Samtidig sparning, försök igen.");
+        }
+    }
+
+    // Gränserna följer kolumnerna: SetLog.Weight är decimal(6,2) och NoteText är VARCHAR(5000).
+    private static string? ValidateExercise(string? noteText, decimal weight, IReadOnlyCollection<SaveSessionSetDto> sets)
+    {
+        if (noteText is { Length: > 5000 })
+            return "Anteckningen är för lång.";
+        if (weight is < 0 or > 1000)
+            return "Ogiltig vikt.";
+        if (sets.Count > 100)
+            return "För många set.";
+        if (sets.Any(s => s.Reps is < 0 or > 500 || s.SetIndex is < 0 or > 100 || s.Weight is < 0 or > 1000))
+            return "Ogiltiga värden för set.";
+        return null;
     }
 
     /// <summary>Returnerar true om det inloggade kontot äger det angivna passet.</summary>

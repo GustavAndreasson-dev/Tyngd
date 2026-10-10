@@ -59,6 +59,8 @@ public partial class ArnoldContext : DbContext
         {
             entity.HasKey(e => e.ExerciseLogId).HasName("PK_ExerciseLogId");
 
+            entity.HasIndex(e => new { e.SessionId, e.ExerciseId }, "UX_ExerciseLog_SessionId_ExerciseId").IsUnique();
+
             entity.Property(e => e.NoteText)
                 .HasMaxLength(5000)
                 .IsUnicode(false);
