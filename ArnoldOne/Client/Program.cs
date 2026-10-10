@@ -48,6 +48,7 @@ builder.Services.AddScoped<PassTemplateService>();
 
 // Service för splitmallar och pass från API
 builder.Services.AddScoped<SplitTemplateService>();
+builder.Services.AddScoped<CatalogService>();
 
 // Service för att spara och läsa pass-logg från API
 builder.Services.AddScoped<PassLogService>();
