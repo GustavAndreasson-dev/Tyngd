@@ -1,4 +1,4 @@
-using ArnoldOne.Shared.DTOs;
+﻿using ArnoldOne.Shared.DTOs;
 using ArnoldOne.Shared.Users;
 using DbArnold.DbArnold.models;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -32,6 +33,9 @@ public class AuthController : ControllerBase
     {
         var userName = request.UserName.Trim();
         var email = request.Email.Trim();
+
+        if (ValidateRegistration(userName, email, request.Password) is { } validationError)
+            return BadRequest(validationError);
 
         if (await _context.UserInfo.AnyAsync(u => u.UserName == userName))
             return BadRequest("Användarnamnet är redan taget.");
@@ -104,6 +108,22 @@ public class AuthController : ControllerBase
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    // Matches the VARCHAR(50) columns. '@' is banned in usernames so a username can never
+    // equal someone's email, which Login also accepts as an identifier.
+    private static string? ValidateRegistration(string userName, string email, string password)
+    {
+        if (userName.Length is < 3 or > 50 || userName.Contains('@'))
+            return "Användarnamnet måste vara 3–50 tecken och får inte innehålla @.";
+
+        if (email.Length > 50 || !MailAddress.TryCreate(email, out var address) || address.Address != email)
+            return "Ange en giltig e-postadress på högst 50 tecken.";
+
+        if (password.Length < 6)
+            return "Lösenordet måste vara minst 6 tecken.";
+
+        return null;
     }
 
     private static bool IsUniqueConstraintViolation(DbUpdateException exception, string? constraintName = null)
