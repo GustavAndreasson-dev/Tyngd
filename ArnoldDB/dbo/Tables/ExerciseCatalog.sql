@@ -1,0 +1,21 @@
+﻿CREATE TABLE [dbo].[ExerciseCatalog] (
+    [CatalogExerciseId] INT              IDENTITY (1, 1) NOT NULL,
+    [WgerUuid]          UNIQUEIDENTIFIER NOT NULL,
+    [NameEn]            NVARCHAR (100)   NOT NULL,
+    [DescriptionEn]     NVARCHAR (MAX)   NOT NULL,
+    [NameSv]            NVARCHAR (100)   NULL,
+    [DescriptionSv]     NVARCHAR (MAX)   NULL,
+    [TranslationStatus] TINYINT          CONSTRAINT [DF_ExerciseCatalog_TranslationStatus] DEFAULT ((0)) NOT NULL,
+    [SourceHash]        CHAR (64)        NOT NULL,
+    [Category]          NVARCHAR (50)    NOT NULL,
+    [Muscles]           NVARCHAR (400)   NOT NULL,
+    [Equipment]         NVARCHAR (400)   NOT NULL,
+    [Aliases]           NVARCHAR (1000)  NOT NULL,
+    [ImageUrl]          NVARCHAR (400)   NULL,
+    [License]           NVARCHAR (100)   NOT NULL,
+    [LicenseAuthor]     NVARCHAR (400)   NOT NULL,
+    [IsActive]          BIT              CONSTRAINT [DF_ExerciseCatalog_IsActive] DEFAULT ((1)) NOT NULL,
+    [LastSyncedUtc]     DATETIMEOFFSET   NOT NULL,
+    CONSTRAINT [PK_ExerciseCatalog] PRIMARY KEY CLUSTERED ([CatalogExerciseId] ASC),
+    CONSTRAINT [UQ_ExerciseCatalog_WgerUuid] UNIQUE ([WgerUuid])
+);
