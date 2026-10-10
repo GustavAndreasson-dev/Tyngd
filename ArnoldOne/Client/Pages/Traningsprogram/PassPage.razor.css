@@ -27,8 +27,15 @@
 .pass-bar__mid { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .25rem; min-width: 0; }
 .pass-bar__side { min-width: 48px; padding: 0 1rem; font-size: 1.5rem; background: var(--mud-palette-background-gray); color: var(--mud-palette-text-primary); }
 .pass-bar__main { width: 100%; background: var(--mud-palette-success); color: var(--mud-palette-success-text); }
-.pass-rest { font-size: .875rem; color: var(--mud-palette-text-secondary); }
-.pass-rest b { font-size: 1.25rem; color: var(--mud-palette-text-primary); font-variant-numeric: tabular-nums; }
+.pass-rest { position: fixed; left: 1rem; right: 1rem; bottom: calc(5.5rem + env(safe-area-inset-bottom)); z-index: 1300; padding: .75rem 1rem; border-radius: 16px; background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.pass-rest__row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.pass-rest .ui-label { color: inherit; opacity: .85; }
+.pass-rest__time { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.pass-rest__skip { min-height: 44px; padding: 0 .75rem; border: 0; border-radius: 10px; background: transparent; color: inherit; font: 700 .875rem inherit; text-decoration: underline; cursor: pointer; }
+.pass-rest__track { height: 4px; margin-top: .25rem; border-radius: 2px; background: rgba(255,255,255,.3); overflow: hidden; }
+.pass-rest__track div { height: 100%; background: currentColor; transition: width 1s linear; }
 @media (min-width: 960px) {
   .pass-bar { left: 240px; }
+  .pass-rest { left: calc(240px + 1rem); }
 }
+.pass--resting { padding-bottom: 12rem; }

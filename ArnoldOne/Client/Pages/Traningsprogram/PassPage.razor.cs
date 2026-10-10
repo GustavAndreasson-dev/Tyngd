@@ -137,6 +137,7 @@ public partial class PassPage : IDisposable
         {
             _handlerIndex = activeIndex;
             await JSRuntime.InvokeVoidAsync("arnoldOne.attachNoteKeyHandler");
+            await JSRuntime.InvokeVoidAsync("arnoldOne.scrollActiveChip");
         }
         await EnsureProgressLoadedAsync();
     }
@@ -169,6 +170,8 @@ public partial class PassPage : IDisposable
         return string.Join(" ", pts.Select((p, i) => FormattableString.Invariant(
             $"{8 + i * 284.0 / Math.Max(pts.Count - 1, 1):0.#},{72 - (double)((p.Weight - min) / range) * 64:0.#}")));
     }
+
+    private int RestPercent => RestTimer.Seconds <= 0 ? 0 : Math.Min(100, restRemaining * 100 / RestTimer.Seconds);
 
     private int TotalSets => pass?.Exercises.Sum(e => e.DefaultSets) ?? 0;
     private int DoneSets => pass is null ? 0 : pass.Exercises.Sum(e => Enumerable.Range(0, e.DefaultSets).Count(i => IsSetDone(e.ExerciseId, i)));

@@ -83,3 +83,9 @@ window.arnoldOne.attachNoteKeyHandler = function () {
         }
     });
 };
+
+// Håller aktiv övningschip synlig när man bläddrar med pilarna (chip-raden scrollar horisontellt).
+window.arnoldOne.scrollActiveChip = function () {
+    var chip = document.querySelector('.pass-chip--active');
+    if (chip) chip.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+};
