@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Catalog\wger-sv.json" LogicalName="ArnoldOne.Server.Catalog.wger-sv.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\ArnoldOne.Buis\ArnoldOne.Buis.csproj" />
     <ProjectReference Include="..\Client\ArnoldOne.Client.csproj" />
     <ProjectReference Include="..\Shared\ArnoldOne.Shared.csproj" />
