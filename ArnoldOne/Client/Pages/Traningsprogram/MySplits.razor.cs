@@ -30,6 +30,29 @@ public partial class MySplits : IDisposable
     // (splitId, passId) -> övningar
     private Dictionary<(int, int), List<CreateExerciseDto>> passExercises = new();
     private HashSet<(int, int)> loadingPasses = new();
+    private Dictionary<(int, int), Dictionary<string, double>> passMuscles = new();
+    // null = laddas
+    private Dictionary<int, Dictionary<string, double>?> splitMuscles = new();
+
+    [Inject]
+    private CatalogService CatalogService { get; set; } = default!;
+
+    private async Task ToggleSplitMusclesAsync(int splitId)
+    {
+        if (splitMuscles.Remove(splitId))
+            return;
+
+        splitMuscles[splitId] = null;
+        try
+        {
+            splitMuscles[splitId] = await UserSplitsService.GetSplitMusclesAsync(splitId);
+        }
+        catch (Exception exception)
+        {
+            splitMuscles.Remove(splitId);
+            Snackbar.Add($"Kunde inte ladda muskler: {exception.Message}", Severity.Error);
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -59,6 +82,8 @@ public partial class MySplits : IDisposable
         {
             splits = new();
             passExercises = new();
+            passMuscles = new();
+            splitMuscles = new();
             return;
         }
 
@@ -66,6 +91,8 @@ public partial class MySplits : IDisposable
         {
             splits = await UserSplitsService.GetMySplitsAsync();
             passExercises = new();
+            passMuscles = new();
+            splitMuscles = new();
         }, "Kunde inte ladda splits");
     }
 
@@ -82,8 +109,12 @@ public partial class MySplits : IDisposable
             if (full is null)
                 return;
 
+            var catalog = await CatalogService.GetAllAsync();
             foreach (var pass in full.Passes)
+            {
                 passExercises[(splitId, pass.PassId ?? 0)] = pass.Exercises;
+                passMuscles[(splitId, pass.PassId ?? 0)] = CatalogService.MuscleLoadFor(catalog, pass.Exercises.Select(e => e.CatalogExerciseId));
+            }
         }
         catch (Exception exception)
         {

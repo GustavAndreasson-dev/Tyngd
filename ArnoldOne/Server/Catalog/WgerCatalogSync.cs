@@ -118,9 +118,10 @@ public sealed class WgerCatalogSync(HttpClient http, ArnoldContext context, Cata
     private static void ApplyMetadata(ExerciseCatalog row, WgerExercise exercise, WgerTranslation english)
     {
         row.Category = exercise.Category.Name;
-        row.Muscles = string.Join(", ", exercise.Muscles.Concat(exercise.MusclesSecondary)
-            .Select(muscle => string.IsNullOrWhiteSpace(muscle.NameEn) ? muscle.Name : muscle.NameEn)
-            .Distinct());
+        static string MuscleKey(WgerMuscle muscle) => string.IsNullOrWhiteSpace(muscle.NameEn) ? muscle.Name : muscle.NameEn;
+        var primary = exercise.Muscles.Select(MuscleKey).Distinct().ToList();
+        row.Muscles = string.Join(", ", primary);
+        row.MusclesSecondary = string.Join(", ", exercise.MusclesSecondary.Select(MuscleKey).Distinct().Except(primary));
         row.Equipment = string.Join(", ", exercise.Equipment.Select(item => item.Name).Distinct());
         row.Aliases = string.Join("\n", english.Aliases.Select(alias => alias.Alias.Trim()).Where(alias => alias.Length > 0));
         row.ImageUrl = (exercise.Images.FirstOrDefault(image => image.IsMain) ?? exercise.Images.FirstOrDefault())?.Image;

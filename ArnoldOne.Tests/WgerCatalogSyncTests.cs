@@ -26,7 +26,8 @@ public class WgerCatalogSyncTests
         var squat = await context.ExerciseCatalog.SingleAsync(row => row.WgerUuid == Squat, TestContext.Current.CancellationToken);
         Assert.Equal("Knäböj", squat.NameSv);
         Assert.Equal((byte)CatalogTranslationStatus.Auto, squat.TranslationStatus);
-        Assert.Equal("Quadriceps, Glutes", squat.Muscles);
+        Assert.Equal("Quadriceps", squat.Muscles);
+        Assert.Equal("Glutes", squat.MusclesSecondary);
         var row = await context.ExerciseCatalog.SingleAsync(item => item.WgerUuid == Row, TestContext.Current.CancellationToken);
         Assert.Null(row.NameSv);
         Assert.Equal((byte)CatalogTranslationStatus.Saknas, row.TranslationStatus);

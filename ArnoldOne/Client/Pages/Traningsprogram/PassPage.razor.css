@@ -40,3 +40,5 @@
   .pass-rest { left: calc(240px + 1rem); }
 }
 .pass--resting { padding-bottom: 12rem; }
+.pass-head__side { display: flex; flex-direction: column; align-items: flex-end; gap: .125rem; }
+.pass-muscles { margin-bottom: 1rem; }

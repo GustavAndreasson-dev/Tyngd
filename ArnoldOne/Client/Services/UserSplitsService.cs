@@ -79,6 +79,9 @@ public class UserSplitsService
         await NotifySplitsChangedAsync();
     }
 
+    public async Task<Dictionary<string, double>> GetSplitMusclesAsync(int splitId) =>
+        await _http.GetFromJsonAsync<Dictionary<string, double>>($"api/UserSplit/{splitId}/muscles") ?? new();
+
     public async Task<List<TrainingSplit>> GetMySplitsAsync()
     {
         return await _http.GetFromJsonAsync<List<TrainingSplit>>("api/UserSplit/my")

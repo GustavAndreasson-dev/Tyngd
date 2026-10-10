@@ -22,7 +22,11 @@ public sealed class CatalogExerciseDto
     /// <summary>Engelska alias från wger, för sökning.</summary>
     public List<string> Aliases { get; set; } = new();
     public string Category { get; set; } = string.Empty;
+    /// <summary>Svenska namn, primära först.</summary>
     public List<string> Muscles { get; set; } = new();
+    /// <summary>Muskelnycklar (Muscles.All) för muskelfiguren.</summary>
+    public List<string> PrimaryMuscles { get; set; } = new();
+    public List<string> SecondaryMuscles { get; set; } = new();
     public List<string> Equipment { get; set; } = new();
     public string? ImageUrl { get; set; }
 }
@@ -36,6 +40,8 @@ public sealed class CatalogExerciseDetailDto
     public string Description { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public List<string> Muscles { get; set; } = new();
+    public List<string> PrimaryMuscles { get; set; } = new();
+    public List<string> SecondaryMuscles { get; set; } = new();
     public List<string> Equipment { get; set; } = new();
     public string? ImageUrl { get; set; }
     public string License { get; set; } = string.Empty;

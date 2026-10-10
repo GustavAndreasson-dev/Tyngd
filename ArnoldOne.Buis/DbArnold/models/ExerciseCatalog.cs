@@ -23,8 +23,11 @@ public class ExerciseCatalog
 
     public string Category { get; set; } = string.Empty;
 
-    /// <summary>Kommaseparerade engelska muskelnamn, primära först.</summary>
+    /// <summary>Kommaseparerade engelska namn på primära muskler (nycklar i Shared.Catalog.Muscles).</summary>
     public string Muscles { get; set; } = string.Empty;
+
+    /// <summary>Kommaseparerade engelska namn på sekundära muskler.</summary>
+    public string MusclesSecondary { get; set; } = string.Empty;
 
     /// <summary>Kommaseparerade engelska utrustningsnamn.</summary>
     public string Equipment { get; set; } = string.Empty;

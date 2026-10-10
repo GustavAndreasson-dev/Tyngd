@@ -40,6 +40,19 @@ public class CatalogService
             .Select(item => item.exercise);
     }
 
+    /// <summary>Muskelbelastning för de övningar som är kopplade till katalogen; okopplade räknas inte.</summary>
+    public static Dictionary<string, double> MuscleLoadFor(IEnumerable<CatalogExerciseDto> catalog, IEnumerable<int?> catalogExerciseIds)
+    {
+        var byId = catalog.ToDictionary(exercise => exercise.CatalogExerciseId);
+        return MuscleLoad.Sum(catalogExerciseIds
+            .Select(id => id is { } value ? byId.GetValueOrDefault(value) : null)
+            .OfType<CatalogExerciseDto>()
+            .Select(exercise => ((IEnumerable<string>)exercise.PrimaryMuscles, (IEnumerable<string>)exercise.SecondaryMuscles)));
+    }
+
+    public async Task<Dictionary<string, double>> MuscleLoadForAsync(IEnumerable<int?> catalogExerciseIds) =>
+        MuscleLoadFor(await GetAllAsync(), catalogExerciseIds);
+
     private async Task<List<CatalogExerciseDto>> LoadAsync() =>
         await _http.GetFromJsonAsync<List<CatalogExerciseDto>>("api/catalog") ?? new List<CatalogExerciseDto>();
 }

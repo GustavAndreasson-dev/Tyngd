@@ -23,8 +23,25 @@
                 <span class="ui-label">Övning @(activeIndex + 1) av @count</span>
                 <h1 class="ui-title">@pass.PassName</h1>
             </div>
-            <span class="ui-sub">@DoneSets / @TotalSets set</span>
+            <div class="pass-head__side">
+                <span class="ui-sub">@DoneSets / @TotalSets set</span>
+                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.AccessibilityNew"
+                           OnClick="ToggleMuscles" aria-expanded="@showMuscles">Muskler</MudButton>
+            </div>
         </header>
+        @if (showMuscles)
+        {
+            <section class="ui-card pass-muscles" aria-label="Muskler i passet">
+                @if (passMuscleLoad is null)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else
+                {
+                    <MuscleMap Load="passMuscleLoad" />
+                }
+            </section>
+        }
         <div class="pass-progress" role="progressbar" aria-valuemin="0" aria-valuemax="@TotalSets" aria-valuenow="@DoneSets">
             <div style="width:@(TotalSets == 0 ? 0 : DoneSets * 100 / TotalSets)%"></div>
         </div>
