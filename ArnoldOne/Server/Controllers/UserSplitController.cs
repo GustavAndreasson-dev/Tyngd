@@ -33,18 +33,7 @@ public class UserSplitController : ApiControllerBase
             .Include(s => s.Pass.Where(p => p.Visability == 1).OrderBy(p => p.Ordning))
             .ToListAsync();
 
-        var result = splits.Select(s => new TrainingSplit
-        {
-            SplitId   = s.SplitId,
-            SplitName = s.SplitName,
-            UserId    = s.UserId.ToString(),
-            Passes    = s.Pass.Select(p => new TrainingPass
-            {
-                PassId   = p.PassId,
-                SplitId  = s.SplitId,
-                PassName = p.PassName,
-            }).ToList(),
-        }).ToList();
+        var result = splits.Select(s => s.ToTrainingSplit()).ToList();
 
         return Ok(result);
     }
@@ -405,18 +394,7 @@ public class UserSplitController : ApiControllerBase
             .Include(s => s.Pass.Where(p => p.Visability == 1).OrderBy(p => p.Ordning))
             .ToListAsync();
 
-        var result = splits.Select(s => new TrainingSplit
-        {
-            SplitId   = s.SplitId,
-            SplitName = s.SplitName,
-            UserId    = s.UserId.ToString(),
-            Passes    = s.Pass.Select(p => new TrainingPass
-            {
-                PassId   = p.PassId,
-                SplitId  = s.SplitId,
-                PassName = p.PassName,
-            }).ToList(),
-        }).ToList();
+        var result = splits.Select(s => s.ToTrainingSplit()).ToList();
 
         return Ok(result);
     }
