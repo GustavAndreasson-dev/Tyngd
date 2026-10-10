@@ -263,6 +263,36 @@ public class SplitAndSessionControllerTests
         Assert.Equal(9, set.Reps);
     }
 
+    [Fact]
+    public async Task SaveSession_with_several_exercises_replaces_sets_and_updates_default_weight()
+    {
+        await using var context = CreateContext();
+        var userId = Guid.NewGuid();
+        var split = CreateSplit(userId);
+        context.Add(split);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var pass = split.Pass.Single();
+        var ids = pass.Exercise.Select(e => e.ExerciseId).ToList();
+        var controller = WithUser(new SessionController(context), userId);
+        SaveSessionRequest Request(int sets, decimal weight) => new()
+        {
+            SessionKey = Guid.Parse("11111111-1111-1111-1111-111111111111"), PassId = pass.PassId,
+            Date = new DateOnly(2026, 7, 15), StartedAtUtc = DateTimeOffset.UtcNow,
+            Exercises = ids.Select(id => new SaveSessionExerciseDto
+            {
+                ExerciseId = id, Weight = weight,
+                Sets = Enumerable.Range(0, sets).Select(i => new SaveSessionSetDto { SetIndex = i, Reps = 8, IsDone = true, Weight = weight }).ToList(),
+            }).ToList(),
+        };
+
+        Assert.IsType<OkResult>(await controller.SaveSession(Request(3, 50)));
+        Assert.IsType<OkResult>(await controller.SaveSession(Request(2, 55)));
+
+        Assert.Equal(2, await context.ExerciseLog.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(4, await context.SetLog.CountAsync(TestContext.Current.CancellationToken));
+        Assert.All(context.Exercise.Where(e => ids.Contains(e.ExerciseId)), e => Assert.Equal(55m, e.DefaultWeight));
+    }
+
     private static ArnoldContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<ArnoldContext>()
