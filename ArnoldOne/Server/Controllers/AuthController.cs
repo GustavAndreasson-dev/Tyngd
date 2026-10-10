@@ -4,6 +4,7 @@ using DbArnold.DbArnold.models;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -17,6 +18,7 @@ namespace ArnoldOne.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("auth")]
 public class AuthController : ControllerBase
 {
     private readonly ArnoldContext _context;
@@ -83,6 +85,13 @@ public class AuthController : ControllerBase
         if (user is null || !VerifyPassword(request.Password, user.PasswordHash))
             return Unauthorized("Felaktigt användarnamn eller lösenord.");
 
+        // Old hashes (100k rounds) are upgraded the first time their owner logs in.
+        if (NeedsRehash(user.PasswordHash))
+        {
+            user.PasswordHash = HashPassword(request.Password);
+            await _context.SaveChangesAsync();
+        }
+
         return Ok(new LoginResponse { User = MapToDto(user), Token = GenerateToken(user) });
     }
 
@@ -148,19 +157,40 @@ public class AuthController : ControllerBase
             Roles     = user.Roles.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(r => r.Trim()).ToList(),
         };
 
+    private const int LegacyIterations = 100_000;
+    private const int Iterations = 600_000;
+
+    // Format: "iterations:salt:hash". Legacy hashes are "salt:hash" and used LegacyIterations.
     private static string HashPassword(string password)
     {
         byte[] salt = RandomNumberGenerator.GetBytes(16);
-        byte[] hash = KeyDerivation.Pbkdf2(password, salt, KeyDerivationPrf.HMACSHA256, 100_000, 32);
-        return $"{Convert.ToBase64String(salt)}:{Convert.ToBase64String(hash)}";
+        byte[] hash = KeyDerivation.Pbkdf2(password, salt, KeyDerivationPrf.HMACSHA256, Iterations, 32);
+        return $"{Iterations}:{Convert.ToBase64String(salt)}:{Convert.ToBase64String(hash)}";
     }
+
+    private static bool NeedsRehash(string stored) => stored.Split(':').Length == 2;
 
     private static bool VerifyPassword(string password, string stored)
     {
         var parts = stored.Split(':');
-        if (parts.Length != 2) return false;
-        byte[] salt = Convert.FromBase64String(parts[0]);
-        byte[] hash = KeyDerivation.Pbkdf2(password, salt, KeyDerivationPrf.HMACSHA256, 100_000, 32);
-        return Convert.ToBase64String(hash) == parts[1];
+        int iterations;
+        if (parts.Length == 2)
+            iterations = LegacyIterations;
+        else if (parts.Length == 3 && int.TryParse(parts[0], out iterations) && iterations > 0)
+            parts = parts[1..];
+        else
+            return false;
+
+        try
+        {
+            byte[] salt = Convert.FromBase64String(parts[0]);
+            byte[] expected = Convert.FromBase64String(parts[1]);
+            byte[] actual = KeyDerivation.Pbkdf2(password, salt, KeyDerivationPrf.HMACSHA256, iterations, 32);
+            return CryptographicOperations.FixedTimeEquals(actual, expected);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 }
