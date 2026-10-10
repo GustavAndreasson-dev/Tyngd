@@ -129,6 +129,23 @@ Mallarna först, eftersom de är få och styr nya splits.
 - Våra översättningar är bearbetningar och får därför samma licens. Valfritt: skicka granskade
   översättningar tillbaka till wger.
 
+## Status 2026-10-11
+
+| Steg | Status |
+|---|---|
+| 1 Datamodell | Klar: `007_Add_ExerciseCatalog.sql` |
+| 2 Import och synk | Klar: admin > Övningskatalog > Synka från wger |
+| 3 Första översättningen | Klar: `ArnoldOne/Server/Catalog/wger-sv.json` (920 st, status Auto). Att granska först: `docs/wger-oversattning-granska.md` |
+| 4 Admin-granskning | Klar: admin > Övningskatalog |
+| 5 API till klienten | Klar, utan ETag (listan laddas en gång per sidladdning) |
+| 6 Välja övning i UI | Klar: `ExercisePicker` i Skapa split och mall-editorn, info-knapp på passet |
+| 7 Koppla befintliga övningar | Skript klart: `008_Link_Exercises_To_Catalog.sql`, körs efter första synken |
+| 8 Veckovis synk + Claude API | Ej påbörjat |
+| 9 Attribution | Klar: rad i övningens info-vy och längst ner på Inställningar |
+
+Ordning vid driftsättning: kör 007 → driftsätt koden → synka i admin → kör 008.
+Koden läser `CatalogExerciseId` på övningar, så 007 måste köras före driftsättning.
+
 ## Risker
 
 | Risk | Hantering |

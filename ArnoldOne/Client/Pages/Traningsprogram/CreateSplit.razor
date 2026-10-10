@@ -189,15 +189,11 @@
                             </div>
                             @if (exerciseExpanded[passIndex][exerciseIndex])
                             {
-                            <MudTextField @bind-Value="exercise.ExerciseName"
-                                          Label="Övningsnamn"
-                                          Variant="Variant.Outlined"
-                                          Class="mb-2"
-                                          MaxLength="50"
-                                          HelperText="Namnbyte behåller samma historik. Ta bort och lägg till för en ny statistikserie."
-                                          Error="@(FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].ExerciseName") is not null)"
-                                          ErrorText="@FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].ExerciseName")"
-                                          Required="true" />
+                            <ExercisePicker @bind-Name="exercise.ExerciseName"
+                                            @bind-CatalogExerciseId="exercise.CatalogExerciseId"
+                                            HelperText="@(exercise.ExerciseId is null ? null : "Byte behåller samma historik. Ta bort och lägg till för en ny statistikserie.")"
+                                            Error="@(FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].ExerciseName") is not null)"
+                                            ErrorText="@FieldError($"Passes[{passIndex}].Exercises[{exerciseIndex}].ExerciseName")" />
                             <div class="d-flex" style="gap:8px; flex-wrap:wrap;">
                                 <MudNumericField @bind-Value="exercise.DefaultSets"
                                                  Label="Set"

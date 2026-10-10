@@ -45,7 +45,14 @@
             <section class="ui-card pass-exercise" aria-labelledby="ex-name">
                 <div class="pass-exercise__top">
                     <div>
-                        <h2 id="ex-name" class="pass-exercise__name">@exercise.Exercise.ExerciseName</h2>
+                        <h2 id="ex-name" class="pass-exercise__name">
+                            @exercise.Exercise.ExerciseName
+                            @if (exercise.CatalogExerciseId is { } catalogExerciseId)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Class="pass-exercise__info"
+                                               aria-label="Om övningen" OnClick="@(() => ShowExerciseInfo(catalogExerciseId))" />
+                            }
+                        </h2>
                         <span class="ui-sub">@FormatSetsReps(exercise)</span>
                     </div>
                     <MudNumericField T="decimal?" Label="Vikt" HideSpinButtons="true" Variant="Variant.Outlined" Format="0.##" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" Value="GetWeight(exercise.ExerciseId)" ValueChanged="v => SetWeight(exercise.ExerciseId, v)" OnBlur="OnWeightChanged" Class="weight-field pass-weight" />

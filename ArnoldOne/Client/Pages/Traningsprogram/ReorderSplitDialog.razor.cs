@@ -135,6 +135,7 @@ public partial class ReorderSplitDialog
         {
             ExerciseId = exercise.ExerciseId,
             ExerciseName = exercise.ExerciseName,
+            CatalogExerciseId = exercise.CatalogExerciseId,
             DefaultSets = exercise.DefaultSets,
             RepsMin = exercise.RepsMin,
             RepsMax = exercise.RepsMax,

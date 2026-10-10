@@ -58,7 +58,7 @@
                 var exercise = pass.Exercises[currentExerciseIndex];
                 <MudPaper Class="pa-4 mt-3 exercise-editor" Outlined="true">
                     <div class="editor-row">
-                        <MudTextField @bind-Value="exercise.ExerciseTemplateName" Label="Övning" Variant="Variant.Outlined" MaxLength="50" />
+                        <ExercisePicker @bind-Name="exercise.ExerciseTemplateName" @bind-CatalogExerciseId="exercise.CatalogExerciseId" />
                         <MudSwitch T="bool" @bind-Value="exercise.IsVisible" Color="Color.Success" Size="Size.Small">Aktiv</MudSwitch>
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
                                        OnClick="@(() => RemoveExercise(currentPassIndex, currentExerciseIndex))" />

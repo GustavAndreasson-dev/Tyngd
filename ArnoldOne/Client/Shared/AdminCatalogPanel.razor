@@ -1,0 +1,215 @@
+@using ArnoldOne.Shared.Catalog
+@using ArnoldOne.Client.Services
+@namespace ArnoldOne.Client.Shared
+
+<div class="d-flex flex-wrap align-center mb-3" style="gap:12px;">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Sync"
+               Disabled="_syncing" OnClick="SyncAsync">
+        @(_syncing ? "Synkar…" : "Synka från wger")
+    </MudButton>
+    @if (_syncMessage is not null)
+    {
+        <MudText Typo="Typo.body2" Color="@(_syncFailed ? Color.Error : Color.Default)">@_syncMessage</MudText>
+    }
+</div>
+
+<div class="d-flex flex-wrap mb-3" style="gap:12px;">
+    <MudSelect T="StatusFilter" @bind-Value="_filter" Label="Visa" Variant="Variant.Outlined" Dense="true" Style="min-width:200px;">
+        <MudSelectItem Value="StatusFilter.AttGranska">Att granska (@Count(StatusFilter.AttGranska))</MudSelectItem>
+        <MudSelectItem Value="StatusFilter.BehoverGranskning">Källan ändrad (@Count(StatusFilter.BehoverGranskning))</MudSelectItem>
+        <MudSelectItem Value="StatusFilter.Saknas">Saknar svenska (@Count(StatusFilter.Saknas))</MudSelectItem>
+        <MudSelectItem Value="StatusFilter.Granskade">Granskade (@Count(StatusFilter.Granskade))</MudSelectItem>
+        <MudSelectItem Value="StatusFilter.Alla">Alla (@_rows.Count)</MudSelectItem>
+    </MudSelect>
+    <MudTextField T="string" @bind-Value="_search" Label="Sök" Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Immediate="true" DebounceInterval="200" Clearable="true" />
+</div>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (_rows.Count == 0)
+{
+    <MudText Class="mud-text-secondary">Katalogen är tom. Kör en synk för att hämta övningar från wger.</MudText>
+}
+else
+{
+    var visible = Visible().ToList();
+    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2">
+        Visar @Math.Min(visible.Count, _shown) av @visible.Count
+    </MudText>
+    @foreach (var row in visible.Take(_shown))
+    {
+        var current = row;
+        <MudPaper Outlined="true" Class="pa-3 mb-2">
+            <div class="d-flex align-center" style="gap:8px; cursor:pointer;" @onclick="@(() => Toggle(current))">
+                <div style="flex:1; min-width:0;">
+                    <MudText Typo="Typo.subtitle2">@(current.NameSv ?? current.NameEn)</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                        @current.NameEn · @current.Category@(current.IsActive ? "" : " · borttagen hos wger")
+                    </MudText>
+                </div>
+                <MudChip T="string" Size="Size.Small" Color="@StatusColor(current.TranslationStatus)">@StatusText(current.TranslationStatus)</MudChip>
+            </div>
+            @if (_editing?.CatalogExerciseId == current.CatalogExerciseId)
+            {
+                <div class="mt-3">
+                    <MudTextField @bind-Value="_editName" Label="Svenskt namn" Variant="Variant.Outlined" MaxLength="50" Class="mb-2" />
+                    <MudTextField @bind-Value="_editDescription" Label="Svensk beskrivning" Variant="Variant.Outlined" Lines="8" Class="mb-2" />
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Engelska (wger)</MudText>
+                    <MudText Typo="Typo.body2" Style="white-space:pre-line;" Class="mb-3">@(string.IsNullOrWhiteSpace(current.DescriptionEn) ? "–" : current.DescriptionEn)</MudText>
+                    <div class="d-flex" style="gap:8px;">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="_saving" OnClick="@(() => SaveAsync(current))">Spara som granskad</MudButton>
+                        <MudButton OnClick="@(() => _editing = null)">Avbryt</MudButton>
+                    </div>
+                </div>
+            }
+        </MudPaper>
+    }
+    @if (visible.Count > _shown)
+    {
+        <MudButton Variant="Variant.Text" OnClick="@(() => _shown += PageSize)">Visa fler</MudButton>
+    }
+}
+
+@code {
+    private const int PageSize = 50;
+
+    [Inject] private AdminCatalogService AdminCatalogService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private enum StatusFilter { AttGranska, BehoverGranskning, Saknas, Granskade, Alla }
+
+    private List<AdminCatalogExerciseDto> _rows = new();
+    private StatusFilter _filter = StatusFilter.AttGranska;
+    private string? _search;
+    private int _shown = PageSize;
+    private bool _loading = true;
+    private bool _syncing;
+    private bool _syncFailed;
+    private string? _syncMessage;
+    private AdminCatalogExerciseDto? _editing;
+    private string _editName = string.Empty;
+    private string _editDescription = string.Empty;
+    private bool _saving;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _rows = await AdminCatalogService.GetAllAsync();
+        }
+        catch (HttpRequestException)
+        {
+            Snackbar.Add("Kunde inte ladda katalogen.", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SyncAsync()
+    {
+        _syncing = true;
+        _syncMessage = null;
+        try
+        {
+            var (result, error) = await AdminCatalogService.SyncAsync();
+            _syncFailed = result is null;
+            _syncMessage = result is null
+                ? $"Synken misslyckades: {error}"
+                : $"Hämtade {result.Fetched}. Nya {result.Added} (varav {result.TranslatedFromSeed} med svensk text), " +
+                  $"ändrade {result.TextChanged}, att granska om {result.NeedsReview}, borttagna {result.Deactivated}, tillbaka {result.Reactivated}.";
+            if (result is not null)
+                await LoadAsync();
+        }
+        catch (HttpRequestException)
+        {
+            _syncFailed = true;
+            _syncMessage = "Synken misslyckades: ingen kontakt med servern.";
+        }
+        finally
+        {
+            _syncing = false;
+        }
+    }
+
+    private IEnumerable<AdminCatalogExerciseDto> Visible()
+    {
+        var rows = _rows.Where(row => Matches(row, _filter));
+        if (!string.IsNullOrWhiteSpace(_search))
+        {
+            var text = _search.Trim();
+            rows = rows.Where(row => row.NameEn.Contains(text, StringComparison.CurrentCultureIgnoreCase)
+                || (row.NameSv?.Contains(text, StringComparison.CurrentCultureIgnoreCase) ?? false));
+        }
+        return rows;
+    }
+
+    private int Count(StatusFilter filter) => _rows.Count(row => Matches(row, filter));
+
+    private static bool Matches(AdminCatalogExerciseDto row, StatusFilter filter) => filter switch
+    {
+        StatusFilter.AttGranska => row.TranslationStatus is CatalogTranslationStatus.Auto or CatalogTranslationStatus.BehoverGranskning,
+        StatusFilter.BehoverGranskning => row.TranslationStatus == CatalogTranslationStatus.BehoverGranskning,
+        StatusFilter.Saknas => row.TranslationStatus == CatalogTranslationStatus.Saknas,
+        StatusFilter.Granskade => row.TranslationStatus == CatalogTranslationStatus.Granskad,
+        _ => true,
+    };
+
+    private void Toggle(AdminCatalogExerciseDto row)
+    {
+        if (_editing?.CatalogExerciseId == row.CatalogExerciseId)
+        {
+            _editing = null;
+            return;
+        }
+        _editing = row;
+        _editName = row.NameSv ?? row.NameEn;
+        _editDescription = row.DescriptionSv ?? string.Empty;
+    }
+
+    private async Task SaveAsync(AdminCatalogExerciseDto row)
+    {
+        _saving = true;
+        try
+        {
+            await AdminCatalogService.UpdateTranslationAsync(row.CatalogExerciseId,
+                new UpdateCatalogTranslationRequest { NameSv = _editName, DescriptionSv = _editDescription });
+            row.NameSv = _editName.Trim();
+            row.DescriptionSv = _editDescription;
+            row.TranslationStatus = CatalogTranslationStatus.Granskad;
+            _editing = null;
+            Snackbar.Add("Sparad som granskad.", Severity.Success);
+        }
+        catch (HttpRequestException)
+        {
+            Snackbar.Add("Kunde inte spara. Kontrollera att namnet är 1–50 tecken.", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static string StatusText(CatalogTranslationStatus status) => status switch
+    {
+        CatalogTranslationStatus.Auto => "Maskinöversatt",
+        CatalogTranslationStatus.Granskad => "Granskad",
+        CatalogTranslationStatus.BehoverGranskning => "Källan ändrad",
+        _ => "Saknas",
+    };
+
+    private static Color StatusColor(CatalogTranslationStatus status) => status switch
+    {
+        CatalogTranslationStatus.Granskad => Color.Success,
+        CatalogTranslationStatus.BehoverGranskning => Color.Warning,
+        CatalogTranslationStatus.Auto => Color.Info,
+        _ => Color.Default,
+    };
+}

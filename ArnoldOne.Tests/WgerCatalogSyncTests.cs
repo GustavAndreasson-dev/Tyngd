@@ -96,6 +96,18 @@ public class WgerCatalogSyncTests
         Assert.Equal("Stand & brace.\n\n• Down\n• Up x", text);
     }
 
+    [Fact]
+    public void Embedded_seed_matches_hashes_computed_by_the_app()
+    {
+        var seed = CatalogSeed.LoadEmbedded();
+        // Rå text från wger 2026-10-10. Seed-filen räknades fram i Python; appen måste få samma hash.
+        var hash = CatalogText.SourceHash("2 Handed Kettlebell Swing", "<p>Two Handed Russian Style Kettlebell swing</p>\n");
+
+        Assert.Equal(920, seed.Count);
+        Assert.Equal("478f24d51a0d0ba5b7f136852242cf558d202f36149a3df792d97123a9d421ba", hash);
+        Assert.NotNull(seed.Find(Guid.Parse("1b020b3a-3732-4c7e-92fd-a0cec90ed69b"), hash));
+    }
+
     private static Task<CatalogSyncResultDto> Sync(ArnoldContext context, CatalogSeed seed, params object[] exercises)
     {
         var json = JsonSerializer.Serialize(new { count = exercises.Length, next = (string?)null, results = exercises });

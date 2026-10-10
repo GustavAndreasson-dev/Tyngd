@@ -26,28 +26,24 @@ public sealed class AdminCatalogController(ArnoldContext context) : AdminApiCont
         }
     }
 
+    /// <summary>Hela katalogen för granskning. Beskrivningar skickas som ren text, så admin redigerar text och inte HTML.</summary>
     [HttpGet]
-    public async Task<ActionResult<List<AdminCatalogExerciseDto>>> GetAll([FromQuery] CatalogTranslationStatus? status = null)
+    public async Task<ActionResult<List<AdminCatalogExerciseDto>>> GetAll()
     {
-        var query = context.ExerciseCatalog.AsNoTracking();
-        if (status is { } wanted)
-            query = query.Where(row => row.TranslationStatus == (byte)wanted);
-
-        var rows = await query
+        var rows = await context.ExerciseCatalog.AsNoTracking()
             .OrderBy(row => row.Category).ThenBy(row => row.NameEn)
-            .Select(row => new AdminCatalogExerciseDto
-            {
-                CatalogExerciseId = row.CatalogExerciseId,
-                NameEn = row.NameEn,
-                NameSv = row.NameSv,
-                DescriptionEn = row.DescriptionEn,
-                DescriptionSv = row.DescriptionSv,
-                TranslationStatus = (CatalogTranslationStatus)row.TranslationStatus,
-                Category = row.Category,
-                IsActive = row.IsActive,
-            })
             .ToListAsync();
-        return Ok(rows);
+        return Ok(rows.Select(row => new AdminCatalogExerciseDto
+        {
+            CatalogExerciseId = row.CatalogExerciseId,
+            NameEn = row.NameEn,
+            NameSv = row.NameSv,
+            DescriptionEn = CatalogText.ToPlainText(row.DescriptionEn),
+            DescriptionSv = row.DescriptionSv is null ? null : CatalogText.ToPlainText(row.DescriptionSv),
+            TranslationStatus = (CatalogTranslationStatus)row.TranslationStatus,
+            Category = CatalogNames.Sv(row.Category),
+            IsActive = row.IsActive,
+        }).ToList());
     }
 
     /// <summary>Sparar svensk text och markerar den som granskad mot nuvarande engelska text.</summary>

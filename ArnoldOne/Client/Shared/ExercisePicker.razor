@@ -1,0 +1,105 @@
+@using ArnoldOne.Shared.Catalog
+@using ArnoldOne.Client.Services
+
+@* Väljer övning ur katalogen. Egen övning (fritext) erbjuds sist, för övningar som inte finns i katalogen. *@
+<MudAutocomplete T="PickerItem"
+                 Value="_selected"
+                 ValueChanged="OnSelected"
+                 SearchFunc="SearchAsync"
+                 ToStringFunc="@(item => item?.Text)"
+                 Label="@Label"
+                 Placeholder="Sök på svenska eller engelska"
+                 Variant="Variant.Outlined"
+                 MaxLength="50"
+                 MinCharacters="1"
+                 DebounceInterval="150"
+                 MaxItems="null"
+                 ResetValueOnEmptyText="false"
+                 CoerceText="false"
+                 Error="Error"
+                 ErrorText="@ErrorText"
+                 HelperText="@HelperText"
+                 Class="mb-2">
+    <ItemTemplate Context="item">
+        @if (item.Exercise is { } exercise)
+        {
+            <div class="d-flex flex-column">
+                <span>@exercise.Name</span>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    @Subtitle(exercise)
+                </MudText>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex align-center" style="gap:6px;">
+                <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" />
+                <span>Lägg till egen övning: "@item.Text"</span>
+            </div>
+        }
+    </ItemTemplate>
+</MudAutocomplete>
+@if (CatalogExerciseId is null && !string.IsNullOrWhiteSpace(Name))
+{
+    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2">Egen övning (finns inte i katalogen)</MudText>
+}
+
+@code {
+    private const int MaxResults = 25;
+
+    [Inject] private CatalogService CatalogService { get; set; } = default!;
+
+    [Parameter] public string Name { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> NameChanged { get; set; }
+    [Parameter] public int? CatalogExerciseId { get; set; }
+    [Parameter] public EventCallback<int?> CatalogExerciseIdChanged { get; set; }
+    [Parameter] public string Label { get; set; } = "Övning";
+    [Parameter] public bool Error { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public string? HelperText { get; set; }
+
+    private PickerItem? _selected;
+
+    protected override void OnParametersSet()
+    {
+        if (_selected?.Text != Name || _selected?.CatalogExerciseId != CatalogExerciseId)
+            _selected = string.IsNullOrWhiteSpace(Name) ? null : new PickerItem(null, Name, CatalogExerciseId);
+    }
+
+    private async Task<IEnumerable<PickerItem>> SearchAsync(string? text, CancellationToken cancellationToken)
+    {
+        var all = await CatalogService.GetAllAsync();
+        var trimmed = (text ?? string.Empty).Trim();
+        var matches = CatalogService.Search(all, trimmed)
+            .Take(MaxResults)
+            .Select(exercise => new PickerItem(exercise, exercise.Name, exercise.CatalogExerciseId))
+            .ToList();
+
+        var exactMatch = matches.Any(item => string.Equals(item.Text, trimmed, StringComparison.CurrentCultureIgnoreCase));
+        if (trimmed.Length > 0 && !exactMatch)
+            matches.Add(new PickerItem(null, trimmed.Length > 50 ? trimmed[..50] : trimmed, null));
+
+        return matches;
+    }
+
+    private async Task OnSelected(PickerItem? item)
+    {
+        _selected = item;
+        await NameChanged.InvokeAsync(item?.Text ?? string.Empty);
+        await CatalogExerciseIdChanged.InvokeAsync(item?.CatalogExerciseId);
+    }
+
+    private static string Subtitle(CatalogExerciseDto exercise)
+    {
+        var parts = new List<string>();
+        if (!string.Equals(exercise.Name, exercise.NameEn, StringComparison.OrdinalIgnoreCase))
+            parts.Add(exercise.NameEn);
+        parts.Add(exercise.Category);
+        if (exercise.Equipment.Count > 0)
+            parts.Add(string.Join(", ", exercise.Equipment));
+        return string.Join(" · ", parts);
+    }
+
+    /// <summary>Exercise är null för en egen övning eller för ett redan sparat värde som inte slagits upp.</summary>
+    private sealed record PickerItem(CatalogExerciseDto? Exercise, string Text, int? CatalogExerciseId);
+}

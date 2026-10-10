@@ -21,6 +21,8 @@ public sealed class CatalogSeed
         return new CatalogSeed(JsonSerializer.Deserialize<List<SeedEntry>>(stream) ?? []);
     }
 
+    public int Count => _entries.Count;
+
     /// <summary>Returnerar översättningen bara om den gjordes från exakt samma källtext.</summary>
     public SeedEntry? Find(Guid uuid, string sourceHash) =>
         _entries.TryGetValue(uuid, out var entry) && entry.SourceHash == sourceHash ? entry : null;

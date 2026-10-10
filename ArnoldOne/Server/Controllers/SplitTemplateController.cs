@@ -53,6 +53,7 @@ public class SplitTemplateController : ControllerBase
                         {
                             ExerciseId     = e.ExerciseTemplateId,
                             Exercise       = new SharedExercise { ExerciseId = e.ExerciseTemplateId, ExerciseName = e.ExerciseTemplateName },
+                            CatalogExerciseId = e.CatalogExerciseId,
                             DefaultSets    = e.DefaultSets    ?? 3,
                             DefaultRepsMin = e.DefaultRepsMin ?? 8,
                             DefaultRepsMax = e.DefaultRepsMax ?? 12,
@@ -90,6 +91,7 @@ public class SplitTemplateController : ControllerBase
             {
                 ExerciseId     = e.ExerciseTemplateId,
                 Exercise       = new SharedExercise { ExerciseId = e.ExerciseTemplateId, ExerciseName = e.ExerciseTemplateName },
+                CatalogExerciseId = e.CatalogExerciseId,
                 DefaultSets    = e.DefaultSets    ?? 3,
                 DefaultRepsMin = e.DefaultRepsMin ?? 8,
                 DefaultRepsMax = e.DefaultRepsMax ?? 12,
