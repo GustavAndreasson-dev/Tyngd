@@ -53,6 +53,24 @@ public class SessionController : ApiControllerBase
         return await SaveOrConflictAsync();
     }
 
+    /// <summary>Högsta avklarade vikt per avslutat pass för en övning (senaste 12), äldst först.</summary>
+    [HttpGet("progress/{exerciseId:int}")]
+    public async Task<ActionResult<List<ExerciseProgressPointDto>>> GetProgress(int exerciseId)
+    {
+        var rows = await _context.ExerciseLog
+            .Where(l => l.ExerciseId == exerciseId
+                && l.Session.CompletedAtUtc != null
+                && l.Session.Pass.Split.UserId == CurrentUserId)
+            .OrderByDescending(l => l.Session.StartedAtUtc)
+            .Take(12)
+            .Select(l => new { l.Session.Date, Weight = l.SetLog.Where(s => s.IsDone).Max(s => (decimal?)s.Weight) })
+            .ToListAsync();
+
+        return Ok(rows.Where(r => r.Weight > 0)
+            .Select(r => new ExerciseProgressPointDto(r.Date, r.Weight!.Value))
+            .Reverse().ToList());
+    }
+
     /// <summary>Hämtar senaste sparade data för ett pass (vikt, reps, anteckningar).</summary>
     [HttpGet("last/{passId}")]
     public async Task<ActionResult<LastSessionDto>> GetLastSession(int passId)

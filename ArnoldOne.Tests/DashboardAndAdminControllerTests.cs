@@ -39,6 +39,7 @@ public class DashboardAndAdminControllerTests
         Assert.Equal(1, dto.CompletedSessionsLast7Days);
         Assert.Equal(2, dto.CompletedSessionsLast30Days);
         Assert.Equal(2, dto.TotalCompletedSessions);
+        Assert.Single(dto.RecentCompletedAtUtc);
         Assert.Single(dto.ActiveSplits);
         Assert.Equal("Min split", dto.LastCompletedSession!.SplitName);
     }
@@ -183,6 +184,44 @@ public class DashboardAndAdminControllerTests
             exercise => exercise.ExerciseTemplateName == "Lutande press",
             TestContext.Current.CancellationToken);
         Assert.NotEqual(kept.ExerciseTemplateId, added.ExerciseTemplateId);
+    }
+
+    [Fact]
+    public async Task Progress_returns_best_done_weight_per_completed_session_for_own_exercise_only()
+    {
+        await using var context = CreateContext();
+        var user = NewUser(AppRoles.User);
+        var other = NewUser(AppRoles.User);
+        var split = AddSplit(user, "Min");
+        var otherSplit = AddSplit(other, "Annan");
+        context.AddRange(user, other);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var exercise = new DbArnold.DbArnold.models.Exercise { PassId = split.Pass.Single().PassId, ExerciseName = "Bänk", Visability = true };
+        var otherExercise = new DbArnold.DbArnold.models.Exercise { PassId = otherSplit.Pass.Single().PassId, ExerciseName = "Bänk", Visability = true };
+        context.AddRange(exercise, otherExercise);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        void Log(Pass pass, DbArnold.DbArnold.models.Exercise ex, int daysAgo, bool completed, params (decimal w, bool done)[] sets)
+        {
+            var s = NewSession(pass, DateTimeOffset.UtcNow.AddDays(-daysAgo), completed);
+            var l = new ExerciseLog { Session = s, ExerciseId = ex.ExerciseId };
+            for (var i = 0; i < sets.Length; i++)
+                l.SetLog.Add(new SetLog { SetIndex = i, Reps = 8, Weight = sets[i].w, IsDone = sets[i].done });
+            context.Add(l);
+        }
+        Log(split.Pass.Single(), exercise, 10, true, (50, true), (60, true), (70, false));
+        Log(split.Pass.Single(), exercise, 3, true, (65, true));
+        Log(split.Pass.Single(), exercise, 1, false, (90, true));
+        Log(otherSplit.Pass.Single(), otherExercise, 2, true, (200, true));
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var result = await WithUser(new SessionController(context), user.UserId).GetProgress(exercise.ExerciseId);
+        var points = Assert.IsType<OkObjectResult>(result.Result).Value as List<ExerciseProgressPointDto>;
+
+        Assert.Equal([60m, 65m], points!.Select(p => p.Weight));
+        Assert.Empty(Assert.IsType<OkObjectResult>(
+            (await WithUser(new SessionController(context), user.UserId).GetProgress(otherExercise.ExerciseId)).Result).Value as List<ExerciseProgressPointDto>);
     }
 
     private static ArnoldContext CreateContext()

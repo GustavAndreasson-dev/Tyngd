@@ -13,86 +13,109 @@
     </MudAlert>
 }
 
-<MudText Typo="Typo.h4" Class="mb-4">@pass?.PassName</MudText>
-
 @if (pass is not null)
 {
-    <div class="pass-layout">
-    <div class="pass-content">
-    <MudCarousel Class="mud-width-full" Style="height:400px; overflow-y:auto;" ShowArrows="true" ShowBullets="false" EnableSwipeGesture="false" AutoCycle="false" TData="object" SelectedIndex="@activeIndex" SelectedIndexChanged="OnCarouselIndexChanged">
-        @foreach (var exercise in pass.Exercises)
-        {
-            <MudCarouselItem Transition="transition" Color="@Color.Secondary">
-                <div class="d-flex flex-column justify-start align-center" style="min-height:100%; gap:8px;">
-                    <MudText Typo="Typo.h5" Class="mb-2">@exercise.Exercise.ExerciseName</MudText>
-                    <MudText Typo="Typo.h6" Class="mb-2">@FormatSetsReps(exercise)</MudText>
-                    <MudNumericField T="decimal?" Label="vikt" HideSpinButtons="true" Variant="Variant.Filled" Format="0.##" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" Value="GetWeight(exercise.ExerciseId)" ValueChanged="v => SetWeight(exercise.ExerciseId, v)" OnBlur="OnWeightChanged" Class="weight-field" />
-                </div>
-            </MudCarouselItem>
-        }
-    </MudCarousel>
+    var count = pass.Exercises.Count;
+    var hasActive = activeIndex >= 0 && activeIndex < count;
+    <div class="pass">
+        <header class="pass-head">
+            <div>
+                <span class="ui-label">Övning @(activeIndex + 1) av @count</span>
+                <h1 class="ui-title">@pass.PassName</h1>
+            </div>
+            <span class="ui-sub">@DoneSets / @TotalSets set</span>
+        </header>
+        <div class="pass-progress" role="progressbar" aria-valuemin="0" aria-valuemax="@TotalSets" aria-valuenow="@DoneSets">
+            <div style="width:@(TotalSets == 0 ? 0 : DoneSets * 100 / TotalSets)%"></div>
+        </div>
 
-    @if (activeIndex >= 0 && activeIndex < pass!.Exercises.Count)
-    {
-        var exercise = pass.Exercises[activeIndex];
-        <div class="slider-wrapper" style="margin-top:16px;">
-            @for (int s = 0; s < exercise.DefaultSets; s++)
+        <nav class="pass-chips" aria-label="Övningar">
+            @for (int i = 0; i < count; i++)
             {
-                var setIndex = s;
-                var currentExercise = exercise;
-                <div class="d-flex align-center" style="margin-bottom:8px; gap:8px;">
-                    <div class="d-flex align-center justify-space-between" style="width:75%; gap:8px;">
-                        <MudText Style="min-width:48px;">Set @(setIndex + 1)</MudText>
-                        <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="() => AdjustReps(currentExercise.ExerciseId, setIndex, -1)" />
-                        <MudText Style="min-width:32px; text-align:center;">@((int)GetReps(currentExercise.ExerciseId, setIndex))</MudText>
-                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="() => AdjustReps(currentExercise.ExerciseId, setIndex, 1)" />
-                        <MudText Style="min-width:32px;">reps</MudText>
+                var idx = i;
+                <button type="button" class="@ChipClass(idx)" @onclick="() => NavigateToExercise(idx)">
+                    <span class="pass-chip__n">@(idx + 1)</span>@pass.Exercises[idx].Exercise.ExerciseName
+                </button>
+            }
+        </nav>
+
+        @if (hasActive)
+        {
+            var exercise = pass.Exercises[activeIndex];
+            <section class="ui-card pass-exercise" aria-labelledby="ex-name">
+                <div class="pass-exercise__top">
+                    <div>
+                        <h2 id="ex-name" class="pass-exercise__name">@exercise.Exercise.ExerciseName</h2>
+                        <span class="ui-sub">@FormatSetsReps(exercise)</span>
                     </div>
-                    <div style="width:25%; display:flex; justify-content:center;">
-                        <MudIconButton Icon="@(IsSetDone(currentExercise.ExerciseId, setIndex) ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.RadioButtonUnchecked)"
-                                       Size="Size.Medium"
-                                       Color="@(IsSetDone(currentExercise.ExerciseId, setIndex) ? Color.Success : Color.Default)"
-                                       OnClick="() => ToggleSet(currentExercise.ExerciseId, setIndex)" />
-                    </div>
+                    <MudNumericField T="decimal?" Label="Vikt" HideSpinButtons="true" Variant="Variant.Outlined" Format="0.##" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" Value="GetWeight(exercise.ExerciseId)" ValueChanged="v => SetWeight(exercise.ExerciseId, v)" OnBlur="OnWeightChanged" Class="weight-field pass-weight" />
                 </div>
+
+                <div class="slider-wrapper pass-sets">
+                    @for (int s = 0; s < exercise.DefaultSets; s++)
+                    {
+                        var setIndex = s;
+                        var currentExercise = exercise;
+                        var done = IsSetDone(currentExercise.ExerciseId, setIndex);
+                        <div class="pass-set @(done ? "pass-set--done" : "")">
+                            <span class="pass-set__n">Set @(setIndex + 1)</span>
+                            <div class="pass-set__reps">
+                                <button type="button" class="pass-step" aria-label="Minska reps" @onclick="() => AdjustReps(currentExercise.ExerciseId, setIndex, -1)">−</button>
+                                <span class="pass-set__count">@((int)GetReps(currentExercise.ExerciseId, setIndex))<small>reps</small></span>
+                                <button type="button" class="pass-step" aria-label="Öka reps" @onclick="() => AdjustReps(currentExercise.ExerciseId, setIndex, 1)">+</button>
+                            </div>
+                            <button type="button" class="pass-check @(done ? "pass-check--on" : "")" aria-pressed="@(done ? "true" : "false")" aria-label="@(done ? "Ångra set klart" : "Markera set klart")" @onclick="() => ToggleSet(currentExercise.ExerciseId, setIndex)">
+                                <MudIcon Icon="@Icons.Material.Filled.Check" />
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                @{ var points = ActiveProgress; }
+                @if (points.Count >= 2)
+                {
+                    var delta = points[^1].Weight - points[0].Weight;
+                    <div class="pass-progress-card">
+                        <div class="pass-row">
+                            <span class="ui-label">Viktutveckling</span>
+                            <span class="ui-sub">@points[^1].Weight.ToString("0.##") kg@(delta == 0 ? "" : $" ({(delta > 0 ? "+" : "")}{delta:0.##})")</span>
+                        </div>
+                        <svg viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="Viktutveckling de senaste @points.Count passen">
+                            <polyline points="@SparkPoints(points)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+                        </svg>
+                    </div>
+                }
+
+                <MudTextField T="string"
+                              Label="Anteckningar"
+                              Lines="2"
+                              Variant="Variant.Outlined"
+                              Value="@GetNote(exercise.ExerciseId)"
+                              ValueChanged="v => SetNote(exercise.ExerciseId, v)"
+                              OnBlur="OnNoteChanged"
+                              Class="note-field" />
+            </section>
+        }
+    </div>
+
+    <div class="pass-bar">
+        <button type="button" class="ui-btn pass-bar__side" disabled="@(activeIndex <= 0)" @onclick="() => NavigateToExercise(activeIndex - 1)" aria-label="Föregående övning">‹</button>
+        <div class="pass-bar__mid">
+            @if (restRemaining > 0)
+            {
+                <span class="pass-rest" role="timer">Vila <b>@($"{restRemaining / 60}:{restRemaining % 60:00}")</b></span>
+            }
+            @if (AllSetsDone())
+            {
+                <button type="button" class="ui-btn pass-bar__main" @onclick="EndPass">Avsluta pass</button>
+            }
+            else
+            {
+                <span class="ui-sub">@DoneSets av @TotalSets set klara</span>
             }
         </div>
-        <MudTextField T="string"
-                      Label="Anteckningar"
-                      Lines="3"
-                      Variant="Variant.Outlined"
-                      Value="@GetNote(exercise.ExerciseId)"
-                      ValueChanged="v => SetNote(exercise.ExerciseId, v)"
-                      OnBlur="OnNoteChanged"
-                      Class="mt-4 note-field" />
-    }
+        <button type="button" class="ui-btn pass-bar__side" disabled="@(activeIndex >= count - 1)" @onclick="() => NavigateToExercise(activeIndex + 1)" aria-label="Nästa övning">›</button>
     </div>
-    <div class="@NavClass">
-        <MudText Typo="Typo.subtitle2" Class="mb-3 px-1">�vningar</MudText>
-        @for (int i = 0; i < pass.Exercises.Count; i++)
-        {
-            var idx = i;
-            var ex = pass.Exercises[i];
-            <div class="@StepClass(idx)" @onclick="() => NavigateToExercise(idx)">
-                <div class="pass-step-circle">@(idx + 1)</div>
-                <MudText Class="pass-step-label" Typo="Typo.body2">@ex.Exercise.ExerciseName</MudText>
-            </div>
-        }
-    </div>
-    </div>
-    <div class="pass-nav-toggle">
-        <MudFab Color="Color.Secondary"
-                StartIcon="@(_navOpen ? Icons.Material.Filled.Close : Icons.Material.Filled.List)"
-                Size="Size.Small" OnClick="ToggleNav" />
-    </div>
-    @if (AllSetsDone())
-    {
-        <div class="d-flex justify-center mt-6 mb-4">
-            <MudButton Variant="Variant.Filled" Color="Color.Success"
-                       StartIcon="@Icons.Material.Filled.CheckCircle"
-                       Size="Size.Large" OnClick="EndPass">Avsluta pass</MudButton>
-        </div>
-    }
 }
 else
 {

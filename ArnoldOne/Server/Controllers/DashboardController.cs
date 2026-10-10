@@ -35,6 +35,10 @@ public sealed class DashboardController : ApiControllerBase
             CompletedSessionsLast7Days = await completed.CountAsync(session => session.CompletedAtUtc >= sevenDaysAgo),
             CompletedSessionsLast30Days = await completed.CountAsync(session => session.CompletedAtUtc >= thirtyDaysAgo),
             TotalCompletedSessions = await completed.CountAsync(),
+            RecentCompletedAtUtc = await completed
+                .Where(session => session.CompletedAtUtc >= sevenDaysAgo)
+                .Select(session => session.CompletedAtUtc!.Value)
+                .ToListAsync(),
             LastCompletedSession = await completed
                 .OrderByDescending(session => session.CompletedAtUtc)
                 .Select(session => new DashboardSessionDto
