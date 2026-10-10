@@ -8,7 +8,9 @@
     [DefaultWeight]        INT          NULL,
     [Visability]           BIT          NOT NULL,
     [Ordning]              INT          CONSTRAINT [DF_ExerciseTemplate_Ordning] DEFAULT ((1)) NOT NULL,
+    [CatalogExerciseId]    INT          NULL,
     CONSTRAINT [PK_ExerciseTemplate] PRIMARY KEY CLUSTERED ([ExerciseTemplateId] ASC),
-    CONSTRAINT [FK_ExerciseTemplate_PassTemplate] FOREIGN KEY ([PassTemplateId]) REFERENCES [dbo].[PassTemplate] ([PassTemplateId])
+    CONSTRAINT [FK_ExerciseTemplate_PassTemplate] FOREIGN KEY ([PassTemplateId]) REFERENCES [dbo].[PassTemplate] ([PassTemplateId]),
+    CONSTRAINT [FK_ExerciseTemplate_ExerciseCatalog] FOREIGN KEY ([CatalogExerciseId]) REFERENCES [dbo].[ExerciseCatalog] ([CatalogExerciseId])
 );
 
