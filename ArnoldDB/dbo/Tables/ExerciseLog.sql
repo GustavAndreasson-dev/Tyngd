@@ -13,3 +13,8 @@ GO
 
 CREATE UNIQUE INDEX [UX_ExerciseLog_SessionId_ExerciseId]
     ON [dbo].[ExerciseLog]([SessionId], [ExerciseId]);
+
+GO
+
+CREATE NONCLUSTERED INDEX [IX_ExerciseLog_ExerciseId]
+    ON [dbo].[ExerciseLog]([ExerciseId]) INCLUDE ([SessionId]);

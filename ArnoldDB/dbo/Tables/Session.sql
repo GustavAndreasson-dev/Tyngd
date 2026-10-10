@@ -14,3 +14,8 @@ GO
 CREATE UNIQUE INDEX [UX_Session_SessionKey]
     ON [dbo].[Session]([SessionKey]);
 
+
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Session_PassId_StartedAtUtc]
+    ON [dbo].[Session]([PassId], [StartedAtUtc] DESC) INCLUDE ([CompletedAtUtc], [Date], [SessionKey]);
