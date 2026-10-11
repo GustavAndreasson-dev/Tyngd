@@ -123,3 +123,11 @@ body, .mud-typography, .mud-button-root, .mud-input {
 .mud-appbar { padding-top: env(safe-area-inset-top); height: calc(64px + env(safe-area-inset-top)) !important; }
 .mud-main-content { padding-top: calc(64px + env(safe-area-inset-top)) !important; }
 @media (max-width: 599.95px) { .mud-appbar { height: calc(56px + env(safe-area-inset-top)) !important; } .mud-main-content { padding-top: calc(56px + env(safe-area-inset-top)) !important; } }
+
+/* Vilotimer i sidhuvudet när man lämnat passidan. */
+.rest-pill {
+    display: inline-flex; align-items: center; gap: .25rem;
+    padding: .25rem .625rem; margin-right: .5rem; border-radius: 999px;
+    background: var(--mud-palette-primary); color: var(--mud-palette-primary-text);
+    font-weight: 700; font-variant-numeric: tabular-nums; text-decoration: none;
+}

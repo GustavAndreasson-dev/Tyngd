@@ -1,6 +1,7 @@
 using ArnoldOne.Client.Services;
 using ArnoldOne.Shared.Users;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace ArnoldOne.Client.Pages;
 
@@ -24,7 +25,11 @@ public partial class Installningar : ComponentBase, IDisposable
     [Inject]
     private PwaService PwaService { get; set; } = default!;
 
+    [Inject]
+    private IJSRuntime JS { get; set; } = default!;
+
     private int _restTimerMinutes;
+    private string? _notificationPermission;
     private string? successMessage;
 
     protected override void OnInitialized()
@@ -37,8 +42,15 @@ public partial class Installningar : ComponentBase, IDisposable
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
+        {
             await PwaService.InitializeAsync();
+            _notificationPermission = await JS.InvokeAsync<string>("arnoldOne.restTimer.permission");
+            StateHasChanged();
+        }
     }
+
+    private async Task RequestNotificationPermission() =>
+        _notificationPermission = await JS.InvokeAsync<string>("arnoldOne.restTimer.requestPermission");
 
     /// <summary>Togglar mörkt läge och sparar till API.</summary>
     private async Task OnDarkModeChanged(bool value)

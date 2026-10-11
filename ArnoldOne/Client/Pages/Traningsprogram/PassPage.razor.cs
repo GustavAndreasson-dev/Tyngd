@@ -90,7 +90,6 @@ public partial class PassPage : IDisposable
 
     private TrainingPassTemplate? pass;
     private int activeIndex;
-    private int restRemaining;
     private int _handlerIndex = -1;
     private readonly Dictionary<int, List<ArnoldOne.Shared.DTOs.ExerciseProgressPointDto>> _progress = new();
 
@@ -107,12 +106,13 @@ public partial class PassPage : IDisposable
     private Severity saveStatusSeverity = Severity.Info;
 
     // Vilotimer
-    private CancellationTokenSource? _restTimerCts;
 
     /// <summary>
     /// Körs när <see cref="PassId"/> ändras. Hämtar rätt passmall och
     /// laddar om passdata om PassId har bytt sedan senaste inläsning.
     /// </summary>
+    protected override void OnInitialized() => RestTimer.OnTick += OnRestTick;
+
     protected override async Task OnParametersSetAsync()
     {
         var passChanged = !_isInitialized || _lastPassId != PassId || _lastSplitId != SplitId;
@@ -203,7 +203,6 @@ public partial class PassPage : IDisposable
             $"{8 + i * 284.0 / Math.Max(pts.Count - 1, 1):0.#},{72 - (double)((p.Weight - min) / range) * 64:0.#}")));
     }
 
-    private int RestPercent => RestTimer.Seconds <= 0 ? 0 : Math.Min(100, restRemaining * 100 / RestTimer.Seconds);
 
     private int TotalSets => pass?.Exercises.Sum(e => e.DefaultSets) ?? 0;
     private int DoneSets => pass is null ? 0 : pass.Exercises.Sum(e => Enumerable.Range(0, e.DefaultSets).Count(i => IsSetDone(e.ExerciseId, i)));
@@ -465,11 +464,14 @@ public partial class PassPage : IDisposable
     /// <summary>Startar ett nytt pass via SessionState och aktiverar wake lock.</summary>
     private void StartSession(bool reset = false)
     {
+        // En vila från samma pass får fortsätta när man kommer tillbaka; bara ett nytt pass nollställer den.
         if (reset)
+        {
             Session.StartNewPass(SplitId, PassId);
+            CancelRestTimer();
+        }
         else
             Session.StartPass(SplitId, PassId);
-        CancelRestTimer();
         _ = JSRuntime.InvokeVoidAsync("arnoldOne.requestWakeLock");
     }
 
@@ -526,40 +528,13 @@ public partial class PassPage : IDisposable
         Nav.NavigateTo("/");
     }
 
-    /// <summary>Startar vilotimern med nedräkning. Avbryter eventuell pågående timer först.</summary>
-    private void StartRestTimer()
-    {
-        CancelRestTimer();
-        _restTimerCts = new CancellationTokenSource();
-        var token = _restTimerCts.Token;
-        restRemaining = RestTimer.Seconds;
-        StateHasChanged();
+    /// <summary>Startar vilan. Den fortsätter även om man lämnar passidan (se RestTimerState).</summary>
+    private void StartRestTimer() => _ = RestTimer.StartAsync($"TP/split/{SplitId}/pass/{PassId}");
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                while (restRemaining > 0)
-                {
-                    await Task.Delay(1000, token);
-                    restRemaining--;
-                    await InvokeAsync(StateHasChanged);
-                }
+    /// <summary>Avbryter pågående vila.</summary>
+    private void CancelRestTimer() => _ = RestTimer.CancelAsync();
 
-                await JSRuntime.InvokeVoidAsync("arnoldOne.flashScreen", token);
-            }
-            catch (OperationCanceledException) { }
-        }, token);
-    }
-
-    /// <summary>Avbryter pågående vilotimer.</summary>
-    private void CancelRestTimer()
-    {
-        _restTimerCts?.Cancel();
-        _restTimerCts?.Dispose();
-        _restTimerCts = null;
-        restRemaining = 0;
-    }
+    private void OnRestTick() => InvokeAsync(StateHasChanged);
 
     /// <summary>Tom – vikter sparas nu till DB vid övningsbyte och avslutat pass.</summary>
     private Task OnWeightChanged(FocusEventArgs _) => Task.CompletedTask;
@@ -685,7 +660,7 @@ public partial class PassPage : IDisposable
     /// <summary>Avbryter timern och frigör wake lock när komponenten avmonteras.</summary>
     public void Dispose()
     {
-        CancelRestTimer();
+        RestTimer.OnTick -= OnRestTick;
         PendingSync.ClearActivePassKey(PassKey);
         _ = JSRuntime.InvokeVoidAsync("arnoldOne.releaseWakeLock");
     }

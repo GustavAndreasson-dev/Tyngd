@@ -36,6 +36,28 @@
                      Variant="Variant.Filled"
                      Class="mt-2"
                      Style="max-width:180px;" />
+    @switch (_notificationPermission)
+    {
+        case "default":
+            <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.NotificationsActive"
+                       Class="mt-3" OnClick="RequestNotificationPermission">
+                Visa notis när vilan är slut
+            </MudButton>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
+                Då får du en notis om appen ligger i bakgrunden när vilan tar slut.
+            </MudText>
+            break;
+        case "granted":
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-3">
+                Notis visas när vilan är slut och appen ligger i bakgrunden.
+            </MudText>
+            break;
+        case "denied":
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-3">
+                Notiser är blockerade för Arnold. Tillåt dem i webbläsarens inställningar för att få en notis när vilan är slut.
+            </MudText>
+            break;
+    }
 </MudPaper>
 
 @if (PwaService.CanInstall)
