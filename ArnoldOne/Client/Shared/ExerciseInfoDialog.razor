@@ -4,7 +4,16 @@
 
 <MudDialog>
     <TitleContent>
-        <MudText Typo="Typo.h6">@(_exercise?.Name ?? "Övning")</MudText>
+        <div class="d-flex align-center" style="gap:4px;">
+            <MudText Typo="Typo.h6">@(_exercise?.Name ?? "Övning")</MudText>
+            @if (_exercise is not null && LoginState.IsLoggedIn)
+            {
+                <MudIconButton Icon="@(_isFavorite ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)"
+                               Color="@(_isFavorite ? Color.Warning : Color.Default)" Size="Size.Small"
+                               aria-label="@(_isFavorite ? "Ta bort från favoriter" : "Spara som favorit")"
+                               OnClick="ToggleFavorite" />
+            }
+        </div>
         @if (_exercise is not null && !string.Equals(_exercise.Name, _exercise.NameEn, StringComparison.OrdinalIgnoreCase))
         {
             <MudText Typo="Typo.caption" Class="mud-text-secondary">@_exercise.NameEn</MudText>
@@ -70,11 +79,20 @@
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
     [Inject] private CatalogService CatalogService { get; set; } = default!;
+    [Inject] private FavoritesService FavoritesService { get; set; } = default!;
+    [Inject] private LoginState LoginState { get; set; } = default!;
 
     [Parameter] public int CatalogExerciseId { get; set; }
 
     private CatalogExerciseDetailDto? _exercise;
     private Dictionary<string, double>? _load;
+    private bool _isFavorite;
+
+    private async Task ToggleFavorite()
+    {
+        try { _isFavorite = await FavoritesService.ToggleAsync(CatalogExerciseId); }
+        catch (HttpRequestException) { }
+    }
     private string? _error;
 
     protected override async Task OnInitializedAsync()
@@ -85,7 +103,10 @@
             if (_exercise is null)
                 _error = "Övningen hittades inte.";
             else
+            {
                 _load = MuscleLoad.Sum([(_exercise.PrimaryMuscles, _exercise.SecondaryMuscles)]);
+                _isFavorite = (await FavoritesService.GetAsync()).Contains(CatalogExerciseId);
+            }
         }
         catch (HttpRequestException)
         {

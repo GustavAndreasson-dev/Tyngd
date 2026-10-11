@@ -1,11 +1,14 @@
 using ArnoldOne.Server.Catalog;
 using ArnoldOne.Shared.Catalog;
 using DbArnold.DbArnold.models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArnoldOne.Server.Controllers;
 
+// Katalogen är öppen data (wger, CC-BY-SA) och visas även för den som inte är inloggad.
+[AllowAnonymous]
 [Route("api/catalog")]
 public sealed class CatalogController(ArnoldContext context) : ApiControllerBase
 {

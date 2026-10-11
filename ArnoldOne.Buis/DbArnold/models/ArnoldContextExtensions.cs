@@ -8,6 +8,8 @@ public partial class ArnoldContext
 
     public virtual DbSet<ExerciseCatalog> ExerciseCatalog { get; set; }
 
+    public virtual DbSet<UserFavoriteExercise> UserFavoriteExercise { get; set; }
+
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserSettings>(entity =>
@@ -43,6 +45,15 @@ public partial class ArnoldContext
             entity.Property(e => e.License).IsRequired().HasMaxLength(100);
             entity.Property(e => e.LicenseAuthor).IsRequired().HasMaxLength(400);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<UserFavoriteExercise>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.CatalogExerciseId });
+            entity.HasOne<UserInfo>().WithMany().HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_UserFavoriteExercise_UserInfo");
+            entity.HasOne(e => e.CatalogExercise).WithMany().HasForeignKey(e => e.CatalogExerciseId)
+                .OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_UserFavoriteExercise_ExerciseCatalog");
         });
 
         modelBuilder.Entity<Exercise>()
