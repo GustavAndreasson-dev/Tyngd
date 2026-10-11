@@ -4,23 +4,22 @@
 @inject CatalogService CatalogService
 @inject IDialogService DialogService
 
-@* Startsidan för den som inte är inloggad: visa vad appen gör och väck intresse. *@
+@* Startsidan för den som inte är inloggad: saklig beskrivning av vad appen gör. *@
 <div class="guest">
     <section class="guest-hero">
-        <span class="ui-label">Arnold</span>
-        <h1 class="guest-hero__title">Planera passen. Träna med fokus. Se dig bli starkare.</h1>
+        <h1 class="guest-hero__title">Arnold – träningslogg för gymmet</h1>
         <p class="guest-hero__lead">
-            Bygg dina egna splits eller börja från en mall, kör passen med vilotimer i mobilen
-            och följ hur varje övning utvecklas över tid.
+            Lägg upp dina pass, logga set, reps och vikt under passet och se hur det gick förra gången.
+            Gratis, i webbläsaren eller installerad som app i mobilen.
         </p>
         <div class="ui-actions">
-            <button type="button" class="ui-btn" @onclick="OnRegister">Skapa konto gratis</button>
+            <button type="button" class="ui-btn" @onclick="OnRegister">Skapa konto</button>
             <button type="button" class="ui-btn ui-btn--ghost" @onclick="OnLogin">Logga in</button>
         </div>
     </section>
 
     <section aria-labelledby="guest-features">
-        <h2 id="guest-features" class="ui-section-title">Det här kan du göra</h2>
+        <h2 id="guest-features" class="ui-section-title">Funktioner</h2>
         <div class="guest-features">
             @foreach (var feature in Features)
             {
@@ -35,11 +34,10 @@
 
     <section class="ui-card guest-demo" aria-labelledby="guest-muscles">
         <div class="guest-demo__text">
-            <span class="ui-label">Muskelfigur</span>
-            <h2 id="guest-muscles" class="ui-section-title">Se vad passet tränar</h2>
+            <h2 id="guest-muscles" class="ui-section-title">Muskler per pass</h2>
             <p class="ui-sub">
-                Varje övning, pass och split visas på en kroppsfigur. Röda muskler tränas mest, orange mindre.
-                Tryck på figuren för att vända den.
+                Exempel på hur ett pass visas. Röd: tränas av flera övningar. Orange: tränas mindre.
+                Tryck på figuren för baksidan.
             </p>
             <div class="guest-demo__tabs" role="group" aria-label="Exempelpass">
                 @foreach (var example in Examples)
@@ -55,10 +53,10 @@
 
     <section aria-labelledby="guest-exercises">
         <div class="guest-row">
-            <h2 id="guest-exercises" class="ui-section-title">@(_catalogCount > 0 ? $"{_catalogCount} övningar på svenska" : "Övningsbibliotek")</h2>
-            <a class="ui-link" href="/ovningar">Utforska alla</a>
+            <h2 id="guest-exercises" class="ui-section-title">Övningar</h2>
+            <a class="ui-link" href="/ovningar">Visa alla@(_catalogCount > 0 ? $" {_catalogCount}" : "")</a>
         </div>
-        <p class="ui-sub mb-3">Med beskrivning, bilder och vilka muskler som tränas. Spara favoriter och bygg pass av dem.</p>
+        <p class="ui-sub mb-3">Hämtade från wger.de och översatta till svenska. Tryck på en övning för beskrivning och muskler.</p>
         @if (_samples.Count > 0)
         {
             <div class="guest-samples">
@@ -75,14 +73,10 @@
         }
     </section>
 
-    <section class="guest-cta">
-        <h2 class="ui-section-title">Kom igång på en minut</h2>
-        <p class="ui-sub">Gratis. Fungerar i mobilen som en app, och sparar passet även när täckningen i gymmet sviker.</p>
-        <div class="ui-actions">
-            <button type="button" class="ui-btn" @onclick="OnRegister">Skapa konto</button>
-            <button type="button" class="ui-btn ui-btn--ghost" @onclick="OnLogin">Jag har redan ett konto</button>
-        </div>
-    </section>
+    <p class="ui-sub guest-foot">
+        Passet sparas i mobilen medan du tränar och synkas när det finns uppkoppling.
+        Ett konto behövs för att spara pass och historik.
+    </p>
 </div>
 
 @code {
@@ -93,12 +87,12 @@
 
     private static readonly Feature[] Features =
     [
-        new(Icons.Material.Outlined.Layers, "Splits och mallar", "Bygg ditt eget upplägg eller aktivera en färdig mall med ett tryck."),
-        new(Icons.Material.Outlined.Timer, "Passläge med vilotimer", "Bocka av set och reps. Vilotimern räknar även när mobilen ligger i fickan."),
-        new(Icons.Material.Outlined.Bolt, "Lösa pass", "Kör utan plan: lägg till övning efter övning och spara passet om det blev bra."),
-        new(Icons.Material.Outlined.ShowChart, "Historik per övning", "Se hur vikterna utvecklas, oavsett vilket pass övningen ingick i."),
-        new(Icons.Material.Outlined.FitnessCenter, "Övningsbibliotek", "Sök på svenska eller engelska, filtrera på muskel och utrustning."),
-        new(Icons.Material.Outlined.AccessibilityNew, "Muskelfigur", "Få koll på balansen: vilka muskler tränar ditt pass och din vecka?"),
+        new(Icons.Material.Outlined.Layers, "Splits och pass", "Egna splits med pass och övningar, eller en färdig mall som utgångspunkt."),
+        new(Icons.Material.Outlined.Timer, "Passläge", "Set, reps och vikt per övning. Förra passets värden fylls i. Vilotimer mellan seten."),
+        new(Icons.Material.Outlined.Bolt, "Lösa pass", "Logga ett pass utan plan och lägg till övningar efter hand. Spara det som pass efteråt om du vill."),
+        new(Icons.Material.Outlined.ShowChart, "Historik", "Tyngsta vikt och reps per tillfälle för varje övning, från alla pass där den ingått."),
+        new(Icons.Material.Outlined.FitnessCenter, "Övningsbibliotek", "Sök på svenska eller engelska och filtrera på muskel och utrustning. Spara favoriter."),
+        new(Icons.Material.Outlined.AccessibilityNew, "Muskelfigur", "Vilka muskler en övning, ett pass eller en split belastar."),
     ];
 
     private sealed record Example(string Name, IReadOnlyDictionary<string, double> Load);
