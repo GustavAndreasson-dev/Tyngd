@@ -1,0 +1,141 @@
+@using ArnoldOne.Shared.Catalog
+@using ArnoldOne.Client.Services
+@namespace ArnoldOne.Client.Shared
+@inject CatalogService CatalogService
+@inject IDialogService DialogService
+
+@* Startsidan för den som inte är inloggad: visa vad appen gör och väck intresse. *@
+<div class="guest">
+    <section class="guest-hero">
+        <span class="ui-label">Arnold</span>
+        <h1 class="guest-hero__title">Planera passen. Träna med fokus. Se dig bli starkare.</h1>
+        <p class="guest-hero__lead">
+            Bygg dina egna splits eller börja från en mall, kör passen med vilotimer i mobilen
+            och följ hur varje övning utvecklas över tid.
+        </p>
+        <div class="ui-actions">
+            <button type="button" class="ui-btn" @onclick="OnRegister">Skapa konto gratis</button>
+            <button type="button" class="ui-btn ui-btn--ghost" @onclick="OnLogin">Logga in</button>
+        </div>
+    </section>
+
+    <section aria-labelledby="guest-features">
+        <h2 id="guest-features" class="ui-section-title">Det här kan du göra</h2>
+        <div class="guest-features">
+            @foreach (var feature in Features)
+            {
+                <article class="ui-card guest-feature">
+                    <MudIcon Icon="@feature.Icon" Color="Color.Primary" />
+                    <h3 class="guest-feature__title">@feature.Title</h3>
+                    <p class="ui-sub">@feature.Text</p>
+                </article>
+            }
+        </div>
+    </section>
+
+    <section class="ui-card guest-demo" aria-labelledby="guest-muscles">
+        <div class="guest-demo__text">
+            <span class="ui-label">Muskelfigur</span>
+            <h2 id="guest-muscles" class="ui-section-title">Se vad passet tränar</h2>
+            <p class="ui-sub">
+                Varje övning, pass och split visas på en kroppsfigur. Röda muskler tränas mest, orange mindre.
+                Tryck på figuren för att vända den.
+            </p>
+            <div class="guest-demo__tabs" role="group" aria-label="Exempelpass">
+                @foreach (var example in Examples)
+                {
+                    var current = example;
+                    <button type="button" class="ui-chip @(_example == current ? "ui-chip--on" : "")" aria-pressed="@(_example == current)"
+                            @onclick="() => _example = current">@current.Name</button>
+                }
+            </div>
+        </div>
+        <MuscleMap Load="_example.Load" />
+    </section>
+
+    <section aria-labelledby="guest-exercises">
+        <div class="guest-row">
+            <h2 id="guest-exercises" class="ui-section-title">@(_catalogCount > 0 ? $"{_catalogCount} övningar på svenska" : "Övningsbibliotek")</h2>
+            <a class="ui-link" href="/ovningar">Utforska alla</a>
+        </div>
+        <p class="ui-sub mb-3">Med beskrivning, bilder och vilka muskler som tränas. Spara favoriter och bygg pass av dem.</p>
+        @if (_samples.Count > 0)
+        {
+            <div class="guest-samples">
+                @foreach (var exercise in _samples)
+                {
+                    var current = exercise;
+                    <button type="button" class="ui-card guest-sample" @onclick="() => OpenInfo(current)">
+                        <img src="@current.ImageUrl" alt="" loading="lazy" />
+                        <span class="guest-sample__name">@current.Name</span>
+                        <span class="ui-sub">@current.Category</span>
+                    </button>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="guest-cta">
+        <h2 class="ui-section-title">Kom igång på en minut</h2>
+        <p class="ui-sub">Gratis. Fungerar i mobilen som en app, och sparar passet även när täckningen i gymmet sviker.</p>
+        <div class="ui-actions">
+            <button type="button" class="ui-btn" @onclick="OnRegister">Skapa konto</button>
+            <button type="button" class="ui-btn ui-btn--ghost" @onclick="OnLogin">Jag har redan ett konto</button>
+        </div>
+    </section>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnLogin { get; set; }
+    [Parameter] public EventCallback OnRegister { get; set; }
+
+    private sealed record Feature(string Icon, string Title, string Text);
+
+    private static readonly Feature[] Features =
+    [
+        new(Icons.Material.Outlined.Layers, "Splits och mallar", "Bygg ditt eget upplägg eller aktivera en färdig mall med ett tryck."),
+        new(Icons.Material.Outlined.Timer, "Passläge med vilotimer", "Bocka av set och reps. Vilotimern räknar även när mobilen ligger i fickan."),
+        new(Icons.Material.Outlined.Bolt, "Lösa pass", "Kör utan plan: lägg till övning efter övning och spara passet om det blev bra."),
+        new(Icons.Material.Outlined.ShowChart, "Historik per övning", "Se hur vikterna utvecklas, oavsett vilket pass övningen ingick i."),
+        new(Icons.Material.Outlined.FitnessCenter, "Övningsbibliotek", "Sök på svenska eller engelska, filtrera på muskel och utrustning."),
+        new(Icons.Material.Outlined.AccessibilityNew, "Muskelfigur", "Få koll på balansen: vilka muskler tränar ditt pass och din vecka?"),
+    ];
+
+    private sealed record Example(string Name, IReadOnlyDictionary<string, double> Load);
+
+    // Exempelbelastning: primär muskel 1 per övning, sekundär 0,5 (som i appen).
+    private static readonly Example[] Examples =
+    [
+        new("Push", new Dictionary<string, double> { ["Chest"] = 3, ["Shoulders"] = 2.5, ["Triceps"] = 2.5, ["Serratus anterior"] = 0.5 }),
+        new("Pull", new Dictionary<string, double> { ["Lats"] = 3, ["Biceps"] = 2.5, ["Trapezius"] = 1.5, ["Brachialis"] = 1, ["Shoulders"] = 0.5 }),
+        new("Ben", new Dictionary<string, double> { ["Quads"] = 3, ["Glutes"] = 2.5, ["Hamstrings"] = 2, ["Calves"] = 1, ["Soleus"] = 0.5 }),
+    ];
+
+    private Example _example = Examples[0];
+    private List<CatalogExerciseDto> _samples = new();
+    private int _catalogCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var all = await CatalogService.GetAllAsync();
+            _catalogCount = all.Count;
+            // Några välkända övningar med bild, en per kategori.
+            _samples = all.Where(e => e.ImageUrl is not null && e.PrimaryMuscles.Count > 0)
+                .GroupBy(e => e.Category)
+                .Select(group => group.OrderBy(e => e.Name.Length).First())
+                .Take(6)
+                .ToList();
+        }
+        catch (HttpRequestException)
+        {
+            // Sidan fungerar utan exempel om katalogen inte nås.
+        }
+    }
+
+    private Task OpenInfo(CatalogExerciseDto exercise) =>
+        DialogService.ShowAsync<ExerciseInfoDialog>(null,
+            new DialogParameters<ExerciseInfoDialog> { { dialog => dialog.CatalogExerciseId, exercise.CatalogExerciseId } },
+            new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+}
