@@ -6,14 +6,7 @@
 
 @if (!LoginState.IsLoggedIn)
 {
-    <section class="dash dash--guest">
-        <h1 class="ui-title">Arnold</h1>
-        <p class="ui-sub">Logga in för att se din översikt.</p>
-        <div class="ui-actions">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="OpenLoginDialog">Logga in</MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large" OnClick="OpenRegisterDialog">Skapa konto</MudButton>
-        </div>
-    </section>
+    <GuestHome OnLogin="OpenLoginDialog" OnRegister="OpenRegisterDialog" />
 }
 else
 {
