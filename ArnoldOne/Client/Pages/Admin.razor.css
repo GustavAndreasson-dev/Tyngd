@@ -1,5 +1,5 @@
 .admin-denied { min-height:50vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:.75rem; }
-.admin-header { display:flex; align-items:center; justify-content:space-between; padding:2rem; border-radius:20px; background:linear-gradient(135deg,rgba(123,31,58,.14),rgba(196,147,63,.1)); }
+.admin-header { display:flex; align-items:center; justify-content:space-between; padding:2rem; border-radius:20px; background:linear-gradient(135deg,color-mix(in srgb,var(--mud-palette-primary) 14%,transparent),color-mix(in srgb,var(--mud-palette-secondary) 14%,transparent)); }
 .admin-header__icon { font-size:4rem; color:var(--mud-palette-secondary); }
 .admin-stat { height:100%; border-top:3px solid var(--mud-palette-secondary); border-radius:12px; }
 .admin-table, .template-card { border-radius:14px; }
