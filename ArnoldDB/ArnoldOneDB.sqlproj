@@ -75,6 +75,7 @@
     <Build Include="dbo\Tables\ExerciseCatalog.sql" />
     <Build Include="dbo\Tables\UserSettings.sql" />
     <Build Include="dbo\Tables\UserFavoriteExercise.sql" />
+    <Build Include="dbo\Tables\MigrationHistory.sql" />
     <Build Include="dbo\Indexes\IX_Pass_SplitId_Visability_Ordning.sql" />
     <Build Include="dbo\Indexes\IX_Exercise_PassId_Visability_Ordning.sql" />
     <Build Include="Security\ArnoldUser.sql" />
