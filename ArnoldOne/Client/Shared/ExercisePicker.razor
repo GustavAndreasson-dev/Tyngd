@@ -11,7 +11,7 @@
                  Placeholder="Sök på svenska eller engelska"
                  Variant="Variant.Outlined"
                  MaxLength="50"
-                 MinCharacters="1"
+                 MinCharacters="0"
                  DebounceInterval="150"
                  MaxItems="null"
                  ResetValueOnEmptyText="false"
@@ -24,7 +24,7 @@
         @if (item.Exercise is { } exercise)
         {
             <div class="d-flex flex-column">
-                <span>@exercise.Name</span>
+                <span>@if (_favoriteIds.Contains(exercise.CatalogExerciseId)) { <span aria-label="Favorit">★ </span> }@exercise.Name</span>
                 <MudText Typo="Typo.caption" Class="mud-text-secondary">
                     @Subtitle(exercise)
                 </MudText>
@@ -48,6 +48,7 @@
     private const int MaxResults = 25;
 
     [Inject] private CatalogService CatalogService { get; set; } = default!;
+    [Inject] private FavoritesService FavoritesService { get; set; } = default!;
 
     [Parameter] public string Name { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> NameChanged { get; set; }
@@ -59,6 +60,7 @@
     [Parameter] public string? HelperText { get; set; }
 
     private PickerItem? _selected;
+    private HashSet<int> _favoriteIds = new();
 
     protected override void OnParametersSet()
     {
@@ -69,8 +71,13 @@
     private async Task<IEnumerable<PickerItem>> SearchAsync(string? text, CancellationToken cancellationToken)
     {
         var all = await CatalogService.GetAllAsync();
+        var favorites = _favoriteIds = await FavoritesService.GetAsync();
         var trimmed = (text ?? string.Empty).Trim();
-        var matches = CatalogService.Search(all, trimmed)
+        // Tomt fält visar favoriterna; vid sökning kommer favoriter först.
+        var found = trimmed.Length == 0
+            ? all.Where(exercise => favorites.Contains(exercise.CatalogExerciseId))
+            : CatalogService.Search(all, trimmed).OrderByDescending(exercise => favorites.Contains(exercise.CatalogExerciseId));
+        var matches = found
             .Take(MaxResults)
             .Select(exercise => new PickerItem(exercise, exercise.Name, exercise.CatalogExerciseId))
             .ToList();

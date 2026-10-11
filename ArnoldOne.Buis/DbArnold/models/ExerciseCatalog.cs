@@ -59,3 +59,15 @@ public partial class ExerciseTemplate
 
     public virtual ExerciseCatalog? CatalogExercise { get; set; }
 }
+
+/// <summary>Användarens favoritövning ur katalogen.</summary>
+public class UserFavoriteExercise
+{
+    public Guid UserId { get; set; }
+
+    public int CatalogExerciseId { get; set; }
+
+    public DateTimeOffset CreatedAtUtc { get; set; }
+
+    public virtual ExerciseCatalog? CatalogExercise { get; set; }
+}
