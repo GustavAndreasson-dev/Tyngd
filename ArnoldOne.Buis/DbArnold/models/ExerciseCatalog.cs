@@ -71,3 +71,9 @@ public class UserFavoriteExercise
 
     public virtual ExerciseCatalog? CatalogExercise { get; set; }
 }
+
+public partial class Split
+{
+    /// <summary>Dold split som håller användarens lösa pass. Visas aldrig i listor över splits.</summary>
+    public bool IsFreeSessions { get; set; }
+}

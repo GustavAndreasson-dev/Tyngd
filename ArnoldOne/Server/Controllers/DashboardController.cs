@@ -21,10 +21,15 @@ public sealed class DashboardController : ApiControllerBase
         var thirtyDaysAgo = now.AddDays(-30);
 
         var splits = await _context.Split
-            .Where(split => split.UserId == CurrentUserId && split.Visability)
+            .Where(split => split.UserId == CurrentUserId && split.Visability && !split.IsFreeSessions)
             .Include(split => split.Pass.Where(pass => pass.Visability == 1).OrderBy(pass => pass.Ordning))
             .OrderBy(split => split.SplitId)
             .ToListAsync();
+
+        var freeSplit = await _context.Split
+            .Where(split => split.UserId == CurrentUserId && split.IsFreeSessions)
+            .Include(split => split.Pass.Where(pass => pass.Visability == 1).OrderByDescending(pass => pass.Ordning).Take(5))
+            .FirstOrDefaultAsync();
 
         var completed = _context.Session
             .Where(session => session.Pass.Split.UserId == CurrentUserId && session.CompletedAtUtc != null);
@@ -32,6 +37,7 @@ public sealed class DashboardController : ApiControllerBase
         var result = new UserDashboardDto
         {
             ActiveSplits = splits.Select(split => split.ToTrainingSplit()).ToList(),
+            RecentFreeSessions = freeSplit?.ToTrainingSplit(),
             CompletedSessionsLast7Days = await completed.CountAsync(session => session.CompletedAtUtc >= sevenDaysAgo),
             CompletedSessionsLast30Days = await completed.CountAsync(session => session.CompletedAtUtc >= thirtyDaysAgo),
             TotalCompletedSessions = await completed.CountAsync(),

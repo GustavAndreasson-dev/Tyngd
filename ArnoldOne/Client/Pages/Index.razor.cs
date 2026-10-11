@@ -56,6 +56,9 @@ public partial class Index : PageComponentBase, IDisposable
 
     private async Task OpenLoginDialog() => await DialogService.ShowAsync<LoginDialog>("Logga in");
     private async Task OpenRegisterDialog() => await DialogService.ShowAsync<RegisterDialog>("Skapa konto");
+
+    private Task StartFreeSession() =>
+        DialogService.ShowAsync<StartFreeSessionDialog>(null, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
     // Egna namn: WASM har ingen sv-SE-kulturdata, så ToString("dddd") blir engelska.
     private static readonly string[] DayNames = ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"];
     private static readonly string[] MonthNames = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
@@ -146,7 +149,8 @@ public partial class Index : PageComponentBase, IDisposable
 
     private static DashboardPass? FindPass(UserDashboardDto currentDashboard, int splitId, int passId)
     {
-        var split = currentDashboard.ActiveSplits.FirstOrDefault(item => item.SplitId == splitId);
+        var split = currentDashboard.ActiveSplits.Append(currentDashboard.RecentFreeSessions)
+            .FirstOrDefault(item => item?.SplitId == splitId);
         var pass = split?.Passes.FirstOrDefault(item => item.PassId == passId);
         return split is not null && pass is not null ? ToDashboardPass(split, pass) : null;
     }

@@ -11,6 +11,8 @@ public sealed class UserDashboardDto
     /// <summary>Slutförandetid för pass de senaste 7 dagarna (veckovyn).</summary>
     public List<DateTimeOffset> RecentCompletedAtUtc { get; set; } = new();
     public DashboardSessionDto? LastCompletedSession { get; set; }
+    /// <summary>De senaste lösa passen (dold split), så att ett pågående löst pass kan återupptas från översikten.</summary>
+    public TrainingSplit? RecentFreeSessions { get; set; }
 }
 
 /// <summary>En punkt i viktutvecklingen för en övning.</summary>

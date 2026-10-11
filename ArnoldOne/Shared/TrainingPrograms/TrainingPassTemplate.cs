@@ -16,4 +16,7 @@ public class TrainingPassTemplate
 
     /// <summary>Övningsmallar som ingår i passet.</summary>
     public List<TrainingExerciseTemplate> Exercises { get; set; } = new();
+
+    /// <summary>Löst pass: övningar kan läggas till under passet.</summary>
+    public bool IsFreeSession { get; set; }
 }

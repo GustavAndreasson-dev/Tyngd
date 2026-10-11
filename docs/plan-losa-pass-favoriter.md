@@ -37,8 +37,11 @@ loopen när appen ligger i bakgrunden, och timern försvinner när man lämnar p
   migrering 012). Då fungerar sparning, offline, återupptagning, historik och statistik som för
   vanliga pass utan ny sessionmodell.
 - Den dolda splitten visas aldrig i listor över splits och kan inte redigeras eller tas bort där.
-- Start från översikten: "Starta löst pass" → välj övningar (favoriter först) → passidan.
-- Under ett löst pass kan man lägga till fler övningar.
+- Start från översikten: "Starta löst pass" → välj första övningen (favoriter först) → passet startar direkt.
+- Nästa övning läggs till med "+ Övning" medan man tränar.
+- När passet avslutas: "Spara som pass" flyttar passet till en egen split (befintlig eller ny) så att det
+  kan köras igen med förra passets vikter; "Släng passet" döljer det. Det som tränats finns kvar i
+  historik och statistik i båda fallen.
 - Startvikt hämtas från övningens senaste historik.
 
 ## 5. Startsida för den som inte är inloggad (`feature/guest-home`)

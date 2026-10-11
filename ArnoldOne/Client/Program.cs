@@ -50,6 +50,7 @@ builder.Services.AddScoped<PassTemplateService>();
 builder.Services.AddScoped<SplitTemplateService>();
 builder.Services.AddScoped<CatalogService>();
 builder.Services.AddScoped<FavoritesService>();
+builder.Services.AddScoped<FreeSessionService>();
 builder.Services.AddScoped<AdminCatalogService>();
 
 // Service för att spara och läsa pass-logg från API

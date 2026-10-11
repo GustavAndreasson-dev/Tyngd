@@ -64,6 +64,40 @@ public partial class PassPage : IDisposable
     [Inject]
     private CatalogService CatalogService { get; set; } = default!;
 
+    [Inject]
+    private FreeSessionService FreeSessionService { get; set; } = default!;
+
+    private bool addingExercise;
+
+    /// <summary>Löst pass: välj en övning, lägg till den på servern och ladda om passet med den nya övningen aktiv.</summary>
+    private async Task AddFreeExercise()
+    {
+        if (pass is null)
+            return;
+
+        var taken = pass.Exercises.Select(e => e.CatalogExerciseId).OfType<int>().ToHashSet();
+        var dialog = await DialogService.ShowAsync<AddFreeExerciseDialog>(null,
+            new DialogParameters<AddFreeExerciseDialog> { { d => d.Taken, taken } },
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is not { Canceled: false, Data: ArnoldOne.Shared.DTOs.FreeSessionExerciseDto picked })
+            return;
+
+        addingExercise = true;
+        await TryAsync(async () =>
+        {
+            var exerciseId = await FreeSessionService.AddExerciseAsync(PassId, picked);
+            pass = await UserSplitsService.GetPassAsync(SplitId, PassId) ?? pass;
+            InitializeDefaults();
+            await LocalStorage.SetItemAsync(PassKey, data);
+            passMuscleLoad = null;
+            showMuscles = false;
+            var index = pass.Exercises.FindIndex(e => e.ExerciseId == exerciseId);
+            if (index >= 0)
+                await NavigateToExercise(index);
+        }, "Kunde inte lägga till övningen");
+        addingExercise = false;
+    }
+
     private bool showMuscles;
     private Dictionary<string, double>? passMuscleLoad;
 
@@ -535,6 +569,19 @@ public partial class PassPage : IDisposable
         Session.EndSession();
         CancelRestTimer();
         _ = JSRuntime.InvokeVoidAsync("arnoldOne.releaseWakeLock");
+
+        if (pass?.IsFreeSession == true)
+        {
+            var dialog = await DialogService.ShowAsync<FinishFreeSessionDialog>(null,
+                new DialogParameters<FinishFreeSessionDialog> { { d => d.PassId, PassId }, { d => d.PassName, pass.PassName } },
+                new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, BackdropClick = false, CloseOnEscapeKey = false });
+            if (await dialog.Result is { Canceled: false, Data: ArnoldOne.Shared.DTOs.StartFreeSessionResponse })
+            {
+                Nav.NavigateTo("/TP/my-splits");
+                return;
+            }
+        }
+
         Nav.NavigateTo("/");
     }
 
