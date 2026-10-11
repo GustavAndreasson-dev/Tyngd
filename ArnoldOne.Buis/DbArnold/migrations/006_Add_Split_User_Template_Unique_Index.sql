@@ -1,6 +1,8 @@
 -- Kör i Arnold-databasen med ett konto som har ALTER-behörighet.
 -- En användare kan bara ha en split per mall (avaktiverade räknas, de återaktiveras).
 SET XACT_ABORT ON;
+-- Filtrerade index kräver QUOTED_IDENTIFIER ON (standard i SSMS, men inte i sqlcmd).
+SET QUOTED_IDENTIFIER ON;
 BEGIN TRANSACTION;
 
 IF EXISTS

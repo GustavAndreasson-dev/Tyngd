@@ -120,11 +120,13 @@ public partial class PassPage : IDisposable
 
         await TryAsync(async () =>
         {
+            // Senaste sessionen behövs nästan alltid när ett pass öppnas; hämta den samtidigt som passet i stället för efteråt.
+            var lastSessionTask = passChanged ? PassLogService.GetLastSessionAsync(PassId) : null;
             pass = await UserSplitsService.GetPassAsync(SplitId, PassId);
 
-            if (pass is not null && passChanged)
+            if (pass is not null && lastSessionTask is not null)
             {
-                await InitializePassDataAsync(isNewSession);
+                await InitializePassDataAsync(isNewSession, lastSessionTask);
                 InitializeDefaults();
                 await LocalStorage.SetItemAsync(PassKey, data);
                 RestoreSessionStateFromLocalData();
@@ -207,7 +209,7 @@ public partial class PassPage : IDisposable
     private int DoneSets => pass is null ? 0 : pass.Exercises.Sum(e => Enumerable.Range(0, e.DefaultSets).Count(i => IsSetDone(e.ExerciseId, i)));
     private bool ExerciseDone(int idx) => pass is not null && Enumerable.Range(0, pass.Exercises[idx].DefaultSets).All(i => IsSetDone(pass.Exercises[idx].ExerciseId, i));
 
-    private async Task InitializePassDataAsync(bool forceNewSession)
+    private async Task InitializePassDataAsync(bool forceNewSession, Task<ArnoldOne.Shared.DTOs.LastSessionDto?> lastSessionTask)
     {
         var now = DateTimeOffset.UtcNow;
         var stored = await LocalStorage.GetItemAsync<PassData>(PassKey);
@@ -228,11 +230,11 @@ public partial class PassPage : IDisposable
 
             data = CreateNewPassData(now);
             _isNewPassData = true;
-            await ApplyLastSessionAsync(includeCompletedSets: false);
+            ApplyLastSession(await lastSessionTask, includeCompletedSets: false);
             return;
         }
 
-        var lastSession = await PassLogService.GetLastSessionAsync(PassId);
+        var lastSession = await lastSessionTask;
         if (lastSession?.SessionKey is not null
             && lastSession.StartedAtUtc is not null
             && lastSession.CompletedAtUtc is null)
@@ -252,12 +254,6 @@ public partial class PassPage : IDisposable
         data = CreateNewPassData(now);
         _isNewPassData = true;
         ApplyLastSession(lastSession, includeCompletedSets: false);
-    }
-
-    private async Task ApplyLastSessionAsync(bool includeCompletedSets)
-    {
-        var lastSession = await PassLogService.GetLastSessionAsync(PassId);
-        ApplyLastSession(lastSession, includeCompletedSets);
     }
 
     private void ApplyLastSession(ArnoldOne.Shared.DTOs.LastSessionDto? lastSession, bool includeCompletedSets)

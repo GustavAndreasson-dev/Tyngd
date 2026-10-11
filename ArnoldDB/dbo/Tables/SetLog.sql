@@ -9,3 +9,8 @@
     CONSTRAINT [FK_SetLog_ExerciseLogId] FOREIGN KEY ([ExerciseLogID]) REFERENCES [dbo].[ExerciseLog] ([ExerciseLogId])
 );
 
+
+GO
+
+CREATE NONCLUSTERED INDEX [IX_SetLog_ExerciseLogID]
+    ON [dbo].[SetLog]([ExerciseLogID]) INCLUDE ([SetIndex], [Reps], [IsDone], [Weight]);
