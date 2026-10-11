@@ -14,3 +14,9 @@
     CONSTRAINT [FK_Exercise_ExerciseCatalog] FOREIGN KEY ([CatalogExerciseId]) REFERENCES [dbo].[ExerciseCatalog] ([CatalogExerciseId])
 );
 
+
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Exercise_CatalogExerciseId]
+    ON [dbo].[Exercise]([CatalogExerciseId]) INCLUDE ([PassId])
+    WHERE [CatalogExerciseId] IS NOT NULL;

@@ -32,6 +32,9 @@ public class PassLogService
     public async Task<List<ExerciseProgressPointDto>> GetProgressAsync(int exerciseId) =>
         await _http.GetFromJsonAsync<List<ExerciseProgressPointDto>>($"api/Session/progress/{exerciseId}") ?? new();
 
+    public async Task<List<ExerciseHistoryEntryDto>> GetCatalogHistoryAsync(int catalogExerciseId, int take = 12) =>
+        await _http.GetFromJsonAsync<List<ExerciseHistoryEntryDto>>($"api/Session/history/{catalogExerciseId}?take={take}") ?? new();
+
     public async Task CompleteSessionAsync(Guid sessionKey)
     {
         var response = await _http.PostAsync($"api/Session/{sessionKey}/complete", null);

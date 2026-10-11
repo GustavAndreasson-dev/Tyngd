@@ -49,6 +49,22 @@
             <div class="mb-3">
                 <MuscleMap Load="_load" EmptyText="wger anger inga muskler för övningen." />
             </div>
+            @if (_history is { Count: > 0 })
+            {
+                <MudText Typo="Typo.subtitle2" Class="mb-1">Din historik</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-1">
+                    Bästa vikt: @(_history.Max(entry => entry.MaxWeight).ToString("0.##")) kg · @_history.Count senaste tillfällen från alla pass
+                </MudText>
+                <ul class="mb-3" style="list-style:none; padding:0; margin:0; font-size:.875rem;">
+                    @foreach (var entry in Enumerable.Reverse(_history).Take(5))
+                    {
+                        <li style="display:flex; justify-content:space-between; gap:8px; padding:2px 0;">
+                            <span>@entry.Date.ToString("d MMM", new System.Globalization.CultureInfo("sv-SE")) · @entry.PassName</span>
+                            <span style="font-variant-numeric:tabular-nums;">@entry.MaxWeight.ToString("0.##") kg · @entry.Sets set · @entry.TotalReps reps</span>
+                        </li>
+                    }
+                </ul>
+            }
             @if (string.IsNullOrWhiteSpace(_exercise.Description))
             {
                 <MudText Typo="Typo.body2" Class="mud-text-secondary">Ingen beskrivning finns.</MudText>
@@ -81,12 +97,14 @@
     [Inject] private CatalogService CatalogService { get; set; } = default!;
     [Inject] private FavoritesService FavoritesService { get; set; } = default!;
     [Inject] private LoginState LoginState { get; set; } = default!;
+    [Inject] private PassLogService PassLogService { get; set; } = default!;
 
     [Parameter] public int CatalogExerciseId { get; set; }
 
     private CatalogExerciseDetailDto? _exercise;
     private Dictionary<string, double>? _load;
     private bool _isFavorite;
+    private List<ArnoldOne.Shared.DTOs.ExerciseHistoryEntryDto>? _history;
 
     private async Task ToggleFavorite()
     {
@@ -106,6 +124,8 @@
             {
                 _load = MuscleLoad.Sum([(_exercise.PrimaryMuscles, _exercise.SecondaryMuscles)]);
                 _isFavorite = (await FavoritesService.GetAsync()).Contains(CatalogExerciseId);
+                if (LoginState.IsLoggedIn)
+                    _history = await PassLogService.GetCatalogHistoryAsync(CatalogExerciseId);
             }
         }
         catch (HttpRequestException)

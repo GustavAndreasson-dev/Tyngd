@@ -26,3 +26,13 @@ public sealed class DashboardSessionDto
     public DateTimeOffset StartedAtUtc { get; set; }
     public DateTimeOffset CompletedAtUtc { get; set; }
 }
+
+/// <summary>Ett genomfört pass där en katalogövning ingick, oavsett vilket pass eller löst pass.</summary>
+public sealed class ExerciseHistoryEntryDto
+{
+    public DateOnly Date { get; set; }
+    public string PassName { get; set; } = string.Empty;
+    public decimal MaxWeight { get; set; }
+    public int Sets { get; set; }
+    public int TotalReps { get; set; }
+}

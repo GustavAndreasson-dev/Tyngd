@@ -71,6 +71,34 @@ public class SessionController : ApiControllerBase
             .Reverse().ToList());
     }
 
+    /// <summary>
+    /// Historik för en katalogövning över alla användarens pass och lösa pass: de senaste genomförda
+    /// tillfällena, äldst först. Samma övning i olika pass räknas därför ihop.
+    /// </summary>
+    [HttpGet("history/{catalogExerciseId:int}")]
+    public async Task<ActionResult<List<ExerciseHistoryEntryDto>>> GetCatalogHistory(int catalogExerciseId, [FromQuery] int take = 12)
+    {
+        take = Math.Clamp(take, 1, 100);
+        var rows = await _context.ExerciseLog
+            .Where(l => l.Exercise.CatalogExerciseId == catalogExerciseId
+                && l.Session.CompletedAtUtc != null
+                && l.Session.Pass.Split.UserId == CurrentUserId)
+            .OrderByDescending(l => l.Session.StartedAtUtc)
+            .Take(take)
+            .Select(l => new ExerciseHistoryEntryDto
+            {
+                Date = l.Session.Date,
+                PassName = l.Session.Pass.PassName,
+                MaxWeight = l.SetLog.Where(s => s.IsDone).Max(s => (decimal?)s.Weight) ?? 0,
+                Sets = l.SetLog.Count(s => s.IsDone),
+                TotalReps = l.SetLog.Where(s => s.IsDone).Sum(s => (int?)s.Reps) ?? 0,
+            })
+            .ToListAsync();
+
+        rows.Reverse();
+        return Ok(rows.Where(row => row.Sets > 0).ToList());
+    }
+
     /// <summary>Hämtar senaste sparade data för ett pass (vikt, reps, anteckningar).</summary>
     [HttpGet("last/{passId}")]
     public async Task<ActionResult<LastSessionDto>> GetLastSession(int passId)

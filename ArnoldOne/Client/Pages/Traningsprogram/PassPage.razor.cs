@@ -180,12 +180,22 @@ public partial class PassPage : IDisposable
         if (pass is null || activeIndex < 0 || activeIndex >= pass.Exercises.Count)
             return;
 
-        var id = pass.Exercises[activeIndex].ExerciseId;
+        var exercise = pass.Exercises[activeIndex];
+        var id = exercise.ExerciseId;
         if (_progress.ContainsKey(id))
             return;
 
         _progress[id] = new();
-        try { _progress[id] = await PassLogService.GetProgressAsync(id); }
+        try
+        {
+            // Kopplad övning: historik från alla pass och lösa pass. Annars bara den här passövningens.
+            _progress[id] = exercise.CatalogExerciseId is { } catalogExerciseId
+                ? (await PassLogService.GetCatalogHistoryAsync(catalogExerciseId))
+                    .Where(entry => entry.MaxWeight > 0)
+                    .Select(entry => new ArnoldOne.Shared.DTOs.ExerciseProgressPointDto(entry.Date, entry.MaxWeight))
+                    .ToList()
+                : await PassLogService.GetProgressAsync(id);
+        }
         catch { }
         StateHasChanged();
     }
