@@ -1,0 +1,59 @@
+@using ArnoldOne.Shared.DTOs
+@using ArnoldOne.Client.Services
+@namespace ArnoldOne.Client.Shared
+@inject FreeSessionService FreeSessionService
+@inject NavigationManager Nav
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Starta löst pass</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">
+            Välj första övningen. Passet startar direkt, och du lägger till nästa övning med "+ Övning" när du är klar.
+        </MudText>
+        @if (_starting)
+        {
+            <MudProgressLinear Indeterminate="true" />
+        }
+        else
+        {
+            <FreeSessionExercisePicker OnAdd="Start" />
+        }
+        @if (_error is not null)
+        {
+            <MudText Color="Color.Error" Class="mt-2">@_error</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => MudDialog.Cancel()">Avbryt</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private bool _starting;
+    private string? _error;
+
+    private async Task Start(FreeSessionExerciseDto first)
+    {
+        _starting = true;
+        _error = null;
+        try
+        {
+            var started = await FreeSessionService.StartAsync(new StartFreeSessionRequest
+            {
+                PassName = FreeSessionService.DefaultPassName(DateTime.Now),
+                Exercises = [first],
+            });
+            MudDialog.Close();
+            Nav.NavigateTo($"/TP/split/{started.SplitId}/pass/{started.PassId}?new=1");
+        }
+        catch (HttpRequestException)
+        {
+            _error = "Kunde inte starta passet. Kontrollera anslutningen.";
+            _starting = false;
+        }
+    }
+}

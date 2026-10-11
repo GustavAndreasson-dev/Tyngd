@@ -27,7 +27,7 @@ public class UserSplitController : ApiControllerBase
         var userId = CurrentUserId;
 
         var splits = await _context.Split
-            .Where(s => s.UserId == userId && s.Visability)
+            .Where(s => s.UserId == userId && s.Visability && !s.IsFreeSessions)
             .Include(s => s.Pass.Where(p => p.Visability == 1).OrderBy(p => p.Ordning))
             .ToListAsync();
 
@@ -49,6 +49,7 @@ public class UserSplitController : ApiControllerBase
                 && p.Split.Visability
                 && p.Split.UserId == userId)
             .Include(p => p.Exercise.Where(e => e.Visability).OrderBy(e => e.Ordning))
+            .Include(p => p.Split)
             .FirstOrDefaultAsync();
 
         if (pass is null)
@@ -59,6 +60,7 @@ public class UserSplitController : ApiControllerBase
             PassId   = pass.PassId,
             SplitId  = pass.SplitId,
             PassName = pass.PassName,
+            IsFreeSession = pass.Split.IsFreeSessions,
             Exercises = pass.Exercise.Select(e => new TrainingExerciseTemplate
             {
                 ExerciseId     = e.ExerciseId,
@@ -261,7 +263,8 @@ public class UserSplitController : ApiControllerBase
             .Where(s => s.SplitId == splitId
                 && s.UserId == userId
                 && s.Visability
-                && s.SplitTemplateId == null)
+                && s.SplitTemplateId == null
+                && !s.IsFreeSessions)
             .Include(s => s.Pass)
             .ThenInclude(p => p.Exercise)
             .FirstOrDefaultAsync();
@@ -361,7 +364,8 @@ public class UserSplitController : ApiControllerBase
             .Where(s => s.SplitId == splitId
                 && s.UserId == CurrentUserId
                 && s.Visability
-                && s.SplitTemplateId == null)
+                && s.SplitTemplateId == null
+                && !s.IsFreeSessions)
             .AsSingleQuery()
             .Select(split => new CreateSplitRequest
             {
@@ -403,7 +407,7 @@ public class UserSplitController : ApiControllerBase
         var userId = CurrentUserId;
 
         var splits = await _context.Split
-            .Where(s => s.UserId == userId && s.Visability && s.SplitTemplateId == null)
+            .Where(s => s.UserId == userId && s.Visability && s.SplitTemplateId == null && !s.IsFreeSessions)
             .Include(s => s.Pass.Where(p => p.Visability == 1).OrderBy(p => p.Ordning))
             .ToListAsync();
 
@@ -419,7 +423,7 @@ public class UserSplitController : ApiControllerBase
         var userId = CurrentUserId;
 
         var split = await _context.Split
-            .FirstOrDefaultAsync(s => s.SplitId == splitId && s.UserId == userId && s.SplitTemplateId == null);
+            .FirstOrDefaultAsync(s => s.SplitId == splitId && s.UserId == userId && s.SplitTemplateId == null && !s.IsFreeSessions);
 
         if (split is null)
             return NotFound();

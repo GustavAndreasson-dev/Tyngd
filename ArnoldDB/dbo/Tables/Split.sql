@@ -4,6 +4,7 @@
     [UserId]          UNIQUEIDENTIFIER NOT NULL,
     [Visability]      BIT              CONSTRAINT [DF_Split_Visability] DEFAULT ((1)) NOT NULL,
     [SplitTemplateId] INT              NULL,
+    [IsFreeSessions]  BIT              CONSTRAINT [DF_Split_IsFreeSessions] DEFAULT ((0)) NOT NULL,
     CONSTRAINT [PK_Split] PRIMARY KEY CLUSTERED ([SplitId] ASC),
     CONSTRAINT [FK_Split_UserInfo] FOREIGN KEY ([UserId]) REFERENCES [dbo].[UserInfo] ([UserId])
 );
@@ -14,3 +15,9 @@ GO
 CREATE UNIQUE INDEX [UX_Split_UserId_SplitTemplateId]
     ON [dbo].[Split]([UserId], [SplitTemplateId])
     WHERE [SplitTemplateId] IS NOT NULL;
+
+GO
+
+CREATE UNIQUE INDEX [UX_Split_FreeSessions_UserId]
+    ON [dbo].[Split]([UserId])
+    WHERE [IsFreeSessions] = 1;

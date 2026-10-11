@@ -54,6 +54,10 @@
                     <span class="pass-chip__n">@(idx + 1)</span>@pass.Exercises[idx].Exercise.ExerciseName
                 </button>
             }
+            @if (pass.IsFreeSession)
+            {
+                <button type="button" class="pass-chip pass-chip--add" disabled="@addingExercise" @onclick="AddFreeExercise">+ Övning</button>
+            }
         </nav>
 
         @if (hasActive)

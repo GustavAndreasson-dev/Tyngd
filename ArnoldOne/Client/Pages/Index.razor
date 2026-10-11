@@ -58,6 +58,15 @@ else
                 </section>
             }
 
+            <button type="button" class="ui-card dash-free" @onclick="StartFreeSession">
+                <MudIcon Icon="@Icons.Material.Filled.Bolt" />
+                <span class="dash-free__text">
+                    <span class="dash-free__title">Starta löst pass</span>
+                    <span class="ui-sub">Välj övningar fritt, utan split</span>
+                </span>
+                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+            </button>
+
             <section class="dash-stats" aria-label="Aktivitet">
                 <div class="ui-card dash-stat"><span class="ui-label">7 dagar</span><span class="dash-stat__n">@dashboard.CompletedSessionsLast7Days</span></div>
                 <div class="ui-card dash-stat"><span class="ui-label">30 dagar</span><span class="dash-stat__n">@dashboard.CompletedSessionsLast30Days</span></div>

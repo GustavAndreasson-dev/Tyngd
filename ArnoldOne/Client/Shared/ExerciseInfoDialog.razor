@@ -59,7 +59,7 @@
                     @foreach (var entry in Enumerable.Reverse(_history).Take(5))
                     {
                         <li style="display:flex; justify-content:space-between; gap:8px; padding:2px 0;">
-                            <span>@entry.Date.ToString("d MMM", new System.Globalization.CultureInfo("sv-SE")) · @entry.PassName</span>
+                            <span>@SvDate.Short(entry.Date) · @entry.PassName</span>
                             <span style="font-variant-numeric:tabular-nums;">@entry.MaxWeight.ToString("0.##") kg · @entry.Sets set · @entry.TotalReps reps</span>
                         </li>
                     }

@@ -56,6 +56,12 @@ public partial class ArnoldContext
                 .OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_UserFavoriteExercise_ExerciseCatalog");
         });
 
+        modelBuilder.Entity<Split>(entity =>
+        {
+            entity.Property(e => e.IsFreeSessions).HasDefaultValue(false);
+            entity.HasIndex(e => e.UserId, "UX_Split_FreeSessions_UserId").IsUnique().HasFilter("[IsFreeSessions] = 1");
+        });
+
         modelBuilder.Entity<Exercise>()
             .HasOne(e => e.CatalogExercise).WithMany()
             .HasForeignKey(e => e.CatalogExerciseId)
