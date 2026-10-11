@@ -66,28 +66,34 @@
 </MudLayout>
 
 @code {
+    // Palette: 381D2A aubergine, FAF9F9 off-white, FFD6BA peach, 23CE6B green, E3B23C gold. Other shades are mixes of these.
     private MudTheme _theme = new()
     {
         PaletteLight = new PaletteLight
         {
-            Primary        = "#8E2447",
-            Secondary      = "#7B1F3A",
-            Tertiary       = "#C4933F",
-            Background     = "#F5F3F2",
-            BackgroundGray = "#F0EDEC",
-            Surface        = "#FFFFFF",
-            LinesDefault   = "#E4DFDE",
+            Primary = "#381D2A", PrimaryContrastText = "#FAF9F9",
+            Secondary = "#E3B23C", SecondaryContrastText = "#381D2A",
+            Tertiary = "#FFD6BA", TertiaryContrastText = "#381D2A",
+            Success = "#23CE6B", SuccessContrastText = "#381D2A",
+            Warning = "#E3B23C", WarningContrastText = "#381D2A",
+            Background = "#F2F0F1", BackgroundGray = "#EEECED", Surface = "#FAF9F9",
+            AppbarBackground = "#FAF9F9", AppbarText = "#381D2A",
+            DrawerBackground = "#FAF9F9", DrawerText = "#381D2A",
+            TextPrimary = "#381D2A", TextSecondary = "#7C6A73", TextDisabled = "#A99BA2",
+            ActionDefault = "#381D2A", LinesDefault = "#E7E3E4", LinesInputs = "#C9C0C4", Divider = "#E7E3E4",
         },
         PaletteDark = new PaletteDark
         {
-            Primary             = "#E8718F",
-            PrimaryContrastText = "#1C0A10",
-            Secondary           = "#A0294E",
-            Tertiary            = "#D4A84B",
-            Background          = "#121011",
-            BackgroundGray      = "#252122",
-            Surface             = "#1B1819",
-            LinesDefault        = "#302B2C"
+            Primary = "#FFD6BA", PrimaryContrastText = "#381D2A",
+            Secondary = "#E3B23C", SecondaryContrastText = "#381D2A",
+            Tertiary = "#23CE6B", TertiaryContrastText = "#381D2A",
+            Success = "#23CE6B", SuccessContrastText = "#381D2A",
+            Warning = "#E3B23C", WarningContrastText = "#381D2A",
+            Background = "#1F1017", BackgroundGray = "#45303A", Surface = "#381D2A",
+            AppbarBackground = "#381D2A", AppbarText = "#FAF9F9",
+            DrawerBackground = "#381D2A", DrawerText = "#FAF9F9",
+            TextPrimary = "#FAF9F9", TextSecondary = "#C0B7BB", TextDisabled = "#8F7F87",
+            ActionDefault = "#FAF9F9", LinesDefault = "#573F4B", LinesInputs = "#7A6470", Divider = "#573F4B",
         }
     };
 }
