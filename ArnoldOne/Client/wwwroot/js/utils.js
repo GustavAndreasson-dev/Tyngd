@@ -89,3 +89,39 @@ window.arnoldOne.scrollActiveChip = function () {
     var chip = document.querySelector('.pass-chip--active');
     if (chip) chip.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
 };
+
+// Vilotimer: sluttiden lagras som JSON så att vilan överlever omladdning; larm när vilan är slut.
+window.arnoldOne.restTimer = {
+    save: function (key, value) {
+        try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { }
+    },
+    load: function (key) {
+        try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+    },
+    finished: async function () {
+        if (navigator.vibrate) navigator.vibrate([250, 120, 250]);
+        if (document.visibilityState === 'visible') {
+            window.arnoldOne.flashScreen();
+            return;
+        }
+        // Appen ligger i bakgrunden: visa en notis om användaren har tillåtit det.
+        if (!('Notification' in window) || Notification.permission !== 'granted' || !('serviceWorker' in navigator)) return;
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.showNotification('Vilan är slut', {
+                body: 'Dags för nästa set.',
+                tag: 'arnold-rest',
+                renotify: true,
+                vibrate: [250, 120, 250],
+                icon: 'icons/arnold-192.png'
+            });
+        } catch (e) { }
+    },
+    permission: function () {
+        return 'Notification' in window ? Notification.permission : 'unsupported';
+    },
+    requestPermission: async function () {
+        if (!('Notification' in window)) return 'unsupported';
+        try { return await Notification.requestPermission(); } catch (e) { return Notification.permission; }
+    }
+};

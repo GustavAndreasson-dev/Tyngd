@@ -62,6 +62,7 @@ public partial class MainLayout : IDisposable
         LoginState.OnChange += OnLoginChanged;
         PendingSync.OnChange += StateHasChanged;
         await PendingSync.RefreshAsync();
+        await RestTimer.RestoreAsync();
 
         if (LoginState.IsLoggedIn)
         {

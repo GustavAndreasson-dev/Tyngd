@@ -17,7 +17,7 @@
 {
     var count = pass.Exercises.Count;
     var hasActive = activeIndex >= 0 && activeIndex < count;
-    <div class="pass @(restRemaining > 0 ? "pass--resting" : "")">
+    <div class="pass @(RestTimer.IsResting ? "pass--resting" : "")">
         <header class="pass-head">
             <div>
                 <span class="ui-label">Övning @(activeIndex + 1) av @count</span>
@@ -122,15 +122,15 @@
         }
     </div>
 
-    @if (restRemaining > 0)
+    @if (RestTimer.IsResting)
     {
         <div class="pass-rest" role="timer" aria-label="Vilotimer">
             <div class="pass-rest__row">
                 <span class="ui-label">Vila</span>
-                <span class="pass-rest__time">@($"{restRemaining / 60}:{restRemaining % 60:00}")</span>
+                <span class="pass-rest__time">@($"{RestTimer.RemainingSeconds / 60}:{RestTimer.RemainingSeconds % 60:00}")</span>
                 <button type="button" class="pass-rest__skip" @onclick="CancelRestTimer">Hoppa över</button>
             </div>
-            <div class="pass-rest__track"><div style="width:@(RestPercent)%"></div></div>
+            <div class="pass-rest__track"><div style="width:@(RestTimer.PercentLeft)%"></div></div>
         </div>
     }
     <div class="pass-bar">
