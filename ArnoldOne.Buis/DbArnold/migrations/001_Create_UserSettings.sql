@@ -1,4 +1,4 @@
--- Kör i Arnold-databasen på localhost
+-- Kör i Arnold-databasen
 CREATE TABLE UserSettings (
     UserId       UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
     IsDarkMode   BIT              NOT NULL DEFAULT 0,
