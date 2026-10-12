@@ -1,24 +1,24 @@
-﻿<#
+<#
 .SYNOPSIS
-    Kör databasmigreringar (ArnoldOne.Buis/DbArnold/migrations/NNN_*.sql) som inte körts, i nummerordning,
-    och loggar varje körning i dbo.MigrationHistory.
+    Runs database migrations (ArnoldOne.Buis/DbArnold/migrations/NNN_*.sql) that have not been run yet,
+    in numeric order, and records each one in dbo.MigrationHistory.
 
 .DESCRIPTION
-    Bara mål i listan nedan accepteras, så produktion kan inte träffas av misstag.
-    Varje skript hanterar sin egen transaktion. Körningen stoppar vid första fel; skriptet som felade loggas inte.
+    Only allow-listed targets are accepted, so production can never be hit by mistake.
+    Each script handles its own transaction. The run stops at the first failure; the failing script is not recorded.
 
 .EXAMPLE
     ./tools/run-migrations.ps1 -Target local -List
-    Visar vilka skript som är körda och vilka som väntar.
+    Shows which scripts have run and which are pending.
 
 .EXAMPLE
     ./tools/run-migrations.ps1 -Target local -Baseline 9
-    Registrerar 001-009 som redan körda (utan att köra dem). Används en gång för en databas
-    där skripten körts för hand innan historiken fanns.
+    Records scripts 001-009 as already applied without running them. Use once for a database
+    where the scripts were run by hand before the history table existed.
 
 .EXAMPLE
     ./tools/run-migrations.ps1 -Target local
-    Kör alla väntande skript.
+    Runs all pending scripts.
 #>
 param(
     [Parameter(Mandatory)]
@@ -32,20 +32,25 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Tillåtna mål. Lägg till test-dev här när inloggning finns; prod ska aldrig stå med.
+# Allowed targets only, so production can never be hit by mistake. 'local' uses Windows authentication
+# against LocalDB by default; override with ARNOLD_SQL_SERVER / ARNOLD_SQL_DATABASE for another local server.
 $targets = @{
-    local = @{ Server = 'localhost'; Database = 'Arnold'; Auth = @('-E') }
+    local = @{
+        Server   = if ($env:ARNOLD_SQL_SERVER) { $env:ARNOLD_SQL_SERVER } else { '(localdb)\MSSQLLocalDB' }
+        Database = if ($env:ARNOLD_SQL_DATABASE) { $env:ARNOLD_SQL_DATABASE } else { 'ArnoldOne' }
+        Auth     = @('-E')
+    }
 }
 $config = $targets[$Target]
 $migrationsDir = Join-Path $PSScriptRoot '..\ArnoldOne.Buis\DbArnold\migrations' | Resolve-Path
 
 function Invoke-Sql([string] $Query) {
     $output = & sqlcmd -S $config.Server -d $config.Database @($config.Auth) -C -b -I -W -h -1 -Q "SET NOCOUNT ON; $Query"
-    if ($LASTEXITCODE -ne 0) { throw "sqlcmd misslyckades: $output" }
+    if ($LASTEXITCODE -ne 0) { throw "sqlcmd failed: $output" }
     return $output
 }
 
-# Historiktabellen skapas vid första körningen (samma definition som i ArnoldDB-projektet).
+# The history table is created on first use (same definition as in the ArnoldDB project).
 Invoke-Sql @"
 IF OBJECT_ID(N'dbo.MigrationHistory', N'U') IS NULL
     CREATE TABLE dbo.MigrationHistory (
@@ -68,26 +73,26 @@ $scripts = Get-ChildItem $migrationsDir -Filter '*.sql' |
 
 function Get-Checksum($file) { (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
 
-Write-Host "Mål: $Target ($($config.Server) / $($config.Database))"
+Write-Host "Target: $Target ($($config.Server) / $($config.Database))"
 $pending = @()
 foreach ($script in $scripts) {
     $number = [int]$script.Name.Substring(0, 3)
     if ($applied.ContainsKey($script.Name)) {
-        $note = if ($applied[$script.Name] -ne (Get-Checksum $script)) { '  (filen har ändrats sedan körningen)' } else { '' }
-        Write-Host "  körd     $($script.Name)$note"
+        $note = if ($applied[$script.Name] -ne (Get-Checksum $script)) { '  (file changed since it was run)' } else { '' }
+        Write-Host "  applied   $($script.Name)$note"
     }
     elseif ($Baseline -ge $number) {
         $pending += [pscustomobject]@{ Script = $script; Baseline = $true }
-        Write-Host "  baseline $($script.Name)"
+        Write-Host "  baseline  $($script.Name)"
     }
     else {
         $pending += [pscustomobject]@{ Script = $script; Baseline = $false }
-        Write-Host "  väntar   $($script.Name)"
+        Write-Host "  pending   $($script.Name)"
     }
 }
 
 if ($List -or $pending.Count -eq 0) {
-    if ($pending.Count -eq 0) { Write-Host 'Inget att köra.' }
+    if ($pending.Count -eq 0) { Write-Host 'Nothing to run.' }
     return
 }
 
@@ -96,10 +101,10 @@ foreach ($item in $pending) {
     $name = $script.Name.Replace("'", "''")
     $sum = Get-Checksum $script
     if (-not $item.Baseline) {
-        Write-Host "Kör $($script.Name) ..."
+        Write-Host "Running $($script.Name) ..."
         & sqlcmd -S $config.Server -d $config.Database @($config.Auth) -C -b -I -i $script.FullName
-        if ($LASTEXITCODE -ne 0) { throw "$($script.Name) misslyckades. Senare skript kördes inte." }
+        if ($LASTEXITCODE -ne 0) { throw "$($script.Name) failed. Later scripts were not run." }
     }
     Invoke-Sql "INSERT INTO dbo.MigrationHistory (ScriptName, Checksum, Baselined) VALUES (N'$name', '$sum', $([int]$item.Baseline));" | Out-Null
 }
-Write-Host 'Klart.'
+Write-Host 'Done.'

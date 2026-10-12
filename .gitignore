@@ -368,5 +368,10 @@ MigrationBackup/
 FodyWeavers.xsd
 /.github/copilot-instructions.md
 
+# Lokala Claude-filer (innehåller adresser till testmiljön) och maskinspecifika verktygsfiler
+/.claude/
+*.scmp
+**/serviceDependencies.*.json
+
 # Dev settings hold the DB password; use user-secrets or this local file
 **/appsettings.Development.json
