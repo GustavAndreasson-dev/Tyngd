@@ -15,8 +15,10 @@ param([switch] $Recreate)
 
 $ErrorActionPreference = 'Stop'
 
-$server   = if ($env:TYNGD_SQL_SERVER) { $env:TYNGD_SQL_SERVER } else { '(localdb)\MSSQLLocalDB' }
-$database = if ($env:TYNGD_SQL_DATABASE) { $env:TYNGD_SQL_DATABASE } else { 'Tyngd' }
+$serverOverride   = if ($env:TYNGD_SQL_SERVER) { $env:TYNGD_SQL_SERVER } else { $env:ARNOLD_SQL_SERVER }  # ARNOLD_*: names from before the rename
+$databaseOverride = if ($env:TYNGD_SQL_DATABASE) { $env:TYNGD_SQL_DATABASE } else { $env:ARNOLD_SQL_DATABASE }
+$server   = if ($serverOverride) { $serverOverride } else { '(localdb)\MSSQLLocalDB' }
+$database = if ($databaseOverride) { $databaseOverride } else { 'Tyngd' }
 
 if ($server -notmatch '^(\(localdb\)|localhost|\.|127\.0\.0\.1)([\x5C].*)?$') {
     throw "Refusing to create a database on '$server'. Only local servers are allowed."

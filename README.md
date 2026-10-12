@@ -97,6 +97,8 @@ $env:TYNGD_SQL_SERVER = "localhost"   # for the scripts in tools/ (optionally TY
 ```
 
 In deployed environments use environment variables instead (`ConnectionStrings__TyngdDb`, `Jwt__Key`).
+Setups from before the project was renamed keep working: `ConnectionStrings:ArnoldDb` and the `ARNOLD_SQL_*`
+variables are still read.
 
 ### Load the exercise catalog
 

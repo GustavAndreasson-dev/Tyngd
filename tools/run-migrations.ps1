@@ -34,10 +34,12 @@ $ErrorActionPreference = 'Stop'
 
 # Allowed targets only, so production can never be hit by mistake. 'local' uses Windows authentication
 # against LocalDB by default; override with TYNGD_SQL_SERVER / TYNGD_SQL_DATABASE for another local server.
+$serverOverride   = if ($env:TYNGD_SQL_SERVER) { $env:TYNGD_SQL_SERVER } else { $env:ARNOLD_SQL_SERVER }  # ARNOLD_*: names from before the rename
+$databaseOverride = if ($env:TYNGD_SQL_DATABASE) { $env:TYNGD_SQL_DATABASE } else { $env:ARNOLD_SQL_DATABASE }
 $targets = @{
     local = @{
-        Server   = if ($env:TYNGD_SQL_SERVER) { $env:TYNGD_SQL_SERVER } else { '(localdb)\MSSQLLocalDB' }
-        Database = if ($env:TYNGD_SQL_DATABASE) { $env:TYNGD_SQL_DATABASE } else { 'Tyngd' }
+        Server   = if ($serverOverride) { $serverOverride } else { '(localdb)\MSSQLLocalDB' }
+        Database = if ($databaseOverride) { $databaseOverride } else { 'Tyngd' }
         Auth     = @('-E')
     }
 }

@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Registrera TyngdContext mot SQL Server
 builder.Services.AddDbContext<TyngdContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("TyngdDb")));
+    options.UseSqlServer(DbConnection.Resolve(builder.Configuration)));
 
 builder.Services.Configure<ErrorNotificationOptions>(
     builder.Configuration.GetSection(ErrorNotificationOptions.SectionName));
