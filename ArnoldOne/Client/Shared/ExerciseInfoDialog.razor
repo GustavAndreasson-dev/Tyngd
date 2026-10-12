@@ -3,23 +3,24 @@
 @namespace ArnoldOne.Client.Shared
 
 <MudDialog>
-    <TitleContent>
-        <div class="d-flex align-center" style="gap:4px;">
-            <MudText Typo="Typo.h6">@(_exercise?.Name ?? "Övning")</MudText>
-            @if (_exercise is not null && LoginState.IsLoggedIn)
-            {
-                <MudIconButton Icon="@(_isFavorite ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)"
-                               Color="@(_isFavorite ? Color.Warning : Color.Default)" Size="Size.Small"
-                               aria-label="@(_isFavorite ? "Ta bort från favoriter" : "Spara som favorit")"
-                               OnClick="ToggleFavorite" />
-            }
-        </div>
-        @if (_exercise is not null && !string.Equals(_exercise.Name, _exercise.NameEn, StringComparison.OrdinalIgnoreCase))
-        {
-            <MudText Typo="Typo.caption" Class="mud-text-secondary">@_exercise.NameEn</MudText>
-        }
-    </TitleContent>
     <DialogContent>
+        @if (_exercise is not null)
+        {
+            <div class="d-flex align-center" style="gap:4px;">
+                <MudText Typo="Typo.h6" Style="flex:1;">@_exercise.Name</MudText>
+                @if (LoginState.IsLoggedIn)
+                {
+                    <MudIconButton Icon="@(_isFavorite ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)"
+                                   Color="@(_isFavorite ? Color.Warning : Color.Default)" Size="Size.Small"
+                                   aria-label="@(_isFavorite ? "Ta bort från favoriter" : "Spara som favorit")"
+                                   OnClick="ToggleFavorite" />
+                }
+            </div>
+            @if (!string.Equals(_exercise.Name, _exercise.NameEn, StringComparison.OrdinalIgnoreCase))
+            {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2">@_exercise.NameEn</MudText>
+            }
+        }
         @if (_error is not null)
         {
             <MudText Color="Color.Error">@_error</MudText>
@@ -36,7 +37,10 @@
                      style="max-width:100%; max-height:220px; display:block; margin:0 auto 12px; border-radius:8px; background:#fff;" />
             }
             <div class="d-flex flex-wrap mb-3" style="gap:4px;">
-                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@_exercise.Category</MudChip>
+                @if (!_exercise.Muscles.Contains(_exercise.Category))
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@_exercise.Category</MudChip>
+                }
                 @foreach (var muscle in _exercise.Muscles)
                 {
                     <MudChip T="string" Size="Size.Small">@muscle</MudChip>
