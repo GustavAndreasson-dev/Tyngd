@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>d5739cfc-275f-453d-8c83-797f6df79814</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Catalog\wger-sv.json" LogicalName="Tyngd.Server.Catalog.wger-sv.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Tyngd.Data\Tyngd.Data.csproj" />
+    <ProjectReference Include="..\Client\Tyngd.Client.csproj" />
+    <ProjectReference Include="..\Shared\Tyngd.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

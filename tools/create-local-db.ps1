@@ -1,10 +1,10 @@
 <#
 .SYNOPSIS
-    Creates an empty local database from the ArnoldDB schema scripts and marks all migrations as applied.
+    Creates an empty local database from the Tyngd.Database schema scripts and marks all migrations as applied.
 
 .DESCRIPTION
-    Defaults to LocalDB: server (localdb)\MSSQLLocalDB, database ArnoldOne, Windows authentication.
-    Override with ARNOLD_SQL_SERVER / ARNOLD_SQL_DATABASE. Local servers only: the script refuses any
+    Defaults to LocalDB: server (localdb)\MSSQLLocalDB, database Tyngd, Windows authentication.
+    Override with TYNGD_SQL_SERVER / TYNGD_SQL_DATABASE. Local servers only: the script refuses any
     server name that is not localhost, '.', or a LocalDB instance.
 
 .EXAMPLE
@@ -15,14 +15,14 @@ param([switch] $Recreate)
 
 $ErrorActionPreference = 'Stop'
 
-$server   = if ($env:ARNOLD_SQL_SERVER) { $env:ARNOLD_SQL_SERVER } else { '(localdb)\MSSQLLocalDB' }
-$database = if ($env:ARNOLD_SQL_DATABASE) { $env:ARNOLD_SQL_DATABASE } else { 'ArnoldOne' }
+$server   = if ($env:TYNGD_SQL_SERVER) { $env:TYNGD_SQL_SERVER } else { '(localdb)\MSSQLLocalDB' }
+$database = if ($env:TYNGD_SQL_DATABASE) { $env:TYNGD_SQL_DATABASE } else { 'Tyngd' }
 
 if ($server -notmatch '^(\(localdb\)|localhost|\.|127\.0\.0\.1)([\x5C].*)?$') {
     throw "Refusing to create a database on '$server'. Only local servers are allowed."
 }
 
-$schemaDir = Join-Path $PSScriptRoot '..\ArnoldDB\dbo' | Resolve-Path
+$schemaDir = Join-Path $PSScriptRoot '..\Tyngd.Database\dbo' | Resolve-Path
 # Dependency order: referenced tables first.
 $tables = 'UserInfo', 'UserSettings', 'SplitTemplate', 'PassTemplate', 'ExerciseCatalog', 'ExerciseTemplate',
           'Split', 'Pass', 'Exercise', 'Session', 'ExerciseLog', 'SetLog', 'UserFavoriteExercise'
@@ -44,7 +44,7 @@ foreach ($table in $tables) { Invoke-Sqlcmd2 '-d', $database, '-i', (Join-Path $
 foreach ($index in Get-ChildItem (Join-Path $schemaDir 'Indexes') -Filter '*.sql') { Invoke-Sqlcmd2 '-d', $database, '-i', $index.FullName }
 
 # The schema scripts already contain every migration; record them so run-migrations only runs future ones.
-$env:ARNOLD_SQL_SERVER = $server
-$env:ARNOLD_SQL_DATABASE = $database
+$env:TYNGD_SQL_SERVER = $server
+$env:TYNGD_SQL_DATABASE = $database
 & (Join-Path $PSScriptRoot 'run-migrations.ps1') -Target local -Baseline 999
 Write-Host "Database '$database' is ready on $server."

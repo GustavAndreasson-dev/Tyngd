@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Runs database migrations (ArnoldOne.Buis/DbArnold/migrations/NNN_*.sql) that have not been run yet,
+    Runs database migrations (Tyngd.Data/Migrations/NNN_*.sql) that have not been run yet,
     in numeric order, and records each one in dbo.MigrationHistory.
 
 .DESCRIPTION
@@ -33,16 +33,16 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # Allowed targets only, so production can never be hit by mistake. 'local' uses Windows authentication
-# against LocalDB by default; override with ARNOLD_SQL_SERVER / ARNOLD_SQL_DATABASE for another local server.
+# against LocalDB by default; override with TYNGD_SQL_SERVER / TYNGD_SQL_DATABASE for another local server.
 $targets = @{
     local = @{
-        Server   = if ($env:ARNOLD_SQL_SERVER) { $env:ARNOLD_SQL_SERVER } else { '(localdb)\MSSQLLocalDB' }
-        Database = if ($env:ARNOLD_SQL_DATABASE) { $env:ARNOLD_SQL_DATABASE } else { 'ArnoldOne' }
+        Server   = if ($env:TYNGD_SQL_SERVER) { $env:TYNGD_SQL_SERVER } else { '(localdb)\MSSQLLocalDB' }
+        Database = if ($env:TYNGD_SQL_DATABASE) { $env:TYNGD_SQL_DATABASE } else { 'Tyngd' }
         Auth     = @('-E')
     }
 }
 $config = $targets[$Target]
-$migrationsDir = Join-Path $PSScriptRoot '..\ArnoldOne.Buis\DbArnold\migrations' | Resolve-Path
+$migrationsDir = Join-Path $PSScriptRoot '..\Tyngd.Data\Migrations' | Resolve-Path
 
 function Invoke-Sql([string] $Query) {
     $output = & sqlcmd -S $config.Server -d $config.Database @($config.Auth) -C -b -I -W -h -1 -Q "SET NOCOUNT ON; $Query"
@@ -50,7 +50,7 @@ function Invoke-Sql([string] $Query) {
     return $output
 }
 
-# The history table is created on first use (same definition as in the ArnoldDB project).
+# The history table is created on first use (same definition as in the Tyngd.Database project).
 Invoke-Sql @"
 IF OBJECT_ID(N'dbo.MigrationHistory', N'U') IS NULL
     CREATE TABLE dbo.MigrationHistory (

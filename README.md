@@ -1,4 +1,4 @@
-# Arnold
+# Tyngd
 
 A mobile-first workout log. Plan your training in splits and passes, log sets, reps and weight while you train,
 and see how each exercise develops over time. Installable as a PWA, with the user interface in Swedish.
@@ -57,10 +57,10 @@ Built as a full-stack .NET 10 project: Blazor WebAssembly client, ASP.NET Core A
   history survives upstream changes and the app works if wger is down. Free-text exercises still work.
 - **Translations that survive re-imports.** Each catalog row stores a hash of the English source text. A sync
   re-translates only rows whose source changed, and never overwrites a reviewed translation: it flags it for review
-  instead. The initial Swedish translation is checked in as `ArnoldOne/Server/Catalog/wger-sv.json`.
+  instead. The initial Swedish translation is checked in as `Tyngd/Server/Catalog/wger-sv.json`.
 - **Free sessions reuse the pass model.** A free session is a pass in a hidden per-user split, so saving, offline sync,
   resume, history and statistics work without a second session model.
-- **Migrations as plain SQL.** `ArnoldOne.Buis/DbArnold/migrations` holds numbered, idempotent scripts.
+- **Migrations as plain SQL.** `Tyngd.Data/Migrations` holds numbered, idempotent scripts.
   `tools/run-migrations.ps1` runs the pending ones and records them with a checksum in `dbo.MigrationHistory`. It only
   accepts allow-listed (local) targets.
 - **Authentication.** PBKDF2-HMAC-SHA256 with a per-user salt and an iteration count stored with the hash, so old hashes
@@ -75,20 +75,28 @@ Prerequisites: the [.NET 10 SDK](https://dotnet.microsoft.com/download), SQL Ser
 `sqlcmd` command-line tool. The helper scripts are PowerShell and use Windows authentication.
 
 ```powershell
-# 1. Create a local database (LocalDB, database "ArnoldOne") from the schema scripts
+# 1. Create a local database (LocalDB, database "Tyngd") from the schema scripts
 ./tools/create-local-db.ps1
 
 # 2. Set a signing key for the JWTs (any random string of 32+ characters)
-dotnet user-secrets set "Jwt:Key" "<random string>" --project ArnoldOne/Server
+dotnet user-secrets set "Jwt:Key" "<random string>" --project Tyngd/Server
 
 # 3. Run
-dotnet run --project ArnoldOne/Server
+dotnet run --project Tyngd/Server
 ```
 
-The app is served at the URL printed on startup. The default connection string in `appsettings.json` points at LocalDB.
-To use another server, set `ConnectionStrings__ArnoldDb` (or add `appsettings.Development.json`, which is git-ignored;
-`appsettings.Development.example.json` shows the shape) and set `ARNOLD_SQL_SERVER` / `ARNOLD_SQL_DATABASE` for the
-scripts.
+The app is served at the URL printed on startup. The default connection string in `appsettings.json` points at LocalDB,
+so a LocalDB setup needs no further configuration.
+
+Machine-specific settings and secrets belong in [user secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets),
+which live outside the repository. To use another SQL Server:
+
+```powershell
+dotnet user-secrets set "ConnectionStrings:TyngdDb" "Server=localhost;Database=Tyngd;Trusted_Connection=True;TrustServerCertificate=True;" --project Tyngd/Server
+$env:TYNGD_SQL_SERVER = "localhost"   # for the scripts in tools/ (optionally TYNGD_SQL_DATABASE too)
+```
+
+In deployed environments use environment variables instead (`ConnectionStrings__TyngdDb`, `Jwt__Key`).
 
 ### Load the exercise catalog
 
@@ -103,7 +111,7 @@ scripts.
 ### Tests
 
 ```powershell
-dotnet test ArnoldOne.Tests
+dotnet test Tyngd.Tests
 ```
 
 The tests use the EF Core in-memory provider, which does not enforce unique indexes. The race handling that depends on
@@ -122,18 +130,18 @@ SQL Server error numbers is therefore not covered by unit tests.
 |---|---|
 | `Jwt:Key` | Required. Signing key for tokens (use user secrets locally, an environment variable elsewhere). |
 | `Jwt:ExpiryMinutes` | Token lifetime, 480 by default. |
-| `ConnectionStrings:ArnoldDb` | SQL Server connection string. |
+| `ConnectionStrings:TyngdDb` | SQL Server connection string. |
 | `ErrorNotifications:*` | Optional email alerts for server and client errors: recipients, SMTP settings, throttle and an hourly cap. |
 
 ## Project layout
 
 ```
-ArnoldOne/Client        Blazor WebAssembly app (pages, components, services)
-ArnoldOne/Server        ASP.NET Core host: API controllers, wger sync, middleware
-ArnoldOne/Shared        DTOs and models shared by client and server
-ArnoldOne.Buis          EF Core entities and DbContext, SQL migration scripts
-ArnoldDB                SSDT database project (schema)
-ArnoldOne.Tests         xUnit tests
+Tyngd/Client        Blazor WebAssembly app (pages, components, services)
+Tyngd/Server        ASP.NET Core host: API controllers, wger sync, middleware
+Tyngd/Shared        DTOs and models shared by client and server
+Tyngd.Data          EF Core entities and DbContext, SQL migration scripts
+Tyngd.Database                SSDT database project (schema)
+Tyngd.Tests         xUnit tests
 tools                   Local database and migration scripts
 docs                    Design notes and screenshots
 ```

@@ -1,0 +1,30 @@
+@namespace Tyngd.Shared
+@implements IDisposable
+@inject NavigationManager Nav
+@inject Tyngd.Client.Services.LoginState LoginState
+
+@if (LoginState.IsLoggedIn && !Nav.Uri.Contains("/pass/"))
+{
+    <nav class="bottom-nav" aria-label="Huvudmeny">
+        <NavLink class="bottom-nav__tab" href="" Match="NavLinkMatch.All"><MudIcon Icon="@Icons.Material.Outlined.Dashboard" />Översikt</NavLink>
+        <NavLink class="bottom-nav__tab" href="TP/my-splits"><MudIcon Icon="@Icons.Material.Outlined.Layers" />Splits</NavLink>
+        <NavLink class="bottom-nav__tab" href="TP/templates"><MudIcon Icon="@Icons.Material.Outlined.LibraryBooks" />Mallar</NavLink>
+        <NavLink class="bottom-nav__tab" href="ovningar"><MudIcon Icon="@Icons.Material.Outlined.FitnessCenter" />Övningar</NavLink>
+        <NavLink class="bottom-nav__tab" href="installningar"><MudIcon Icon="@Icons.Material.Outlined.Settings" />Inställningar</NavLink>
+    </nav>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        LoginState.OnChange += Refresh;
+    }
+    private void OnLocationChanged(object? s, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => Refresh();
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+        LoginState.OnChange -= Refresh;
+    }
+}

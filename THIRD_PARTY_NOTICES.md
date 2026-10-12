@@ -20,7 +20,7 @@ The license and the author of each exercise's text are stored in the catalog tab
 and shown in the exercise dialog in the app. Re-running the sync refreshes them. The sync reads the license of the
 text, not the license of the exercise record, which differs for a handful of entries.
 
-`ArnoldOne/Server/Catalog/wger-sv.json` contains Swedish translations of exercise names and descriptions. They are
+`Tyngd/Server/Catalog/wger-sv.json` contains Swedish translations of exercise names and descriptions. They are
 adaptations of the wger text and are shared under
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). CC BY-SA 3.0 explicitly allows distributing an
 adaptation under a later version of the license with the same license elements, so this covers the 128 entries that
@@ -45,7 +45,7 @@ The screenshots are cropped and compressed screen captures of the app, not chang
 
 ## Muscle images: Wikimedia Commons (CC BY-SA 3.0)
 
-`ArnoldOne/Client/wwwroot/img/muscles/` contains the body silhouettes and the per-muscle overlays used by the muscle map.
+`Tyngd/Client/wwwroot/img/muscles/` contains the body silhouettes and the per-muscle overlays used by the muscle map.
 They are copied from wger's `core/static/images/muscles` directory. wger's `SOURCES` file there points to Wikimedia
 Commons for the two silhouettes:
 

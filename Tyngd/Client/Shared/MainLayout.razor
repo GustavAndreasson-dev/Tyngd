@@ -1,0 +1,99 @@
+﻿@namespace Tyngd.Shared
+@using Tyngd.Client.Services
+@using Tyngd.Client.Shared
+@inherits LayoutComponentBase
+<MudThemeProvider Theme="@_theme" IsDarkMode="@ThemeState.IsDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<PageTitle>Tyngd</PageTitle>
+<MudLayout>
+    <MudAppBar Elevation="0">
+        <MudIconButton Class="app-menu-toggle" Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h6" Class="ml-3 app-wordmark">Tyngd</MudText>
+        <MudSpacer />
+        <RestPill />
+        @if (PendingSync.HasVisiblePendingSync)
+        {
+            <MudButton Class="pending-sync-badge"
+                       Variant="Variant.Filled"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.SyncProblem"
+                       Disabled="@_syncingPendingData"
+                       OnClick="SyncPendingData">
+                Osynkat
+            </MudButton>
+        }
+        <MudMenu @ref="_menu"
+                 Icon="@Icons.Material.Filled.MoreVert"
+                 Color="Color.Inherit"
+                 AnchorOrigin="Origin.BottomRight"
+                 TransformOrigin="Origin.TopRight">
+            @if (LoginState.IsLoggedIn)
+            {
+                <MudMenuItem Disabled="true" Icon="@Icons.Material.Filled.AccountCircle">@LoginState.CurrentUser!.UserName</MudMenuItem>
+                <MudDivider />
+                @if (LoginState.CurrentUser!.IsAdmin)
+                {
+                    <MudMenuItem Href="/admin" Icon="@Icons.Material.Filled.AdminPanelSettings">Admin</MudMenuItem>
+                    <MudDivider />
+                }
+                <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Logga ut</MudMenuItem>
+                <MudDivider />
+            }
+            else
+            {
+                <MudMenuItem Icon="@Icons.Material.Filled.Login" OnClick="OpenLoginDialog">Logga in</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.PersonAdd" OnClick="OpenRegisterDialog">Skapa konto</MudMenuItem>
+                <MudDivider />
+            }
+            <MudMenuItem Href="/installningar" Icon="@Icons.Material.Filled.Settings">Inställningar</MudMenuItem>
+        </MudMenu>
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
+         <MudNavMenu>
+             <NavMenu />
+          </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent>
+        @if (_ready)
+        {
+            @Body
+        }
+    </MudMainContent>
+    <BottomNav />
+</MudLayout>
+
+@code {
+    // Palette: C9FBFF ice, 57737A slate, 040F0F ink, 23CE6B green, E0A458 amber. Other shades are mixes of these.
+    private MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#57737A", PrimaryContrastText = "#C9FBFF",
+            Secondary = "#E0A458", SecondaryContrastText = "#040F0F",
+            Tertiary = "#C9FBFF", TertiaryContrastText = "#040F0F",
+            Success = "#23CE6B", SuccessContrastText = "#040F0F",
+            Warning = "#E0A458", WarningContrastText = "#040F0F",
+            Background = "#ECFEFF", BackgroundGray = "#E1F5F7", Surface = "#F8FFFF",
+            AppbarBackground = "#F8FFFF", AppbarText = "#040F0F",
+            DrawerBackground = "#F8FFFF", DrawerText = "#040F0F",
+            TextPrimary = "#040F0F", TextSecondary = "#465F65", TextDisabled = "#8FA5A9",
+            ActionDefault = "#040F0F", LinesDefault = "#D6E9EB", LinesInputs = "#B0C6CA", Divider = "#D6E9EB",
+        },
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#C9FBFF", PrimaryContrastText = "#040F0F",
+            Secondary = "#E0A458", SecondaryContrastText = "#040F0F",
+            Tertiary = "#23CE6B", TertiaryContrastText = "#040F0F",
+            Success = "#23CE6B", SuccessContrastText = "#040F0F",
+            Warning = "#E0A458", WarningContrastText = "#040F0F",
+            Background = "#040F0F", BackgroundGray = "#172A2C", Surface = "#0F1D1E",
+            AppbarBackground = "#0F1D1E", AppbarText = "#E4FCFF",
+            DrawerBackground = "#0F1D1E", DrawerText = "#E4FCFF",
+            TextPrimary = "#E4FCFF", TextSecondary = "#9BC5CA", TextDisabled = "#5B7C82",
+            ActionDefault = "#E4FCFF", LinesDefault = "#25393C", LinesInputs = "#3F5A5F", Divider = "#25393C",
+        }
+    };
+}

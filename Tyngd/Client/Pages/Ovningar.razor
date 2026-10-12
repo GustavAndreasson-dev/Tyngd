@@ -1,0 +1,209 @@
+@page "/ovningar"
+@using Tyngd.Shared.Catalog
+@using Tyngd.Client.Services
+@layout MainLayout
+@implements IDisposable
+@inject CatalogService CatalogService
+@inject FavoritesService FavoritesService
+@inject LoginState LoginState
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Övningar</PageTitle>
+
+<header class="lib-head">
+    <h1 class="ui-title">Övningar</h1>
+    <span class="ui-sub">@(_all.Count > 0 ? $"{_all.Count} övningar" : "")</span>
+</header>
+
+<MudTextField T="string" Value="_search" ValueChanged="OnSearchChanged" Placeholder="Sök på svenska eller engelska"
+              Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+              Immediate="true" DebounceInterval="200" Clearable="true" Class="mb-3" />
+
+<div class="lib-chips" role="group" aria-label="Kategori">
+    @if (LoginState.IsLoggedIn)
+    {
+        <button type="button" class="ui-chip @(_onlyFavorites ? "ui-chip--on" : "")" @onclick="ToggleOnlyFavorites" aria-pressed="@_onlyFavorites">
+            ★ Favoriter@(_favorites.Count > 0 ? $" ({_favorites.Count})" : "")
+        </button>
+    }
+    @foreach (var category in _categories)
+    {
+        var current = category;
+        <button type="button" class="ui-chip @(_category == current ? "ui-chip--on" : "")" @onclick="() => SetCategory(current)" aria-pressed="@(_category == current)">@current</button>
+    }
+</div>
+
+<div class="lib-filters">
+    <MudSelect T="string" Value="_muscle" ValueChanged="OnMuscleChanged" Label="Muskel" Variant="Variant.Outlined" Dense="true" Clearable="true">
+        @foreach (var muscle in Muscles.All.OrderBy(m => m.NameSv))
+        {
+            <MudSelectItem Value="@muscle.Key">@muscle.NameSv</MudSelectItem>
+        }
+    </MudSelect>
+    <MudSelect T="string" Value="_equipment" ValueChanged="OnEquipmentChanged" Label="Utrustning" Variant="Variant.Outlined" Dense="true" Clearable="true">
+        @foreach (var item in _equipmentOptions)
+        {
+            <MudSelectItem Value="@item">@item</MudSelectItem>
+        }
+    </MudSelect>
+</div>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Class="my-4" />
+}
+else if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">@_error</MudAlert>
+}
+else
+{
+    var visible = Visible().ToList();
+    @if (visible.Count == 0)
+    {
+        <MudText Class="mud-text-secondary my-6">
+            @(_onlyFavorites && _favorites.Count == 0 ? "Du har inga favoriter än. Tryck på stjärnan vid en övning." : "Inga övningar matchar.")
+        </MudText>
+    }
+    <ul class="lib-list">
+        @foreach (var exercise in visible.Take(_shown))
+        {
+            var current = exercise;
+            var isFavorite = _favorites.Contains(current.CatalogExerciseId);
+            <li class="lib-item">
+                <button type="button" class="lib-item__main" @onclick="() => OpenInfo(current)">
+                    @if (current.ImageUrl is not null)
+                    {
+                        <img class="lib-item__img" src="@current.ImageUrl" alt="" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="lib-item__img lib-item__img--empty" aria-hidden="true"><MudIcon Icon="@Icons.Material.Filled.FitnessCenter" Size="Size.Small" /></span>
+                    }
+                    <span class="lib-item__text">
+                        <span class="lib-item__name">@current.Name</span>
+                        <span class="lib-item__meta">@Meta(current)</span>
+                    </span>
+                </button>
+                @if (LoginState.IsLoggedIn)
+                {
+                    <MudIconButton Icon="@(isFavorite ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)"
+                                   Color="@(isFavorite ? Color.Warning : Color.Default)"
+                                   aria-label="@(isFavorite ? $"Ta bort {current.Name} från favoriter" : $"Spara {current.Name} som favorit")"
+                                   OnClick="() => ToggleFavorite(current)" />
+                }
+            </li>
+        }
+    </ul>
+    @if (visible.Count > _shown)
+    {
+        <MudButton Variant="Variant.Text" FullWidth="true" OnClick="@(() => _shown += PageSize)">Visa fler (@(visible.Count - _shown) kvar)</MudButton>
+    }
+    @if (!LoginState.IsLoggedIn)
+    {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mt-4">Logga in för att spara favoriter och se din historik per övning.</MudText>
+    }
+}
+
+@code {
+    private const int PageSize = 40;
+
+    private List<CatalogExerciseDto> _all = new();
+    private HashSet<int> _favorites = new();
+    private List<string> _categories = new();
+    private List<string> _equipmentOptions = new();
+    private string? _search;
+    private string? _category;
+    private string? _muscle;
+    private string? _equipment;
+    private bool _onlyFavorites;
+    private int _shown = PageSize;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        LoginState.OnChange += OnLoginChanged;
+        FavoritesService.OnChange += OnFavoritesChanged;
+        try
+        {
+            _all = await CatalogService.GetAllAsync();
+            _categories = _all.Select(e => e.Category).Distinct().Order().ToList();
+            _equipmentOptions = _all.SelectMany(e => e.Equipment).Distinct().Order().ToList();
+            _favorites = await FavoritesService.GetAsync();
+        }
+        catch (HttpRequestException)
+        {
+            _error = "Kunde inte hämta övningarna. Kontrollera anslutningen.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private IEnumerable<CatalogExerciseDto> Visible()
+    {
+        IEnumerable<CatalogExerciseDto> rows = _all;
+        if (_onlyFavorites)
+            rows = rows.Where(e => _favorites.Contains(e.CatalogExerciseId));
+        if (_category is not null)
+            rows = rows.Where(e => e.Category == _category);
+        if (_muscle is not null)
+            rows = rows.Where(e => e.PrimaryMuscles.Contains(_muscle) || e.SecondaryMuscles.Contains(_muscle));
+        if (_equipment is not null)
+            rows = rows.Where(e => e.Equipment.Contains(_equipment));
+        rows = CatalogService.Search(rows, _search);
+        // Favoriter först, annars sökordningen.
+        return rows.OrderByDescending(e => _favorites.Contains(e.CatalogExerciseId));
+    }
+
+    private static string Meta(CatalogExerciseDto exercise)
+    {
+        var parts = new List<string> { exercise.Category };
+        if (exercise.Equipment.Count > 0)
+            parts.Add(string.Join(", ", exercise.Equipment));
+        if (!string.Equals(exercise.Name, exercise.NameEn, StringComparison.OrdinalIgnoreCase))
+            parts.Add(exercise.NameEn);
+        return string.Join(" · ", parts);
+    }
+
+    private void OnSearchChanged(string? value) { _search = value; _shown = PageSize; }
+    private void OnMuscleChanged(string? value) { _muscle = value; _shown = PageSize; }
+    private void OnEquipmentChanged(string? value) { _equipment = value; _shown = PageSize; }
+    private void SetCategory(string category) { _category = _category == category ? null : category; _shown = PageSize; }
+    private void ToggleOnlyFavorites() { _onlyFavorites = !_onlyFavorites; _shown = PageSize; }
+
+    private async Task ToggleFavorite(CatalogExerciseDto exercise)
+    {
+        try
+        {
+            var added = await FavoritesService.ToggleAsync(exercise.CatalogExerciseId);
+            Snackbar.Add(added ? $"{exercise.Name} sparad som favorit." : $"{exercise.Name} borttagen från favoriter.", Severity.Normal);
+        }
+        catch (HttpRequestException)
+        {
+            Snackbar.Add("Kunde inte spara favoriten.", Severity.Error);
+        }
+    }
+
+    private Task OpenInfo(CatalogExerciseDto exercise) =>
+        DialogService.ShowAsync<ExerciseInfoDialog>(null,
+            new DialogParameters<ExerciseInfoDialog> { { dialog => dialog.CatalogExerciseId, exercise.CatalogExerciseId } },
+            new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+
+    private void OnFavoritesChanged() => InvokeAsync(StateHasChanged);
+
+    private async void OnLoginChanged()
+    {
+        try { _favorites = await FavoritesService.GetAsync(); } catch (HttpRequestException) { _favorites = new(); }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        LoginState.OnChange -= OnLoginChanged;
+        FavoritesService.OnChange -= OnFavoritesChanged;
+    }
+}

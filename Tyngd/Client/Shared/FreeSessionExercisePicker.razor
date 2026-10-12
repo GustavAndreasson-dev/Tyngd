@@ -1,0 +1,61 @@
+@using Tyngd.Shared.DTOs
+@using Tyngd.Shared.Catalog
+@using Tyngd.Client.Services
+@namespace Tyngd.Client.Shared
+@inject CatalogService CatalogService
+@inject FavoritesService FavoritesService
+
+@* Väljer en övning att lägga till: snabbval bland favoriter, eller sök i katalogen (egen övning sist). *@
+@if (_favorites.Count > 0)
+{
+    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-1">Favoriter</MudText>
+    <div class="d-flex flex-wrap mb-3" style="gap:6px;">
+        @foreach (var favorite in _favorites)
+        {
+            var current = favorite;
+            var taken = Taken.Contains(current.CatalogExerciseId);
+            <MudChip T="string" Size="Size.Small" Disabled="taken" Icon="@Icons.Material.Filled.Add"
+                     OnClick="() => Add(new FreeSessionExerciseDto { CatalogExerciseId = current.CatalogExerciseId, Name = Shorten(current.Name) })">@current.Name</MudChip>
+        }
+    </div>
+}
+@* Ny instans efter varje val, så att sökfältet töms. *@
+<ExercisePicker @key="_pickerKey" Label="Sök övning"
+                NameChanged="name => _pendingName = name"
+                CatalogExerciseIdChanged="OnPicked" />
+
+@code {
+    /// <summary>Anropas för varje vald övning.</summary>
+    [Parameter] public EventCallback<FreeSessionExerciseDto> OnAdd { get; set; }
+
+    /// <summary>Katalog-id:n som redan är valda; deras favoritknappar gråas ut.</summary>
+    [Parameter] public IReadOnlySet<int> Taken { get; set; } = new HashSet<int>();
+
+    private List<CatalogExerciseDto> _favorites = new();
+    private string _pendingName = string.Empty;
+    private int _pickerKey;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var favorites = await FavoritesService.GetAsync();
+            _favorites = (await CatalogService.GetAllAsync()).Where(e => favorites.Contains(e.CatalogExerciseId)).ToList();
+        }
+        catch (HttpRequestException) { }
+    }
+
+    // ExercisePicker anropar NameChanged före CatalogExerciseIdChanged, även för egen övning (id null).
+    private async Task OnPicked(int? catalogExerciseId)
+    {
+        if (string.IsNullOrWhiteSpace(_pendingName))
+            return;
+        await Add(new FreeSessionExerciseDto { CatalogExerciseId = catalogExerciseId, Name = Shorten(_pendingName) });
+        _pendingName = string.Empty;
+        _pickerKey++;
+    }
+
+    private Task Add(FreeSessionExerciseDto exercise) => OnAdd.InvokeAsync(exercise);
+
+    private static string Shorten(string name) => name.Length > 50 ? name[..50] : name;
+}

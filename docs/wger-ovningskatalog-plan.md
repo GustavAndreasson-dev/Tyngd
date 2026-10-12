@@ -57,7 +57,7 @@ Ny tabell `ExerciseCatalog`:
 | `LastSyncedUtc` | datetimeoffset | |
 
 `Exercise` och `ExerciseTemplate` får `CatalogExerciseId int NULL` med FK.
-Skript `007_Add_ExerciseCatalog.sql`, samma tabeller i `ArnoldDB`-projektet och i `ArnoldContext`.
+Skript `007_Add_ExerciseCatalog.sql`, samma tabeller i `Tyngd.Database`-projektet och i `TyngdContext`.
 
 ### 2. Import och synk (`feature/catalog-sync`)
 
@@ -135,7 +135,7 @@ Mallarna först, eftersom de är få och styr nya splits.
 |---|---|
 | 1 Datamodell | Klar: `007_Add_ExerciseCatalog.sql` |
 | 2 Import och synk | Klar: admin > Övningskatalog > Synka från wger |
-| 3 Första översättningen | Klar: `ArnoldOne/Server/Catalog/wger-sv.json` (920 st, status Auto). Att granska först: `docs/wger-oversattning-granska.md` |
+| 3 Första översättningen | Klar: `Tyngd/Server/Catalog/wger-sv.json` (920 st, status Auto). Att granska först: `docs/wger-oversattning-granska.md` |
 | 4 Admin-granskning | Klar: admin > Övningskatalog |
 | 5 API till klienten | Klar, utan ETag (listan laddas en gång per sidladdning) |
 | 6 Välja övning i UI | Klar: `ExercisePicker` i Skapa split och mall-editorn, info-knapp på passet |

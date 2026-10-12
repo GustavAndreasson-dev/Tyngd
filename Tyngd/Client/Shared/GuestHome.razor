@@ -1,0 +1,135 @@
+@using Tyngd.Shared.Catalog
+@using Tyngd.Client.Services
+@namespace Tyngd.Client.Shared
+@inject CatalogService CatalogService
+@inject IDialogService DialogService
+
+@* Startsidan för den som inte är inloggad: saklig beskrivning av vad appen gör. *@
+<div class="guest">
+    <section class="guest-hero">
+        <h1 class="guest-hero__title">Tyngd – träningslogg för gymmet</h1>
+        <p class="guest-hero__lead">
+            Lägg upp dina pass, logga set, reps och vikt under passet och se hur det gick förra gången.
+            Gratis, i webbläsaren eller installerad som app i mobilen.
+        </p>
+        <div class="ui-actions">
+            <button type="button" class="ui-btn" @onclick="OnRegister">Skapa konto</button>
+            <button type="button" class="ui-btn ui-btn--ghost" @onclick="OnLogin">Logga in</button>
+        </div>
+    </section>
+
+    <section aria-labelledby="guest-features">
+        <h2 id="guest-features" class="ui-section-title">Funktioner</h2>
+        <div class="guest-features">
+            @foreach (var feature in Features)
+            {
+                <article class="ui-card guest-feature">
+                    <MudIcon Icon="@feature.Icon" Color="Color.Primary" />
+                    <h3 class="guest-feature__title">@feature.Title</h3>
+                    <p class="ui-sub">@feature.Text</p>
+                </article>
+            }
+        </div>
+    </section>
+
+    <section class="ui-card guest-demo" aria-labelledby="guest-muscles">
+        <div class="guest-demo__text">
+            <h2 id="guest-muscles" class="ui-section-title">Muskler per pass</h2>
+            <p class="ui-sub">
+                Exempel på hur ett pass visas. Röd: tränas av flera övningar. Orange: tränas mindre.
+                Tryck på figuren för baksidan.
+            </p>
+            <div class="guest-demo__tabs" role="group" aria-label="Exempelpass">
+                @foreach (var example in Examples)
+                {
+                    var current = example;
+                    <button type="button" class="ui-chip @(_example == current ? "ui-chip--on" : "")" aria-pressed="@(_example == current)"
+                            @onclick="() => _example = current">@current.Name</button>
+                }
+            </div>
+        </div>
+        <MuscleMap Load="_example.Load" />
+    </section>
+
+    <section aria-labelledby="guest-exercises">
+        <div class="guest-row">
+            <h2 id="guest-exercises" class="ui-section-title">Övningar</h2>
+            <a class="ui-link" href="/ovningar">Visa alla@(_catalogCount > 0 ? $" {_catalogCount}" : "")</a>
+        </div>
+        <p class="ui-sub mb-3">Hämtade från wger.de och översatta till svenska. Tryck på en övning för beskrivning och muskler.</p>
+        @if (_samples.Count > 0)
+        {
+            <div class="guest-samples">
+                @foreach (var exercise in _samples)
+                {
+                    var current = exercise;
+                    <button type="button" class="ui-card guest-sample" @onclick="() => OpenInfo(current)">
+                        <img src="@current.ImageUrl" alt="" loading="lazy" />
+                        <span class="guest-sample__name">@current.Name</span>
+                        <span class="ui-sub">@current.Category</span>
+                    </button>
+                }
+            </div>
+        }
+    </section>
+
+    <p class="ui-sub guest-foot">
+        Passet sparas i mobilen medan du tränar och synkas när det finns uppkoppling.
+        Ett konto behövs för att spara pass och historik.
+    </p>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnLogin { get; set; }
+    [Parameter] public EventCallback OnRegister { get; set; }
+
+    private sealed record Feature(string Icon, string Title, string Text);
+
+    private static readonly Feature[] Features =
+    [
+        new(Icons.Material.Outlined.Layers, "Splits och pass", "Egna splits med pass och övningar, eller en färdig mall som utgångspunkt."),
+        new(Icons.Material.Outlined.Timer, "Passläge", "Set, reps och vikt per övning. Förra passets värden fylls i. Vilotimer mellan seten."),
+        new(Icons.Material.Outlined.Bolt, "Lösa pass", "Logga ett pass utan plan och lägg till övningar efter hand. Spara det som pass efteråt om du vill."),
+        new(Icons.Material.Outlined.ShowChart, "Historik", "Tyngsta vikt och reps per tillfälle för varje övning, från alla pass där den ingått."),
+        new(Icons.Material.Outlined.FitnessCenter, "Övningsbibliotek", "Sök på svenska eller engelska och filtrera på muskel och utrustning. Spara favoriter."),
+        new(Icons.Material.Outlined.AccessibilityNew, "Muskelfigur", "Vilka muskler en övning, ett pass eller en split belastar."),
+    ];
+
+    private sealed record Example(string Name, IReadOnlyDictionary<string, double> Load);
+
+    // Exempelbelastning: primär muskel 1 per övning, sekundär 0,5 (som i appen).
+    private static readonly Example[] Examples =
+    [
+        new("Push", new Dictionary<string, double> { ["Chest"] = 3, ["Shoulders"] = 2.5, ["Triceps"] = 2.5, ["Serratus anterior"] = 0.5 }),
+        new("Pull", new Dictionary<string, double> { ["Lats"] = 3, ["Biceps"] = 2.5, ["Trapezius"] = 1.5, ["Brachialis"] = 1, ["Shoulders"] = 0.5 }),
+        new("Ben", new Dictionary<string, double> { ["Quads"] = 3, ["Glutes"] = 2.5, ["Hamstrings"] = 2, ["Calves"] = 1, ["Soleus"] = 0.5 }),
+    ];
+
+    private Example _example = Examples[0];
+    private List<CatalogExerciseDto> _samples = new();
+    private int _catalogCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var all = await CatalogService.GetAllAsync();
+            _catalogCount = all.Count;
+            // Några välkända övningar med bild, en per kategori.
+            _samples = all.Where(e => e.ImageUrl is not null && e.PrimaryMuscles.Count > 0)
+                .GroupBy(e => e.Category)
+                .Select(group => group.OrderBy(e => e.Name.Length).First())
+                .Take(6)
+                .ToList();
+        }
+        catch (HttpRequestException)
+        {
+            // Sidan fungerar utan exempel om katalogen inte nås.
+        }
+    }
+
+    private Task OpenInfo(CatalogExerciseDto exercise) =>
+        DialogService.ShowAsync<ExerciseInfoDialog>(null,
+            new DialogParameters<ExerciseInfoDialog> { { dialog => dialog.CatalogExerciseId, exercise.CatalogExerciseId } },
+            new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+}

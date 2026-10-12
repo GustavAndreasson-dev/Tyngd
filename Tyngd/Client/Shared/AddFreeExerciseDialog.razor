@@ -1,0 +1,23 @@
+@using Tyngd.Shared.DTOs
+@namespace Tyngd.Client.Shared
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Lägg till övning</MudText>
+    </TitleContent>
+    <DialogContent>
+        <FreeSessionExercisePicker OnAdd="Picked" Taken="Taken" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => MudDialog.Cancel()">Avbryt</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    /// <summary>Katalog-id:n som redan finns i passet.</summary>
+    [Parameter] public IReadOnlySet<int> Taken { get; set; } = new HashSet<int>();
+
+    private void Picked(FreeSessionExerciseDto exercise) => MudDialog.Close(DialogResult.Ok(exercise));
+}

@@ -1,0 +1,85 @@
+@page "/installningar"
+@namespace Tyngd.Client.Pages
+
+<PageTitle>Inställningar</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6 pt-2">Inställningar</MudText>
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <MudAlert Severity="Severity.Success" Dense="true" ShowCloseIcon="true" CloseIconClicked="ClearSuccess" Class="mb-4">
+        @successMessage
+    </MudAlert>
+}
+
+<MudPaper Class="pa-4 mb-4" Elevation="2">
+    <label class="ui-switch">
+        Mörkt läge
+        <input type="checkbox" role="switch" checked="@ThemeState.IsDarkMode" @onchange="e => OnDarkModeChanged((bool)e.Value!)" />
+        <span class="ui-switch__track"></span>
+    </label>
+</MudPaper>
+
+<MudPaper Class="pa-4 mb-4" Elevation="2">
+    <MudText Typo="Typo.subtitle1" Class="mb-3">Vilotimer</MudText>
+    <label class="ui-switch">
+        Aktivera vilotimer
+        <input type="checkbox" role="switch" checked="@RestTimer.IsEnabled" @onchange="e => OnRestTimerEnabledChanged((bool)e.Value!)" />
+        <span class="ui-switch__track"></span>
+    </label>
+    <MudNumericField T="int"
+                     Label="Vilotid (minuter)"
+                     Value="@_restTimerMinutes"
+                     ValueChanged="OnRestTimerMinutesChanged"
+                     Min="1" Max="10"
+                     Disabled="@(!RestTimer.IsEnabled)"
+                     Variant="Variant.Filled"
+                     Class="mt-2"
+                     Style="max-width:180px;" />
+    @switch (_notificationPermission)
+    {
+        case "default":
+            <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.NotificationsActive"
+                       Class="mt-3" OnClick="RequestNotificationPermission">
+                Visa notis när vilan är slut
+            </MudButton>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
+                Då får du en notis om appen ligger i bakgrunden när vilan tar slut.
+            </MudText>
+            break;
+        case "granted":
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-3">
+                Notis visas när vilan är slut och appen ligger i bakgrunden.
+            </MudText>
+            break;
+        case "denied":
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-3">
+                Notiser är blockerade för Tyngd. Tillåt dem i webbläsarens inställningar för att få en notis när vilan är slut.
+            </MudText>
+            break;
+    }
+</MudPaper>
+
+@if (PwaService.CanInstall)
+{
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudText Typo="Typo.subtitle1" Class="mb-3">App</MudText>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.InstallMobile"
+                   OnClick="InstallTyngd">
+            Installera Tyngd
+        </MudButton>
+    </MudPaper>
+}
+
+@* Licenskrav för wgers övningsdata (CC-BY-SA). Diskret, längst ner. *@
+<MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-6" Style="opacity:.7;">
+    Övningar och beskrivningar kommer från <a href="https://wger.de" target="_blank" rel="noopener">wger.de</a>
+    och används under Creative Commons-licenser, oftast <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.sv" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+    (licens och upphovsperson visas för varje övning). Svenska översättningar är bearbetningar under samma licens.
+    Kroppsfigurerna är av Termininja
+    (<a href="https://commons.wikimedia.org/wiki/File:Muscular_system.svg" target="_blank" rel="noopener">Wikimedia Commons</a>,
+    <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.sv" target="_blank" rel="noopener">CC BY-SA 3.0</a>),
+    något bearbetade för appen.
+</MudText>
