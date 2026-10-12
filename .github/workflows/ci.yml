@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # The test project references the client, server, shared and data projects, so this builds the whole app.
+      # The solution also contains an SSDT database project that needs Visual Studio, so it is not built here.
+      - name: Restore
+        run: dotnet restore ArnoldOne.Tests
+
+      - name: Build
+        run: dotnet build ArnoldOne.Tests --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test ArnoldOne.Tests --configuration Release --no-build --verbosity normal
