@@ -13,6 +13,8 @@
     [Equipment]         NVARCHAR (400)   NOT NULL,
     [Aliases]           NVARCHAR (1000)  NOT NULL,
     [ImageUrl]          NVARCHAR (400)   NULL,
+    [ImageAuthor]       NVARCHAR (200)   NULL,
+    [ImageLicense]      NVARCHAR (50)    NULL,
     [License]           NVARCHAR (100)   NOT NULL,
     [LicenseAuthor]     NVARCHAR (400)   NOT NULL,
     [IsActive]          BIT              CONSTRAINT [DF_ExerciseCatalog_IsActive] DEFAULT ((1)) NOT NULL,

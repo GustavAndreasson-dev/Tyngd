@@ -44,6 +44,8 @@ public sealed class CatalogExerciseDetailDto
     public List<string> SecondaryMuscles { get; set; } = new();
     public List<string> Equipment { get; set; } = new();
     public string? ImageUrl { get; set; }
+    public string? ImageAuthor { get; set; }
+    public string? ImageLicense { get; set; }
     public string License { get; set; } = string.Empty;
     public string LicenseAuthor { get; set; } = string.Empty;
     public Guid WgerUuid { get; set; }

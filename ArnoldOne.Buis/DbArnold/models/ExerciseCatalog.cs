@@ -37,6 +37,11 @@ public class ExerciseCatalog
 
     public string? ImageUrl { get; set; }
 
+    /// <summary>Huvudbildens upphovsperson och licens (bilden hämtas från wger, den har en egen licens).</summary>
+    public string? ImageAuthor { get; set; }
+
+    public string? ImageLicense { get; set; }
+
     public string License { get; set; } = string.Empty;
 
     public string LicenseAuthor { get; set; } = string.Empty;

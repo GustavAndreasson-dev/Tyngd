@@ -27,6 +27,11 @@ public class WgerCatalogSyncTests
         Assert.Equal("Knäböj", squat.NameSv);
         Assert.Equal((byte)CatalogTranslationStatus.Auto, squat.TranslationStatus);
         Assert.Equal("Quadriceps", squat.Muscles);
+        // Texten har översättningens licens (CC0), inte övningens (CC-BY-SA 4); bilden har sin egen.
+        Assert.Equal("CC0", squat.License);
+        Assert.Equal("author", squat.LicenseAuthor);
+        Assert.Equal("CC-BY-SA 3", squat.ImageLicense);
+        Assert.Equal("Photographer", squat.ImageAuthor);
         Assert.Equal("Glutes", squat.MusclesSecondary);
         var row = await context.ExerciseCatalog.SingleAsync(item => item.WgerUuid == Row, TestContext.Current.CancellationToken);
         Assert.Null(row.NameSv);
@@ -123,12 +128,12 @@ public class WgerCatalogSyncTests
         muscles = new[] { new { name = "Quadriceps femoris", name_en = "Quadriceps" } },
         muscles_secondary = new[] { new { name = "Gluteus maximus", name_en = "Glutes" } },
         equipment = new[] { new { name = "Barbell" } },
-        images = Array.Empty<object>(),
+        images = new[] { new { image = "https://wger.test/media/a.png", is_main = true, license = 1, license_author = "Photographer" } },
         license = new { short_name = "CC-BY-SA 4" },
         license_author = "wger",
         translations = new[]
         {
-            new { name, description, language = 2, license_author = "author", aliases = new[] { new { alias = name + " alias" } } },
+            new { name, description, language = 2, license = 3, license_author = "author", aliases = new[] { new { alias = name + " alias" } } },
         },
     };
 

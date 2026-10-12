@@ -61,6 +61,8 @@ public sealed class CatalogController(ArnoldContext context) : ApiControllerBase
             SecondaryMuscles = Muscles.ParseKeys(row.MusclesSecondary),
             Equipment = CatalogNames.SvList(row.Equipment),
             ImageUrl = row.ImageUrl,
+            ImageAuthor = row.ImageAuthor,
+            ImageLicense = row.ImageLicense,
             License = row.License,
             LicenseAuthor = row.LicenseAuthor,
             WgerUuid = row.WgerUuid,

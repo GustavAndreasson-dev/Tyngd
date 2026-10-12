@@ -29,7 +29,9 @@ public sealed record WgerMuscle(
 
 public sealed record WgerImage(
     [property: JsonPropertyName("image")] string Image,
-    [property: JsonPropertyName("is_main")] bool IsMain);
+    [property: JsonPropertyName("is_main")] bool IsMain,
+    [property: JsonPropertyName("license")] int? License,
+    [property: JsonPropertyName("license_author")] string? LicenseAuthor);
 
 public sealed record WgerLicense(
     [property: JsonPropertyName("short_name")] string ShortName);
@@ -38,6 +40,7 @@ public sealed record WgerTranslation(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("description")] string? Description,
     [property: JsonPropertyName("language")] int Language,
+    [property: JsonPropertyName("license")] int? License,
     [property: JsonPropertyName("license_author")] string? LicenseAuthor,
     [property: JsonPropertyName("aliases")] List<WgerAlias> Aliases);
 

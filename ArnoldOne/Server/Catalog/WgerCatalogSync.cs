@@ -124,10 +124,16 @@ public sealed class WgerCatalogSync(HttpClient http, ArnoldContext context, Cata
         row.MusclesSecondary = string.Join(", ", exercise.MusclesSecondary.Select(MuscleKey).Distinct().Except(primary));
         row.Equipment = string.Join(", ", exercise.Equipment.Select(item => item.Name).Distinct());
         row.Aliases = string.Join("\n", english.Aliases.Select(alias => alias.Alias.Trim()).Where(alias => alias.Length > 0));
-        row.ImageUrl = (exercise.Images.FirstOrDefault(image => image.IsMain) ?? exercise.Images.FirstOrDefault())?.Image;
-        row.License = exercise.License?.ShortName ?? string.Empty;
-        row.LicenseAuthor = english.LicenseAuthor ?? exercise.LicenseAuthor ?? string.Empty;
+        var image = exercise.Images.FirstOrDefault(item => item.IsMain) ?? exercise.Images.FirstOrDefault();
+        row.ImageUrl = image?.Image;
+        row.ImageLicense = image is null ? null : WgerLicenses.Name(image.License);
+        row.ImageAuthor = string.IsNullOrWhiteSpace(image?.LicenseAuthor) ? null : Truncate(image.LicenseAuthor.Trim(), 200);
+        // Texten (det vi visar och översätter) har översättningens licens; övningens egen licens är reserv.
+        row.License = WgerLicenses.Name(english.License) ?? exercise.License?.ShortName ?? string.Empty;
+        row.LicenseAuthor = Truncate(english.LicenseAuthor ?? exercise.LicenseAuthor ?? string.Empty, 400);
     }
+
+    private static string Truncate(string value, int length) => value.Length <= length ? value : value[..length];
 
     private async Task<List<WgerExercise>> FetchAllAsync(CancellationToken cancellationToken)
     {

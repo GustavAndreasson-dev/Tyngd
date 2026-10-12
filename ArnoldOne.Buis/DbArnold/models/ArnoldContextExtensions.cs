@@ -42,6 +42,8 @@ public partial class ArnoldContext
             entity.Property(e => e.Equipment).IsRequired().HasMaxLength(400);
             entity.Property(e => e.Aliases).IsRequired().HasMaxLength(1000);
             entity.Property(e => e.ImageUrl).HasMaxLength(400);
+            entity.Property(e => e.ImageAuthor).HasMaxLength(200);
+            entity.Property(e => e.ImageLicense).HasMaxLength(50);
             entity.Property(e => e.License).IsRequired().HasMaxLength(100);
             entity.Property(e => e.LicenseAuthor).IsRequired().HasMaxLength(400);
             entity.Property(e => e.IsActive).HasDefaultValue(true);

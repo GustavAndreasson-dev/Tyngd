@@ -88,6 +88,11 @@
                 {
                     <span> · @_exercise.LicenseAuthor</span>
                 }
+                @if (_exercise.ImageUrl is not null && (!string.IsNullOrWhiteSpace(_exercise.ImageAuthor) || !string.IsNullOrWhiteSpace(_exercise.ImageLicense)))
+                {
+                    <br />
+                    <span>Bild: @(string.Join(", ", new[] { _exercise.ImageAuthor, _exercise.ImageLicense }.Where(part => !string.IsNullOrWhiteSpace(part))))</span>
+                }
             </MudText>
         }
     </DialogContent>
