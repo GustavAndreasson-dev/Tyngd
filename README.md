@@ -154,6 +154,7 @@ docs                    Design notes and screenshots
 
 The source code is released under the [MIT License](LICENSE).
 
-Exercise data comes from [wger](https://wger.de) under per-exercise Creative Commons licenses (mostly CC BY-SA), and the
-muscle illustrations are by Termininja from Wikimedia Commons (CC BY-SA 3.0). The Swedish translations are adaptations
-shared under CC BY-SA. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details.
+Exercise text comes from [wger](https://wger.de) under per-exercise Creative Commons licenses (mostly CC BY-SA), and
+exercise images are loaded from wger.de with their author and license shown. The muscle illustrations are by Termininja
+from Wikimedia Commons (CC BY-SA 3.0). The Swedish translations are adaptations shared under CC BY-SA 4.0.
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details.
