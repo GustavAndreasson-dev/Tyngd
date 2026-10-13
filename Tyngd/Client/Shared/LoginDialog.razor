@@ -6,17 +6,22 @@
         <MudText Typo="Typo.h6">Logga in</MudText>
     </TitleContent>
     <DialogContent>
+        @* Ett riktigt formulär med autocomplete gör att lösenordshanterare (t.ex. LastPass på Android) känner igen
+           inloggningen och fyller i via tangentbordet, i stället för en egen ruta som stjäl fokus från fältet. *@
+        <form id="login-form" @onsubmit="Submit" @onsubmit:preventDefault>
         <MudTextField @bind-Value="_username"
                       Label="Användarnamn eller e-post"
                       Variant="Variant.Filled"
                       Class="mb-4"
-                      Immediate="true" />
+                      Immediate="true"
+                      UserAttributes="@(new() { ["autocomplete"] = "username" })" />
         <MudTextField @bind-Value="_password"
                       Label="Lösenord"
                       Variant="Variant.Filled"
                       InputType="InputType.Password"
                       Immediate="true"
-                      OnKeyDown="OnKeyDown" />
+                      UserAttributes="@(new() { ["autocomplete"] = "current-password" })" />
+        </form>
         @if (_errorMessage is not null)
         {
             <MudText Color="Color.Error" Class="mt-2">@_errorMessage</MudText>
@@ -24,6 +29,7 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Avbryt</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">Logga in</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit"
+                   UserAttributes="@(new() { ["form"] = "login-form" })">Logga in</MudButton>
     </DialogActions>
 </MudDialog>
