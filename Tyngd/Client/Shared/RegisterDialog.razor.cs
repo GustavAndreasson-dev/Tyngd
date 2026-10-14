@@ -1,7 +1,6 @@
 using Tyngd.Client.Services;
 using Tyngd.Shared.DTOs;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace Tyngd.Client.Shared;
@@ -79,11 +78,4 @@ public partial class RegisterDialog : ComponentBase
         if (atIndex <= 0) return false;
         var dotIndex = email.IndexOf('.', atIndex);
         return dotIndex > atIndex + 1 && dotIndex < email.Length - 1;
-    }
-
-    private async Task OnKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-            await Submit();
-    }
-}
+    }}

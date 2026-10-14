@@ -6,28 +6,33 @@
         <MudText Typo="Typo.h6">Skapa konto</MudText>
     </TitleContent>
     <DialogContent>
+        <form id="register-form" @onsubmit="Submit" @onsubmit:preventDefault>
         <MudTextField @bind-Value="_username"
                       Label="Användarnamn"
                       Variant="Variant.Filled"
                       Class="mb-4"
-                      Immediate="true" />
+                      Immediate="true"
+                      UserAttributes="@(new() { ["autocomplete"] = "username" })" />
         <MudTextField @bind-Value="_email"
                       Label="E-post"
                       Variant="Variant.Filled"
                       Class="mb-4"
-                      Immediate="true" />
+                      Immediate="true"
+                      UserAttributes="@(new() { ["autocomplete"] = "email" })" />
         <MudTextField @bind-Value="_password"
                       Label="Lösenord"
                       Variant="Variant.Filled"
                       InputType="InputType.Password"
                       Class="mb-4"
-                      Immediate="true" />
+                      Immediate="true"
+                      UserAttributes="@(new() { ["autocomplete"] = "new-password" })" />
         <MudTextField @bind-Value="_confirmPassword"
                       Label="Bekräfta lösenord"
                       Variant="Variant.Filled"
                       InputType="InputType.Password"
                       Immediate="true"
-                      OnKeyDown="OnKeyDown" />
+                      UserAttributes="@(new() { ["autocomplete"] = "new-password" })" />
+        </form>
         @if (_errorMessage is not null)
         {
             <MudText Color="Color.Error" Class="mt-2">@_errorMessage</MudText>
@@ -35,6 +40,7 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Avbryt</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">Skapa konto</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit"
+                   UserAttributes="@(new() { ["form"] = "register-form" })">Skapa konto</MudButton>
     </DialogActions>
 </MudDialog>

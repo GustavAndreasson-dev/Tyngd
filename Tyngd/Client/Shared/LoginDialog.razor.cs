@@ -1,7 +1,6 @@
 using Tyngd.Client.Services;
 using Tyngd.Shared.DTOs;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace Tyngd.Client.Shared;
@@ -43,11 +42,4 @@ public partial class LoginDialog : ComponentBase
         MudDialog.Close(DialogResult.Ok(user));
     }
 
-    private void Cancel() => MudDialog.Cancel();
-
-    private async Task OnKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-            await Submit();
-    }
-}
+    private void Cancel() => MudDialog.Cancel();}
