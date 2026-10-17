@@ -7,6 +7,8 @@
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
     <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+    <!-- Byggtid (UTC) som versionsnummer, visas i Inställningar. SDK:n lägger till +commit-hash. -->
+    <Version>$([System.DateTime]::UtcNow.ToString("yyyy.M.d.HHmm"))</Version>
   </PropertyGroup>
 
   <ItemGroup>
