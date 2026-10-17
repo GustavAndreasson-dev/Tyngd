@@ -1,18 +1,17 @@
 using Tyngd.Client.Models;
 using Tyngd.Shared.DTOs;
-using Blazored.LocalStorage;
 
 namespace Tyngd.Client.Services;
 
 /// <summary>Håller reda på om det finns lokal passdata som ännu inte har synkats till API:t.</summary>
 public class PendingSyncState
 {
-    private readonly ILocalStorageService _localStorage;
+    private readonly IAppStorage _localStorage;
     private readonly PassLogService _passLogService;
     private readonly HashSet<string> _pendingPassKeys = new(StringComparer.Ordinal);
     private string? _activePassKey;
 
-    public PendingSyncState(ILocalStorageService localStorage, PassLogService passLogService)
+    public PendingSyncState(IAppStorage localStorage, PassLogService passLogService)
     {
         _localStorage = localStorage;
         _passLogService = passLogService;

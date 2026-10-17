@@ -17,8 +17,10 @@ builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().Cre
 // MudBlazor UI-komponenter
 builder.Services.AddMudServices();
 
-// LocalStorage för att spara vikter och reps mellan sessioner
-builder.Services.AddBlazoredLocalStorage();
+// LocalStorage för att spara vikter och reps mellan sessioner. Singleton så att singleton-tjänster
+// som LoginState kan använda den direkt; i WebAssembly är scoped och singleton ändå samma instans.
+builder.Services.AddBlazoredLocalStorageAsSingleton();
+builder.Services.AddSingleton<IAppStorage, BlazoredAppStorage>();
 
 // Singleton för att dela temainställningar (dark mode) globalt
 builder.Services.AddSingleton<ThemeState>();

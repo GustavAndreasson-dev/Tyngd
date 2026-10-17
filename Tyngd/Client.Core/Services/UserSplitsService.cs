@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Tyngd.Shared.DTOs;
 using Tyngd.Shared.TrainingPrograms;
 using System.Net.Http.Json;

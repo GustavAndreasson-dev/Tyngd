@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Shared\Tyngd.Shared.csproj" />
+    <ProjectReference Include="..\Client.Core\Tyngd.Client.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
