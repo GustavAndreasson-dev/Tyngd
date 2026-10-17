@@ -55,6 +55,8 @@ public partial class MainLayout : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        // Apply the theme App.razor painted before the first render, so the app bar and bottom nav don't flash light.
+        ThemeState.SetDarkMode(((IJSInProcessRuntime)JSRuntime).Invoke<bool>("eval", "!!window.tyngdBootDark"));
         await MigrationService.MigrateAsync();
         await LoginState.InitializeAsync();
 

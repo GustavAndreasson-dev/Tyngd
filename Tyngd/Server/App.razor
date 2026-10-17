@@ -11,7 +11,7 @@
         (function () {
             var d = null;
             try { d = localStorage.getItem('tyngd-dark'); } catch (e) { }
-            var dark = d === null ? matchMedia('(prefers-color-scheme: dark)').matches : d === '1';
+            var dark = window.tyngdBootDark = d === null ? matchMedia('(prefers-color-scheme: dark)').matches : d === '1';
             document.documentElement.style.background = dark ? '#040F0F' : '#ECFEFF';
         })();
     </script>
