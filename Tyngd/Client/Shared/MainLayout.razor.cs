@@ -58,7 +58,8 @@ public partial class MainLayout : IDisposable
         await MigrationService.MigrateAsync();
         await LoginState.InitializeAsync();
 
-        ThemeState.OnChange += StateHasChanged;
+        ThemeState.OnChange += OnThemeChanged;
+        Nav.LocationChanged += OnLocationChanged;
         LoginState.OnChange += OnLoginChanged;
         PendingSync.OnChange += StateHasChanged;
         await PendingSync.RefreshAsync();
@@ -155,10 +156,27 @@ public partial class MainLayout : IDisposable
     /// <summary>Avslutar prenumerationerna.</summary>
     public void Dispose()
     {
-        ThemeState.OnChange -= StateHasChanged;
+        ThemeState.OnChange -= OnThemeChanged;
+        Nav.LocationChanged -= OnLocationChanged;
         LoginState.OnChange -= OnLoginChanged;
         PendingSync.OnChange -= StateHasChanged;
         PwaService.OnChange -= OnPwaStateChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
+        InvokeAsync(StateHasChanged);
+
+    private void OnThemeChanged()
+    {
+        StateHasChanged();
+        _ = JSRuntime.InvokeVoidAsync("tyngd.rememberTheme", ThemeState.IsDarkMode).AsTask();
+    }
+
+    /// <summary>Går tillbaka i historiken, eller till startsidan om sidan öppnades direkt.</summary>
+    private async Task GoBack()
+    {
+        if (!await JSRuntime.InvokeAsync<bool>("tyngd.goBack"))
+            Nav.NavigateTo("/");
     }
 
     private void OnLoginChanged()

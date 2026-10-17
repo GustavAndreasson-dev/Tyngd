@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=4.0, viewport-fit=cover" />
     <title>Tyngd</title>
     <base href="/" />
+    <script>
+        // Paint the saved theme's background before Blazor boots, so a dark-mode reload never flashes white.
+        (function () {
+            var d = null;
+            try { d = localStorage.getItem('tyngd-dark'); } catch (e) { }
+            var dark = d === null ? matchMedia('(prefers-color-scheme: dark)').matches : d === '1';
+            document.documentElement.style.background = dark ? '#040F0F' : '#ECFEFF';
+        })();
+    </script>
     <meta name="theme-color" content="#F8FFFF" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0F1D1E" media="(prefers-color-scheme: dark)" />
     <link href="@Assets["css/app.css"]" rel="stylesheet" />

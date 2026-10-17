@@ -16,6 +16,15 @@ public partial class Admin : PageComponentBase, IDisposable
     private PagedResultDto<AdminUserDto>? users;
     private List<AdminSplitTemplateDto> templates = new();
     private string? userSearch;
+    private int activeSection;
+    private int roleRenderKey;
+    private static readonly (string Label, string Icon)[] sections =
+    [
+        ("Översikt", Icons.Material.Filled.Dashboard),
+        ("Användare", Icons.Material.Filled.People),
+        ("Mallar", Icons.Material.Filled.AccountTree),
+        ("Övningskatalog", Icons.Material.Filled.FitnessCenter),
+    ];
     private int TotalUserPages => Math.Max(1, (int)Math.Ceiling((users?.TotalCount ?? 0) / (double)(users?.PageSize ?? 25)));
 
     protected override async Task OnInitializedAsync()
@@ -52,15 +61,16 @@ public partial class Admin : PageComponentBase, IDisposable
     {
         var action = isAdmin ? "ge adminbehörighet till" : "ta bort adminbehörighet från";
         var confirmed = await DialogService.ShowMessageBoxAsync("Bekräfta rolländring", $"Vill du {action} {user.UserName}?", yesText: "Ja", cancelText: "Avbryt");
-        if (confirmed != true)
-            return;
-
-        await TryAsync(async () =>
+        if (confirmed == true)
         {
-            await AdminService.SetAdminRoleAsync(user.UserId, isAdmin);
-            await LoadUsersPageAsync(users?.Page ?? 1);
-            overview = await AdminService.GetOverviewAsync();
-        }, "Kunde inte ändra användarrollen");
+            await TryAsync(async () =>
+            {
+                await AdminService.SetAdminRoleAsync(user.UserId, isAdmin);
+                await LoadUsersPageAsync(users?.Page ?? 1);
+                overview = await AdminService.GetOverviewAsync();
+            }, "Kunde inte ändra användarrollen");
+        }
+        roleRenderKey++;
     }
 
     private async Task ToggleTemplateVisibilityAsync(AdminSplitTemplateDto template)

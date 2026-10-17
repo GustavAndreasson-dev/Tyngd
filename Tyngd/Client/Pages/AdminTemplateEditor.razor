@@ -34,7 +34,7 @@
 <MudPaper Class="pa-5 mt-5 editor-card" Outlined="true">
     <div class="editor-row">
         <MudTextField @bind-Value="model.SplitTemplateName" Label="Mallnamn" Variant="Variant.Outlined" MaxLength="50" Required="true" />
-        <MudSwitch T="bool" @bind-Value="model.IsVisible" Color="Color.Success">Aktiv</MudSwitch>
+        <label class="ui-switch">Aktiv<input type="checkbox" role="switch" @bind="model.IsVisible" /><span class="ui-switch__track"></span></label>
     </div>
 </MudPaper>
 
@@ -47,7 +47,7 @@
             <div class="editor-row">
                 <MudText Typo="Typo.h6">Pass @(currentPassIndex + 1)</MudText>
                 <MudSpacer />
-                <MudSwitch T="bool" @bind-Value="pass.IsVisible" Color="Color.Success" Size="Size.Small">Aktiv</MudSwitch>
+                <label class="ui-switch">Aktiv<input type="checkbox" role="switch" @bind="pass.IsVisible" /><span class="ui-switch__track"></span></label>
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemovePass(currentPassIndex))" />
             </div>
             <MudTextField @bind-Value="pass.PassTemplateName" Label="Passnamn" Variant="Variant.Outlined" MaxLength="50" Class="mt-3" />
@@ -59,7 +59,7 @@
                 <MudPaper Class="pa-4 mt-3 exercise-editor" Outlined="true">
                     <div class="editor-row">
                         <ExercisePicker @bind-Name="exercise.ExerciseTemplateName" @bind-CatalogExerciseId="exercise.CatalogExerciseId" />
-                        <MudSwitch T="bool" @bind-Value="exercise.IsVisible" Color="Color.Success" Size="Size.Small">Aktiv</MudSwitch>
+                        <label class="ui-switch">Aktiv<input type="checkbox" role="switch" @bind="exercise.IsVisible" /><span class="ui-switch__track"></span></label>
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
                                        OnClick="@(() => RemoveExercise(currentPassIndex, currentExerciseIndex))" />
                     </div>
