@@ -11,9 +11,8 @@ public sealed class SmtpErrorNotificationService : IErrorNotificationService
     private readonly IOptionsMonitor<ErrorNotificationOptions> _options;
     private readonly ILogger<SmtpErrorNotificationService> _logger;
     private readonly ConcurrentDictionary<string, DateTimeOffset> _lastSentByFingerprint = new();
-    private readonly object _capLock = new();
-    private DateTimeOffset _capWindowStart = DateTimeOffset.MinValue;
-    private int _sentInWindow;
+    // One window per source, so anonymous client reports cannot use up the emails for server errors.
+    private readonly Dictionary<string, (DateTimeOffset Start, int Sent)> _capWindows = new();
 
     public SmtpErrorNotificationService(
         IOptionsMonitor<ErrorNotificationOptions> options,
@@ -41,7 +40,7 @@ public sealed class SmtpErrorNotificationService : IErrorNotificationService
             return;
         }
 
-        if (IsThrottled(message, options.ThrottleMinutes) || IsOverHourlyCap(options.MaxPerHour))
+        if (IsThrottled(message, options.ThrottleMinutes) || IsOverHourlyCap(message.Source, options.MaxPerHour))
             return;
 
         using var mailMessage = new MailMessage
@@ -104,24 +103,22 @@ public sealed class SmtpErrorNotificationService : IErrorNotificationService
 
     private const int MaxTrackedFingerprints = 1000;
 
-    private bool IsOverHourlyCap(int maxPerHour)
+    private bool IsOverHourlyCap(string source, int maxPerHour)
     {
         if (maxPerHour <= 0)
             return false;
 
-        lock (_capLock)
+        lock (_capWindows)
         {
             var now = DateTimeOffset.UtcNow;
-            if (now - _capWindowStart >= TimeSpan.FromHours(1))
-            {
-                _capWindowStart = now;
-                _sentInWindow = 0;
-            }
+            var window = _capWindows.GetValueOrDefault(source, (Start: DateTimeOffset.MinValue, Sent: 0));
+            if (now - window.Start >= TimeSpan.FromHours(1))
+                window = (now, 0);
 
-            if (_sentInWindow >= maxPerHour)
+            if (window.Sent >= maxPerHour)
                 return true;
 
-            _sentInWindow++;
+            _capWindows[source] = (window.Start, window.Sent + 1);
             return false;
         }
     }

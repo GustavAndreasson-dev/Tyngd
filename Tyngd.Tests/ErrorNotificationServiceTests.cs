@@ -11,6 +11,23 @@ public class ErrorNotificationServiceTests
     [Fact]
     public async Task Unique_messages_are_capped_per_hour()
     {
+        var connections = await CountSmtpConnectionsAsync(Enumerable.Range(0, 10).Select(i => ("Client", $"unique {i}")));
+
+        Assert.Equal(3, connections);
+    }
+
+    [Fact]
+    public async Task Client_reports_cannot_use_up_the_cap_for_server_errors()
+    {
+        var connections = await CountSmtpConnectionsAsync(
+            Enumerable.Range(0, 10).Select(i => ("Client", $"unique {i}")).Append(("Server", "crash")));
+
+        Assert.Equal(4, connections);
+    }
+
+    /// <summary>Sends the messages with a cap of 3 per hour and counts how many reached the SMTP server.</summary>
+    private static async Task<int> CountSmtpConnectionsAsync(IEnumerable<(string Source, string Message)> messages)
+    {
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
@@ -34,12 +51,12 @@ public class ErrorNotificationServiceTests
             }),
             NullLogger<SmtpErrorNotificationService>.Instance);
 
-        for (var i = 0; i < 10; i++)
-            await service.NotifyAsync(new ErrorNotificationMessage { Source = "Client", ExceptionType = "E", Message = $"unique {i}" },
+        foreach (var (source, message) in messages)
+            await service.NotifyAsync(new ErrorNotificationMessage { Source = source, ExceptionType = "E", Message = message },
                 TestContext.Current.CancellationToken);
         listener.Stop();
 
-        Assert.Equal(3, connections);
+        return connections;
     }
 
     private sealed class StaticOptions(ErrorNotificationOptions value) : IOptionsMonitor<ErrorNotificationOptions>

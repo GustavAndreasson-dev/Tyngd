@@ -2,6 +2,7 @@ using Tyngd.Server.Services;
 using Tyngd.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace Tyngd.Server.Controllers;
@@ -10,6 +11,7 @@ namespace Tyngd.Server.Controllers;
 [AllowAnonymous]
 [Route("api/client-errors")]
 [RequestSizeLimit(16_384)]
+[EnableRateLimiting("client-errors")]
 public class ClientErrorsController : ControllerBase
 {
     private readonly IErrorNotificationService _errorNotificationService;
