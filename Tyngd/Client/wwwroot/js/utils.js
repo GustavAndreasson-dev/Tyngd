@@ -1,5 +1,18 @@
 window.tyngd = window.tyngd || {};
 
+// Sparar temat så att App.razor kan måla rätt bakgrund innan Blazor har laddat.
+window.tyngd.rememberTheme = function (dark) {
+    try { localStorage.setItem('tyngd-dark', dark ? '1' : '0'); } catch (e) { }
+    document.documentElement.style.background = dark ? '#040F0F' : '#ECFEFF';
+};
+
+// Backar i historiken om det finns en tidigare sida inom appen; annars false.
+window.tyngd.goBack = function () {
+    if (history.length <= 1) return false;
+    history.back();
+    return true;
+};
+
 // Håller en referens till aktiv wake lock för att kunna släppa den senare.
 window.tyngd._wakeLock = null;
 

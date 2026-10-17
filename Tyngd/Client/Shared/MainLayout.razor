@@ -10,6 +10,11 @@
 <PageTitle>Tyngd</PageTitle>
 <MudLayout>
     <MudAppBar Elevation="0">
+        @* Android fullscreen hides the system back button, so pages below the start page get one here. *@
+        @if (Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0] != "")
+        {
+            <MudIconButton Class="app-back" Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Inherit" Edge="Edge.Start" aria-label="Tillbaka" OnClick="GoBack" />
+        }
         <MudIconButton Class="app-menu-toggle" Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h6" Class="ml-3 app-wordmark">Tyngd</MudText>
         <MudSpacer />

@@ -30,8 +30,18 @@
 }
 else
 {
-    <MudTabs Rounded="true" Class="mt-5">
-        <MudTabPanel Text="Översikt" Icon="@Icons.Material.Filled.Dashboard">
+    <nav class="pass-chips mt-5 mb-4" aria-label="Adminsektioner">
+        @for (var i = 0; i < sections.Length; i++)
+        {
+            var idx = i;
+            <button type="button" class="@(activeSection == idx ? "pass-chip pass-chip--active" : "pass-chip")" @onclick="() => activeSection = idx">
+                <span class="pass-chip__n"><MudIcon Icon="@sections[idx].Icon" Size="Size.Small" /></span>@sections[idx].Label
+            </button>
+        }
+    </nav>
+
+    @if (activeSection == 0)
+    {
             @if (overview is not null)
             {
                 <MudGrid>
@@ -73,9 +83,9 @@ else
                     </MudItem>
                 </MudGrid>
             }
-        </MudTabPanel>
-
-        <MudTabPanel Text="Användare" Icon="@Icons.Material.Filled.People">
+    }
+    else if (activeSection == 1)
+    {
             <MudPaper Class="pa-4 admin-table" Outlined="true">
                 <div class="admin-toolbar">
                     <MudTextField @bind-Value="userSearch" Label="Sök användare eller e-post" Variant="Variant.Outlined"
@@ -88,9 +98,13 @@ else
                         <MudTd DataLabel="Användare"><strong>@context.UserName</strong><br /><small>@context.Email</small></MudTd>
                         <MudTd DataLabel="Skapad">@context.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</MudTd>
                         <MudTd DataLabel="Admin">
-                            <MudSwitch T="bool" Value="@context.IsAdmin" Color="Color.Secondary"
-                                       Disabled="@(context.UserId.ToString() == LoginState.CurrentUser!.UserId)"
-                                       ValueChanged="@(value => ChangeAdminRoleAsync(context, value))" />
+                            @* Keyed so a cancelled or failed change re-renders the checkbox back to the stored value. *@
+                            <label class="ui-switch" @key="@($"{context.UserId}-{roleRenderKey}")">
+                                <input type="checkbox" role="switch" aria-label="Admin" checked="@context.IsAdmin"
+                                       disabled="@(context.UserId.ToString() == LoginState.CurrentUser!.UserId)"
+                                       @onchange="@(e => ChangeAdminRoleAsync(context, (bool)e.Value!))" />
+                                <span class="ui-switch__track"></span>
+                            </label>
                         </MudTd>
                     </RowTemplate>
                     <NoRecordsContent><MudText Color="Color.Secondary">Inga användare hittades.</MudText></NoRecordsContent>
@@ -101,9 +115,9 @@ else
                     <MudButton Variant="Variant.Text" Disabled="@(users is null || users.Page >= TotalUserPages)" OnClick="NextUsersPageAsync">Nästa</MudButton>
                 </div>
             </MudPaper>
-        </MudTabPanel>
-
-        <MudTabPanel Text="Mallar" Icon="@Icons.Material.Filled.AccountTree">
+    }
+    else if (activeSection == 2)
+    {
             <div class="admin-toolbar admin-toolbar--end">
                 <MudText Color="Color.Secondary">Redigering behåller stabila id:n. Borttagning arkiverar.</MudText>
                 <MudButton Href="/admin/templates/new" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">Ny mall</MudButton>
@@ -134,12 +148,9 @@ else
                     </MudItem>
                 }
             </MudGrid>
-        </MudTabPanel>
-
-        <MudTabPanel Text="Övningskatalog" Icon="@Icons.Material.Filled.FitnessCenter">
-            <div class="mt-3">
-                <AdminCatalogPanel />
-            </div>
-        </MudTabPanel>
-    </MudTabs>
+    }
+    else
+    {
+        <AdminCatalogPanel />
+    }
 }

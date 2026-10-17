@@ -89,6 +89,7 @@ body, .mud-typography, .mud-button-root, .mud-input {
 
 /* ---------- Navigation ---------- */
 .mud-appbar { box-shadow: none !important; border-bottom: 1px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface) !important; color: var(--mud-palette-text-primary) !important; }
+.app-back { margin-right: 4px; }
 .app-wordmark { font-weight: 800; letter-spacing: -.02em; }
 .mud-drawer { border-right: 1px solid var(--mud-palette-lines-default); box-shadow: none !important; }
 .mud-nav-link { border-radius: var(--radius-control); margin: 2px 8px; min-height: var(--tap); }
@@ -110,14 +111,23 @@ body, .mud-typography, .mud-button-root, .mud-input {
 .mud-main-content { padding-inline: 1rem; }
 @media (min-width: 960px) { .mud-main-content { padding-inline: 2rem; } }
 
+/* ---------- Chip picker (pass exercises, admin sections) ---------- */
+.pass-chips { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: none; }
+.pass-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; padding: 0 .875rem 0 .5rem; border-radius: 12px; border: 1px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface); color: var(--mud-palette-text-primary); font: 600 .875rem inherit; cursor: pointer; white-space: nowrap; }
+.pass-chip__n { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: var(--mud-palette-background-gray); font-size: .8rem; }
+.pass-chip--active { border-color: var(--mud-palette-primary); }
+.pass-chip--active .pass-chip__n { background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); }
+.pass-chip--done .pass-chip__n { background: var(--mud-palette-success); color: var(--mud-palette-success-text); }
+
 /* ---------- Toggle switch ---------- */
 .ui-switch { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 48px; cursor: pointer; font-weight: 600; }
 .ui-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .ui-switch__track { position: relative; flex: 0 0 auto; width: 48px; height: 28px; border-radius: 14px; background: var(--mud-palette-lines-inputs); transition: background .2s; }
 .ui-switch__track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .2s; }
 .ui-switch input:checked + .ui-switch__track { background: var(--mud-palette-primary); }
-.ui-switch input:checked + .ui-switch__track::after { transform: translateX(20px); }
+.ui-switch input:checked + .ui-switch__track::after { transform: translateX(20px); background: var(--mud-palette-primary-text); }
 .ui-switch input:focus-visible + .ui-switch__track { outline: 2px solid var(--mud-palette-primary); outline-offset: 2px; }
+.ui-switch:has(input:disabled) { cursor: default; opacity: .5; }
 
 /* ---------- Fullscreen / installed app: keep content out of notch and system bars ---------- */
 .mud-appbar { padding-top: env(safe-area-inset-top); height: calc(64px + env(safe-area-inset-top)) !important; }

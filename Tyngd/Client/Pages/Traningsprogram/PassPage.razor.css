@@ -2,12 +2,6 @@
 .pass-head, .pass-row, .pass-exercise__top { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
 .pass-progress { height: 6px; border-radius: 3px; background: var(--mud-palette-background-gray); overflow: hidden; }
 .pass-progress div { height: 100%; background: var(--mud-palette-primary); transition: width .3s; }
-.pass-chips { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: none; }
-.pass-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; padding: 0 .875rem 0 .5rem; border-radius: 12px; border: 1px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface); color: var(--mud-palette-text-primary); font: 600 .875rem inherit; cursor: pointer; white-space: nowrap; }
-.pass-chip__n { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: var(--mud-palette-background-gray); font-size: .8rem; }
-.pass-chip--active { border-color: var(--mud-palette-primary); }
-.pass-chip--active .pass-chip__n { background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); }
-.pass-chip--done .pass-chip__n { background: var(--mud-palette-success); color: var(--mud-palette-success-text); }
 .pass-exercise { display: flex; flex-direction: column; gap: 1.25rem; }
 .pass-exercise__name { margin: 0; font-size: 1.375rem; font-weight: 800; letter-spacing: -.02em; display: flex; align-items: center; gap: .125rem; flex-wrap: wrap; }
 .pass-exercise__name ::deep .pass-exercise__info { min-width: 0; min-height: 0; width: 1.75rem; height: 1.75rem; padding: 0; margin-left: .125rem; vertical-align: middle; opacity: .7; }
