@@ -20,7 +20,7 @@ public class AuthTokenHandler : DelegatingHandler
         var response = await base.SendAsync(request, cancellationToken);
 
         if (response.StatusCode == HttpStatusCode.Unauthorized && _loginState.IsLoggedIn)
-            await _loginState.LogoutAsync();
+            await _loginState.LogoutAsync(keepPassData: true);
 
         return response;
     }

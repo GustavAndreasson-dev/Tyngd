@@ -49,18 +49,24 @@ public class LoginState
         OnChange?.Invoke();
     }
 
-    /// <summary>Loggar ut den inloggade användaren och tar bort från localStorage.</summary>
-    public async Task LogoutAsync()
+    /// <summary>
+    /// Loggar ut den inloggade användaren och tar bort från localStorage. När token har gått ut
+    /// (<paramref name="keepPassData"/>) behålls pågående pass, så osynkade set finns kvar efter ny inloggning.
+    /// </summary>
+    public async Task LogoutAsync(bool keepPassData = false)
     {
         CurrentUser = null;
         Token       = null;
-        _sessionState.EndSession();
         using var scope = _scopeFactory.CreateScope();
         var localStorage = scope.ServiceProvider.GetRequiredService<ILocalStorageService>();
         await localStorage.RemoveItemAsync(UserKey);
         await localStorage.RemoveItemAsync(TokenKey);
-        await localStorage.RemoveItemAsync("exercise-weights");
-        await ClearPassDataAsync(localStorage);
+        if (!keepPassData)
+        {
+            _sessionState.EndSession();
+            await localStorage.RemoveItemAsync("exercise-weights");
+            await ClearPassDataAsync(localStorage);
+        }
         OnChange?.Invoke();
     }
 
