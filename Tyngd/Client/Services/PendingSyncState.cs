@@ -112,7 +112,8 @@ public class PendingSyncState
         await RefreshAsync();
     }
 
-    private static SaveSessionRequest CreateSaveSessionRequest(int passId, PassData data, bool completeSession)
+    /// <summary>Hela passet som det ligger lokalt, för synk och för att avsluta passet.</summary>
+    public static SaveSessionRequest CreateSaveSessionRequest(int passId, PassData data, bool completeSession)
     {
         var exerciseIds = data.Reps.Keys
             .Concat(data.Notes.Keys)
@@ -125,31 +126,34 @@ public class PendingSyncState
         {
             SessionKey = data.SessionKey,
             PassId = passId,
-            Date   = DateOnly.FromDateTime(data.StartedAtUtc!.Value.ToLocalTime().DateTime),
-            StartedAtUtc = data.StartedAtUtc.Value,
+            Date   = data.LocalDate,
+            StartedAtUtc = data.StartedAtUtc!.Value,
             CompleteSession = completeSession,
-            Exercises = exerciseIds.Select(exerciseId =>
+            Exercises = exerciseIds.Select(exerciseId => CreateExerciseDto(data, exerciseId)).ToList(),
+        };
+    }
+
+    /// <summary>En övnings anteckning, vikt och set som de ligger lokalt.</summary>
+    public static SaveSessionExerciseDto CreateExerciseDto(PassData data, int exerciseId)
+    {
+        data.Reps.TryGetValue(exerciseId, out var reps);
+        data.CompletedSets.TryGetValue(exerciseId, out var completedSets);
+        data.Weights.TryGetValue(exerciseId, out var weight);
+        data.Notes.TryGetValue(exerciseId, out var note);
+
+        var setCount = Math.Max(reps?.Length ?? 0, completedSets?.Length ?? 0);
+
+        return new SaveSessionExerciseDto
+        {
+            ExerciseId = exerciseId,
+            NoteText   = note ?? string.Empty,
+            Weight     = weight,
+            Sets       = Enumerable.Range(0, setCount).Select(index => new SaveSessionSetDto
             {
-                data.Reps.TryGetValue(exerciseId, out var reps);
-                data.CompletedSets.TryGetValue(exerciseId, out var completedSets);
-                data.Weights.TryGetValue(exerciseId, out var weight);
-                data.Notes.TryGetValue(exerciseId, out var note);
-
-                var setCount = Math.Max(reps?.Length ?? 0, completedSets?.Length ?? 0);
-
-                return new SaveSessionExerciseDto
-                {
-                    ExerciseId = exerciseId,
-                    NoteText   = note ?? string.Empty,
-                    Weight     = weight,
-                    Sets       = Enumerable.Range(0, setCount).Select(index => new SaveSessionSetDto
-                    {
-                        SetIndex = index,
-                        Reps     = (int)(reps is not null && index < reps.Length ? reps[index] : 0),
-                        IsDone   = completedSets is not null && index < completedSets.Length && completedSets[index],
-                        Weight   = weight,
-                    }).ToList(),
-                };
+                SetIndex = index,
+                Reps     = (int)(reps is not null && index < reps.Length ? reps[index] : 0),
+                IsDone   = completedSets is not null && index < completedSets.Length && completedSets[index],
+                Weight   = weight,
             }).ToList(),
         };
     }
