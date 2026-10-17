@@ -10,7 +10,4 @@
     <SupportedPlatform Include="browser" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Temp klasser\" />
-  </ItemGroup>
 </Project>

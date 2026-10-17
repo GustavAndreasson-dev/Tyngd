@@ -5,11 +5,11 @@ namespace Tyngd.Shared.Users;
 /// <summary>
 /// DTO för att skicka användarinformation från server till klient.
 /// Exponerar bara det klienten behöver – aldrig lösenordshash eller känslig data.
-/// Mappas från <see cref="Tyngd.Server.Models.AppUser"/> i API-lagret.
+/// Mappas från UserInfo-tabellen i AuthController.
 /// </summary>
 public class UserInfo
 {
-    /// <summary>Användarens GUID-id (ärvs från IdentityUser).</summary>
+    /// <summary>Användarens GUID-id.</summary>
     public string UserId { get; set; } = string.Empty;
 
     /// <summary>Användarnamn.</summary>
