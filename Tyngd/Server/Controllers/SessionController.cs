@@ -40,8 +40,10 @@ public class SessionController : ApiControllerBase
         if (session.PassId != request.PassId)
             return Forbid();
 
+        // Avslutad session ändras inte. Ok i stället för 409, annars försöker klientens bakgrundssynk igen för alltid
+        // när svaret på "avsluta" gick förlorat.
         if (session.CompletedAtUtc is not null)
-            return request.CompleteSession ? Ok() : Conflict("Sessionen är redan avslutad och kan inte ändras.");
+            return Ok();
 
         var state = await LoadExerciseStateAsync(session, exerciseIds);
         foreach (var ex in request.Exercises)

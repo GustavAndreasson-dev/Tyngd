@@ -185,6 +185,66 @@ public class SplitAndSessionControllerTests
     }
 
     [Fact]
+    public async Task Sessions_cannot_be_saved_to_another_users_pass_or_with_another_pass_exercise()
+    {
+        await using var context = CreateContext();
+        var ownerId = Guid.NewGuid();
+        var mine = CreateSplit(ownerId);
+        var theirs = CreateSplit(Guid.NewGuid());
+        context.AddRange(mine, theirs);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var myPass = mine.Pass.Single();
+        var theirPass = theirs.Pass.Single();
+        var controller = WithUser(new SessionController(context), ownerId);
+        SaveSessionRequest Request(int passId, int exerciseId) => new()
+        {
+            SessionKey = Guid.NewGuid(), PassId = passId, Date = new DateOnly(2026, 7, 15),
+            StartedAtUtc = DateTimeOffset.UtcNow,
+            Exercises = [new SaveSessionExerciseDto { ExerciseId = exerciseId }],
+        };
+
+        var intoTheirPass = await controller.SaveSession(Request(theirPass.PassId, theirPass.Exercise.First().ExerciseId));
+        var theirExerciseInMyPass = await controller.SaveSession(Request(myPass.PassId, theirPass.Exercise.First().ExerciseId));
+        var upsertIntoTheirPass = await controller.UpsertExercise(new UpsertExerciseRequest
+        {
+            SessionKey = Guid.NewGuid(), PassId = theirPass.PassId, Date = new DateOnly(2026, 7, 15),
+            StartedAtUtc = DateTimeOffset.UtcNow, ExerciseId = theirPass.Exercise.First().ExerciseId,
+        });
+
+        Assert.IsType<ForbidResult>(intoTheirPass);
+        Assert.IsType<ForbidResult>(theirExerciseInMyPass);
+        Assert.IsType<ForbidResult>(upsertIntoTheirPass);
+        Assert.Equal(0, await context.Session.CountAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Late_sync_of_a_completed_session_succeeds_without_changing_it()
+    {
+        await using var context = CreateContext();
+        var userId = Guid.NewGuid();
+        var split = CreateSplit(userId);
+        context.Add(split);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var pass = split.Pass.Single();
+        var exerciseId = pass.Exercise.First().ExerciseId;
+        var controller = WithUser(new SessionController(context), userId);
+        SaveSessionRequest Request(bool complete, int reps) => new()
+        {
+            SessionKey = Guid.Parse("5b0f3c1e-0000-0000-0000-000000000001"), PassId = pass.PassId,
+            Date = new DateOnly(2026, 7, 15), StartedAtUtc = new DateTimeOffset(2026, 7, 15, 8, 0, 0, TimeSpan.Zero),
+            CompleteSession = complete,
+            Exercises = [new SaveSessionExerciseDto { ExerciseId = exerciseId, Weight = 50,
+                Sets = [new SaveSessionSetDto { SetIndex = 0, Reps = reps, IsDone = true, Weight = 50 }] }],
+        };
+
+        await controller.SaveSession(Request(complete: true, reps: 8));
+        var result = await controller.SaveSession(Request(complete: false, reps: 3));
+
+        Assert.IsType<OkResult>(result);
+        Assert.Equal(8, (await context.SetLog.SingleAsync(TestContext.Current.CancellationToken)).Reps);
+    }
+
+    [Fact]
     public async Task Separate_session_keys_allow_multiple_sessions_same_day()
     {
         await using var context = CreateContext();

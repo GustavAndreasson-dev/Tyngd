@@ -524,35 +524,14 @@ public partial class PassPage : IDisposable
     {
         if (pass is not null)
         {
-            var request = new Tyngd.Shared.DTOs.SaveSessionRequest
-            {
-                SessionKey = data.SessionKey,
-                PassId = PassId,
-                Date   = DateOnly.FromDateTime(data.StartedAtUtc!.Value.ToLocalTime().DateTime),
-                StartedAtUtc = data.StartedAtUtc.Value,
-                CompleteSession = true,
-                Exercises = pass.Exercises.Select(ex => new Tyngd.Shared.DTOs.SaveSessionExerciseDto
-                {
-                    ExerciseId = ex.ExerciseId,
-                    NoteText   = GetNote(ex.ExerciseId),
-                    Weight     = GetWeight(ex.ExerciseId) ?? 0,
-                    Sets       = Enumerable.Range(0, ex.DefaultSets).Select(i => new Tyngd.Shared.DTOs.SaveSessionSetDto
-                    {
-                        SetIndex = i,
-                        Reps     = (int)GetReps(ex.ExerciseId, i),
-                        IsDone   = IsSetDone(ex.ExerciseId, i),
-                        Weight   = GetWeight(ex.ExerciseId) ?? 0,
-                    }).ToList(),
-                }).ToList(),
-            };
-
             var saved = false;
             await TryAsync(async () =>
             {
                 SetSaveStatus("Sparar passet...", Severity.Info);
-                await PassLogService.SaveSessionAsync(request);
+                // Allt som visas ligger redan i localStorage (SaveLocalDataAsync), så passet sparas därifrån som vid synk.
+                await PendingSync.FinalizeAsync(PassKey);
+                data.IsSynced = true;
                 data.CompletedAtUtc = DateTimeOffset.UtcNow;
-                await MarkSessionSavedAsync();
                 SetSaveStatus("Passet har sparats.", Severity.Success);
                 saved = true;
             }, "Kunde inte spara passet");
@@ -628,19 +607,6 @@ public partial class PassPage : IDisposable
         await PendingSync.RefreshAsync();
     }
 
-    private async Task MarkSessionSavedAsync()
-    {
-        if (pass is not null)
-        {
-            foreach (var ex in pass.Exercises)
-                data.SavedExercises[ex.ExerciseId] = true;
-        }
-
-        data.IsSynced = true;
-        await LocalStorage.SetItemAsync(PassKey, data);
-        await PendingSync.RefreshAsync();
-    }
-
     /// <summary>Sparar en enskild övnings data till DB (anropas vid övningsbyte och vid avslutat pass).</summary>
     private async Task SaveCurrentExerciseAsync(int exerciseId)
     {
@@ -648,22 +614,17 @@ public partial class PassPage : IDisposable
         var ex = pass.Exercises.FirstOrDefault(e => e.ExerciseId == exerciseId);
         if (ex is null) return;
 
+        var exercise = PendingSyncState.CreateExerciseDto(data, exerciseId);
         var request = new Tyngd.Shared.DTOs.UpsertExerciseRequest
         {
             SessionKey = data.SessionKey,
             PassId     = PassId,
-            Date       = DateOnly.FromDateTime(data.StartedAtUtc!.Value.ToLocalTime().DateTime),
-            StartedAtUtc = data.StartedAtUtc.Value,
+            Date       = data.LocalDate,
+            StartedAtUtc = data.StartedAtUtc!.Value,
             ExerciseId = exerciseId,
-            NoteText   = GetNote(exerciseId),
-            Weight     = GetWeight(exerciseId) ?? 0,
-            Sets       = Enumerable.Range(0, ex.DefaultSets).Select(i => new Tyngd.Shared.DTOs.SaveSessionSetDto
-            {
-                SetIndex = i,
-                Reps     = (int)GetReps(exerciseId, i),
-                IsDone   = IsSetDone(exerciseId, i),
-                Weight   = GetWeight(exerciseId) ?? 0,
-            }).ToList(),
+            NoteText   = exercise.NoteText,
+            Weight     = exercise.Weight,
+            Sets       = exercise.Sets,
         };
 
         SetSaveStatus("Sparar övningen...", Severity.Info);

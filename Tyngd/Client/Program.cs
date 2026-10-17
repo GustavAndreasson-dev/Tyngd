@@ -43,9 +43,6 @@ builder.Services.AddScoped<AdminService>();
 // Service för autentisering mot API
 builder.Services.AddScoped<AuthService>();
 
-// Service för passmallars övningsantal från API
-builder.Services.AddScoped<PassTemplateService>();
-
 // Service för splitmallar och pass från API
 builder.Services.AddScoped<SplitTemplateService>();
 builder.Services.AddScoped<CatalogService>();

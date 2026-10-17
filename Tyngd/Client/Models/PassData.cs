@@ -10,6 +10,10 @@ public class PassData
     public DateTimeOffset? CompletedAtUtc { get; set; }
     public bool IsSynced { get; set; } = true;
 
+    /// <summary>Passets datum i användarens tidszon.</summary>
+    [JsonIgnore]
+    public DateOnly LocalDate => DateOnly.FromDateTime(StartedAtUtc!.Value.ToLocalTime().DateTime);
+
     [JsonPropertyName("IsSaved")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? LegacyIsSaved { get; set; }
