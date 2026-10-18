@@ -72,8 +72,32 @@ public partial class App : Application
 })
                 .ConfigureServices((context, services) =>
                 {
-                    // TODO: Register your services
-                    //services.AddSingleton<IMyService, MyService>();
+                    // Samma klienttjänster som webbappen (Tyngd.Client/Program.cs), men med lagring i appens mapp.
+                    services.AddSingleton<IAppStorage>(new FileAppStorage(
+                        Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "storage")));
+
+                    var apiUrl = context.Configuration["ApiClient:Url"]
+                        ?? throw new InvalidOperationException("Saknar ApiClient:Url i appsettings.json.");
+                    services.AddTransient<AuthTokenHandler>();
+                    services.AddHttpClient("Tyngd.ServerAPI", client => client.BaseAddress = new Uri(apiUrl))
+                        .AddHttpMessageHandler<AuthTokenHandler>();
+                    services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Tyngd.ServerAPI"));
+
+                    services.AddSingleton<ThemeState>();
+                    services.AddSingleton<SessionState>();
+                    services.AddSingleton<LoginState>();
+                    services.AddScoped<PendingSyncState>();
+                    services.AddScoped<AuthService>();
+                    services.AddScoped<UserSplitsService>();
+                    services.AddScoped<DashboardService>();
+                    services.AddScoped<AdminService>();
+                    services.AddScoped<SplitTemplateService>();
+                    services.AddScoped<CatalogService>();
+                    services.AddScoped<FavoritesService>();
+                    services.AddScoped<FreeSessionService>();
+                    services.AddScoped<AdminCatalogService>();
+                    services.AddScoped<PassLogService>();
+                    services.AddScoped<UserSettingsService>();
                 })
                 .UseNavigation(RegisterRoutes)
             );
@@ -85,7 +109,13 @@ public partial class App : Application
                 MainWindow.SetWindowIcon();
 
         Host = await MainWindow.InitializeNavigationAsync(
-            () => Task.FromResult(builder.Build()),
+            async () =>
+            {
+                var host = builder.Build();
+                // Läs sparad inloggning innan första sidan visas, som MainLayout gör i webbappen.
+                await host.Services.GetRequiredService<LoginState>().InitializeAsync();
+                return host;
+            },
             initialRoute: "Main"
         );
     }

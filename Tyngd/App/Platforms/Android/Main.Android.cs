@@ -17,7 +17,8 @@ namespace Tyngd.App.Droid;
     Icon = "@mipmap/icon",
     LargeHeap = true,
     HardwareAccelerated = true,
-    Theme = "@style/Theme.App.Starting"
+    Theme = "@style/Theme.App.Starting",
+    NetworkSecurityConfig = "@xml/network_security_config"
 )]
 public class Application : Microsoft.UI.Xaml.NativeApplication
 {
