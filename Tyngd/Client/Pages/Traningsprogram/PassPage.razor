@@ -74,7 +74,7 @@
                                                aria-label="Om övningen" OnClick="@(() => ShowExerciseInfo(catalogExerciseId))" />
                             }
                         </h2>
-                        <span class="ui-sub">@FormatSetsReps(exercise)</span>
+                        <span class="ui-sub">@FormatSetsReps(exercise)@PreviousWeight(exercise.ExerciseId)</span>
                     </div>
                     <MudNumericField T="decimal?" Label="Vikt" HideSpinButtons="true" Variant="Variant.Outlined" Format="0.##" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" Value="GetWeight(exercise.ExerciseId)" ValueChanged="v => SetWeight(exercise.ExerciseId, v)" OnBlur="OnWeightChanged" Class="weight-field pass-weight" />
                 </div>
@@ -85,8 +85,16 @@
                         var setIndex = s;
                         var currentExercise = exercise;
                         var done = IsSetDone(currentExercise.ExerciseId, setIndex);
+                        var prevSet = PreviousSet(currentExercise.ExerciseId, setIndex);
                         <div class="pass-set @(done ? "pass-set--done" : "")">
-                            <span class="pass-set__n">Set @(setIndex + 1)</span>
+                            <span class="pass-set__n">
+                                Set @(setIndex + 1)
+                                @if (prevSet is not null)
+                                {
+                                    var reps = (int)GetReps(currentExercise.ExerciseId, setIndex);
+                                    <small class="@(reps > prevSet.Reps ? "pass-set__prev pass-set__prev--up" : "pass-set__prev")">förra @prevSet.Reps@(reps > prevSet.Reps ? " ↑" : "")</small>
+                                }
+                            </span>
                             <div class="pass-set__reps">
                                 <button type="button" class="pass-step" aria-label="Minska reps" @onclick="() => AdjustReps(currentExercise.ExerciseId, setIndex, -1)">−</button>
                                 <span class="pass-set__count">@((int)GetReps(currentExercise.ExerciseId, setIndex))<small>reps</small></span>
@@ -99,6 +107,10 @@
                     }
                 </div>
 
+                @if (_previous.TryGetValue(exercise.ExerciseId, out var prevNoteExercise) && !string.IsNullOrWhiteSpace(prevNoteExercise.NoteText))
+                {
+                    <p class="pass-prev-note"><span class="ui-label">Förra anteckningen</span>@prevNoteExercise.NoteText</p>
+                }
                 <MudTextField T="string"
                               Label="Anteckningar"
                               Lines="2"
