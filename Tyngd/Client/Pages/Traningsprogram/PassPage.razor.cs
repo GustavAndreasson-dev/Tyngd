@@ -128,6 +128,10 @@ public partial class PassPage : IDisposable
     private readonly Dictionary<int, List<Tyngd.Shared.DTOs.ExerciseProgressPointDto>> _progress = new();
 
     private Dictionary<int, decimal> _weights = new();
+
+    // Förra genomförandet av passet, per övning; visas som referens bredvid seten och anteckningen.
+    private Dictionary<int, Tyngd.Shared.DTOs.LastSessionExerciseDto> _previous = new();
+    private DateOnly? _previousDate;
     private PassData data = new();
     private string PassKey => $"pass-{SplitId}-{PassId}";
 
@@ -161,6 +165,7 @@ public partial class PassPage : IDisposable
             if (pass is not null && lastSessionTask is not null)
             {
                 await InitializePassDataAsync(isNewSession, lastSessionTask);
+                SetPrevious(await lastSessionTask);
                 InitializeDefaults();
                 await LocalStorage.SetItemAsync(PassKey, data);
                 RestoreSessionStateFromLocalData();
@@ -326,7 +331,8 @@ public partial class PassPage : IDisposable
                 data.Reps[ex.ExerciseId] = reps;
             }
 
-            if (!string.IsNullOrEmpty(ex.NoteText))
+            // Förra passets anteckning visas ovanför fältet i stället för att kopieras in; bara ett återupptaget pass har sin egen.
+            if (includeCompletedSets && !string.IsNullOrEmpty(ex.NoteText))
                 data.Notes[ex.ExerciseId] = ex.NoteText;
 
             data.SavedExercises[ex.ExerciseId] = true;
@@ -353,6 +359,26 @@ public partial class PassPage : IDisposable
 
         data.IsSynced = true;
     }
+
+    /// <summary>Sparar senaste sessionen som referens, utom när den är passet som pågår nu.</summary>
+    private void SetPrevious(Tyngd.Shared.DTOs.LastSessionDto? lastSession)
+    {
+        var isPrevious = lastSession is not null && lastSession.SessionKey != data.SessionKey;
+        _previous = isPrevious ? lastSession!.Exercises.ToDictionary(e => e.ExerciseId) : new();
+        _previousDate = isPrevious ? lastSession!.Date : null;
+    }
+
+    /// <summary>T.ex. " · förra 80 kg (12 okt)", tom om övningen saknar förra vikt.</summary>
+    private string PreviousWeight(int exerciseId) =>
+        _previous.TryGetValue(exerciseId, out var ex) && ex.Weight > 0
+            ? $" · förra {ex.Weight:0.##} kg" + (_previousDate is { } date ? $" ({SvDate.Short(date)})" : "")
+            : "";
+
+    /// <summary>Förra setet, men bara om vikten är densamma som nu; reps på en annan vikt går inte att jämföra.</summary>
+    private Tyngd.Shared.DTOs.LastSessionSetDto? PreviousSet(int exerciseId, int setIndex) =>
+        _previous.TryGetValue(exerciseId, out var ex)
+            ? ex.Sets.FirstOrDefault(s => s.SetIndex == setIndex && s.Weight == (GetWeight(exerciseId) ?? 0))
+            : null;
 
     private static PassData CreateNewPassData(DateTimeOffset now) => new()
     {

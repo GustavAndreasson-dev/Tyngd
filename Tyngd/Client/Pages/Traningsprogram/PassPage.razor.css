@@ -10,6 +10,10 @@
 .pass-set { display: flex; align-items: center; gap: .75rem; padding: .5rem .5rem .5rem 1rem; border-radius: 14px; background: var(--mud-palette-background-gray); transition: background .2s; }
 .pass-set--done { background: color-mix(in srgb, var(--mud-palette-success) 22%, transparent); }
 .pass-set__n { font-weight: 700; font-size: .875rem; min-width: 3rem; }
+.pass-set__prev { display: block; font-size: .6875rem; font-weight: 600; color: var(--mud-palette-text-secondary); white-space: nowrap; }
+.pass-set__prev--up { color: var(--mud-palette-success); }
+.pass-prev-note { margin: 0; padding: .625rem .875rem; border-radius: var(--radius-control); background: var(--mud-palette-background-gray); font-size: .875rem; white-space: pre-wrap; }
+.pass-prev-note .ui-label { display: block; margin-bottom: .125rem; }
 .pass-set__reps { flex: 1; display: flex; align-items: center; justify-content: center; gap: .75rem; }
 .pass-set__count { min-width: 3.5rem; text-align: center; font-size: 1.5rem; font-weight: 800; }
 .pass-set__count small { display: block; font-size: .6875rem; font-weight: 600; color: var(--mud-palette-text-secondary); }
