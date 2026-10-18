@@ -116,18 +116,22 @@ public partial class App : Application
                 await host.Services.GetRequiredService<LoginState>().InitializeAsync();
                 return host;
             },
-            initialRoute: "Main"
+            initialNavigate: (services, navigator) => services.GetRequiredService<LoginState>().IsLoggedIn
+                ? navigator.NavigateViewModelAsync<MainViewModel>(this)
+                : navigator.NavigateViewModelAsync<LoginViewModel>(this)
         );
     }
 
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
     {
         views.Register(
+            new ViewMap<LoginPage, LoginViewModel>(),
             new ViewMap<MainPage, MainViewModel>()
         );
 
         routes.Register(
-            new RouteMap("Main", View: views.FindByViewModel<MainViewModel>(), IsDefault:true)
+            new RouteMap("Login", View: views.FindByViewModel<LoginViewModel>()),
+            new RouteMap("Main", View: views.FindByViewModel<MainViewModel>())
         );
     }
 }
