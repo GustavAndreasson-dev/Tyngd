@@ -7,26 +7,107 @@
                 Spacing="16">
       <TextBlock Text="Inställningar"
                  Style="{StaticResource HeadlineMedium}" />
-      <Grid ColumnSpacing="16">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <TextBlock Text="Mörkt läge"
-                   Style="{StaticResource BodyLarge}"
-                   VerticalAlignment="Center" />
-        <ToggleSwitch Grid.Column="1"
-                      IsOn="{Binding IsDarkMode, Mode=TwoWay}"
-                      OnContent=""
-                      OffContent=""
-                      AutomationProperties.Name="Mörkt läge"
-                      AutomationProperties.AutomationId="DarkModeSwitch" />
-      </Grid>
-      <TextBlock Text="{Binding UserName}"
-                 Style="{StaticResource BodyMedium}" />
-      <Button Content="Logga ut"
-              Command="{Binding LogoutCommand}"
-              AutomationProperties.AutomationId="LogoutButton" />
+      <TextBlock Text="{Binding SavedMessage}"
+                 Style="{StaticResource BodyMedium}"
+                 Foreground="{ThemeResource PrimaryBrush}"
+                 AutomationProperties.LiveSetting="Polite" />
+
+      <Border Background="{ThemeResource SurfaceBrush}"
+              CornerRadius="12"
+              Padding="16">
+        <Grid ColumnSpacing="16">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Text="Mörkt läge"
+                     Style="{StaticResource BodyLarge}"
+                     VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Column="1"
+                        IsOn="{Binding IsDarkMode, Mode=TwoWay}"
+                        OnContent=""
+                        OffContent=""
+                        AutomationProperties.Name="Mörkt läge"
+                        AutomationProperties.AutomationId="DarkModeSwitch" />
+        </Grid>
+      </Border>
+
+      <Border Background="{ThemeResource SurfaceBrush}"
+              CornerRadius="12"
+              Padding="16">
+        <StackPanel Spacing="12">
+          <TextBlock Text="Vilotimer"
+                     Style="{StaticResource TitleMedium}" />
+          <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Aktivera vilotimer"
+                       Style="{StaticResource BodyLarge}"
+                       VerticalAlignment="Center" />
+            <ToggleSwitch Grid.Column="1"
+                          IsOn="{Binding IsRestTimerEnabled, Mode=TwoWay}"
+                          OnContent=""
+                          OffContent=""
+                          AutomationProperties.Name="Aktivera vilotimer"
+                          AutomationProperties.AutomationId="RestTimerSwitch" />
+          </Grid>
+          <NumberBox Header="Vilotid (minuter)"
+                     Value="{Binding RestTimerMinutes, Mode=TwoWay}"
+                     IsEnabled="{Binding IsRestTimerEnabled}"
+                     Minimum="1"
+                     Maximum="10"
+                     SmallChange="1"
+                     SpinButtonPlacementMode="Inline"
+                     ValidationMode="InvalidInputOverwritten"
+                     MaxWidth="180"
+                     HorizontalAlignment="Left"
+                     AutomationProperties.AutomationId="RestTimerMinutes" />
+        </StackPanel>
+      </Border>
+
+      <Border Background="{ThemeResource SurfaceBrush}"
+              CornerRadius="12"
+              Padding="16">
+        <StackPanel Spacing="12">
+          <TextBlock Text="Konto"
+                     Style="{StaticResource TitleMedium}" />
+          <StackPanel>
+            <TextBlock Text="{Binding UserName}"
+                       Style="{StaticResource BodyLarge}" />
+            <TextBlock Text="{Binding Email}"
+                       Style="{StaticResource BodyMedium}"
+                       Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+          </StackPanel>
+          <TextBlock Text="Administration görs i webbappen."
+                     Visibility="{Binding AdminNoteVisibility}"
+                     Style="{StaticResource BodyMedium}"
+                     Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                     TextWrapping="Wrap" />
+          <Button Content="Logga ut"
+                  Command="{Binding LogoutCommand}"
+                  Style="{StaticResource OutlinedButtonStyle}"
+                  MinHeight="44"
+                  AutomationProperties.AutomationId="LogoutButton" />
+        </StackPanel>
+      </Border>
+
+      <!-- Licenskrav för wgers övningsdata (CC-BY-SA). Diskret, längst ner. -->
+      <TextBlock Style="{StaticResource BodySmall}"
+                 Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                 TextWrapping="Wrap"
+                 Margin="0,8,0,0">
+        <Run Text="Övningar och beskrivningar kommer från" />
+        <Hyperlink NavigateUri="https://wger.de">wger.de</Hyperlink>
+        <Run Text="och används under Creative Commons-licenser, oftast" />
+        <Hyperlink NavigateUri="https://creativecommons.org/licenses/by-sa/4.0/deed.sv">CC BY-SA 4.0</Hyperlink>
+        <Run Text="(licens och upphovsperson visas för varje övning). Svenska översättningar är bearbetningar under samma licens. Kroppsfigurerna är av Termininja (" /><Hyperlink NavigateUri="https://commons.wikimedia.org/wiki/File:Muscular_system.svg">Wikimedia Commons</Hyperlink><Run Text="," />
+        <Hyperlink NavigateUri="https://creativecommons.org/licenses/by-sa/3.0/deed.sv">CC BY-SA 3.0</Hyperlink><Run Text="), något bearbetade för appen." />
+      </TextBlock>
+      <TextBlock Text="{Binding AppVersion}"
+                 Style="{StaticResource BodySmall}"
+                 Foreground="{ThemeResource OnSurfaceVariantBrush}" />
     </StackPanel>
   </ScrollViewer>
 </Page>

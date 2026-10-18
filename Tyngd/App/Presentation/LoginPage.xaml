@@ -31,6 +31,12 @@
               Command="{Binding LoginCommand}"
               AutomationProperties.AutomationId="LoginButton"
               HorizontalAlignment="Stretch" />
+      <Button Content="Skapa konto"
+              Click="OnRegisterClick"
+              Style="{StaticResource TextButtonStyle}"
+              MinHeight="44"
+              AutomationProperties.AutomationId="RegisterButton"
+              HorizontalAlignment="Stretch" />
     </StackPanel>
   </ScrollViewer>
 </Page>

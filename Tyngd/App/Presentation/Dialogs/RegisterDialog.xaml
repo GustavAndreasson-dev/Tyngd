@@ -1,0 +1,34 @@
+<ContentDialog x:Class="Tyngd.App.Presentation.Dialogs.RegisterDialog"
+               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+               Title="Skapa konto"
+               PrimaryButtonText="Skapa konto"
+               CloseButtonText="Avbryt"
+               DefaultButton="Primary"
+               PrimaryButtonClick="OnPrimaryButtonClick">
+  <ScrollViewer>
+    <StackPanel Spacing="16"
+                MinWidth="280">
+      <TextBox x:Name="UserNameBox"
+               Header="Användarnamn"
+               IsSpellCheckEnabled="False"
+               AutomationProperties.AutomationId="RegisterUserName" />
+      <TextBox x:Name="EmailBox"
+               Header="E-post"
+               IsSpellCheckEnabled="False"
+               InputScope="EmailSmtpAddress"
+               AutomationProperties.AutomationId="RegisterEmail" />
+      <PasswordBox x:Name="PasswordBox"
+                   Header="Lösenord"
+                   AutomationProperties.AutomationId="RegisterPassword" />
+      <PasswordBox x:Name="ConfirmPasswordBox"
+                   Header="Bekräfta lösenord"
+                   AutomationProperties.AutomationId="RegisterConfirmPassword" />
+      <TextBlock x:Name="ErrorText"
+                 Foreground="{ThemeResource ErrorBrush}"
+                 TextWrapping="Wrap"
+                 AutomationProperties.LiveSetting="Assertive"
+                 AutomationProperties.AutomationId="RegisterError" />
+    </StackPanel>
+  </ScrollViewer>
+</ContentDialog>

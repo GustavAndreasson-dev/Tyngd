@@ -54,6 +54,12 @@ public partial class LoginViewModel : ObservableObject
         }
 
         Password = string.Empty;
-        await _navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.ClearBackStack);
+        await GoToMainAsync();
     }
+
+    // Registreringsdialogen (öppnas från LoginPage) loggar in via AuthService och går sedan samma väg som inloggningen.
+    public AuthService AuthService => _authService;
+
+    public Task GoToMainAsync() =>
+        _navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.ClearBackStack);
 }
