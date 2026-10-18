@@ -40,39 +40,13 @@ public partial class App : Application
                         // Default filters for core Uno Platform namespaces
                         .CoreLogLevel(LogLevel.Warning);
 
-                    // Uno Platform namespace filter groups
-                    // Uncomment individual methods to see more detailed logging
-                    //// Generic Xaml events
-                    //logBuilder.XamlLogLevel(LogLevel.Debug);
-                    //// Layout specific messages
-                    //logBuilder.XamlLayoutLogLevel(LogLevel.Debug);
-                    //// Storage messages
-                    //logBuilder.StorageLogLevel(LogLevel.Debug);
-                    //// Binding related messages
-                    //logBuilder.XamlBindingLogLevel(LogLevel.Debug);
-                    //// Binder memory references tracking
-                    //logBuilder.BinderMemoryReferenceLogLevel(LogLevel.Debug);
-                    //// DevServer and HotReload related
-                    //logBuilder.HotReloadCoreLogLevel(LogLevel.Information);
-                    //// Debug JS interop
-                    //logBuilder.WebAssemblyLogLevel(LogLevel.Debug);
-
                 }, enableUnoLogging: true)
-                .UseConfiguration(configure: configBuilder =>
-                    configBuilder
-                        .EmbeddedSource<App>()
-                        .Section<AppConfig>()
-                )
-                .UseHttp((context, services) => {
-#if DEBUG
-                // DelegatingHandler will be automatically injected
-                services.AddTransient<DelegatingHandler, DebugHttpHandler>();
-#endif
-
-})
+                .UseConfiguration(configure: configBuilder => configBuilder.EmbeddedSource<App>())
                 .ConfigureServices((context, services) =>
                 {
                     // Samma klienttjänster som webbappen (Tyngd.Client/Program.cs), men med lagring i appens mapp.
+                    // Singleton genomgående: navigeringen skapar ett scope per sida, så scoped tjänster
+                    // (t.ex. PendingSyncState) skulle få nya instanser och tappa sitt tillstånd vid sidbyte.
                     services.AddSingleton<IAppStorage>(new FileAppStorage(
                         Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "storage")));
 
@@ -81,23 +55,23 @@ public partial class App : Application
                     services.AddTransient<AuthTokenHandler>();
                     services.AddHttpClient("Tyngd.ServerAPI", client => client.BaseAddress = new Uri(apiUrl))
                         .AddHttpMessageHandler<AuthTokenHandler>();
-                    services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Tyngd.ServerAPI"));
+                    services.AddSingleton(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Tyngd.ServerAPI"));
 
                     services.AddSingleton<ThemeState>();
                     services.AddSingleton<SessionState>();
                     services.AddSingleton<LoginState>();
-                    services.AddScoped<PendingSyncState>();
-                    services.AddScoped<AuthService>();
-                    services.AddScoped<UserSplitsService>();
-                    services.AddScoped<DashboardService>();
-                    services.AddScoped<AdminService>();
-                    services.AddScoped<SplitTemplateService>();
-                    services.AddScoped<CatalogService>();
-                    services.AddScoped<FavoritesService>();
-                    services.AddScoped<FreeSessionService>();
-                    services.AddScoped<AdminCatalogService>();
-                    services.AddScoped<PassLogService>();
-                    services.AddScoped<UserSettingsService>();
+                    services.AddSingleton<PendingSyncState>();
+                    services.AddSingleton<AuthService>();
+                    services.AddSingleton<UserSplitsService>();
+                    services.AddSingleton<DashboardService>();
+                    services.AddSingleton<AdminService>();
+                    services.AddSingleton<SplitTemplateService>();
+                    services.AddSingleton<CatalogService>();
+                    services.AddSingleton<FavoritesService>();
+                    services.AddSingleton<FreeSessionService>();
+                    services.AddSingleton<AdminCatalogService>();
+                    services.AddSingleton<PassLogService>();
+                    services.AddSingleton<UserSettingsService>();
                 })
                 .UseNavigation(RegisterRoutes)
             );

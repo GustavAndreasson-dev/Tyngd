@@ -33,6 +33,17 @@ public sealed class FileAppStorageTests : IDisposable
         await Assert.ThrowsAsync<ArgumentException>(async () => await storage.SetItemAsync("../utanför", 1));
     }
 
+    [Fact]
+    public async Task Concurrent_saves_of_the_same_key_do_not_collide()
+    {
+        var storage = new FileAppStorage(_folder);
+
+        await Task.WhenAll(Enumerable.Range(0, 20).Select(i => Task.Run(async () => await storage.SetItemAsync("pass-1-2", i))));
+
+        Assert.InRange(await storage.GetItemAsync<int>("pass-1-2"), 0, 19);
+        Assert.Equal(["pass-1-2"], await storage.KeysAsync());
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_folder))

@@ -10,6 +10,8 @@ public class FileAppStorage : IAppStorage
 {
     private const string Extension = ".json";
     private readonly string _folder;
+    // En filoperation i taget: samtidiga sparningar av samma nyckel krockar annars i filsystemet.
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
     public FileAppStorage(string folder)
     {
@@ -20,11 +22,19 @@ public class FileAppStorage : IAppStorage
     public async ValueTask<T?> GetItemAsync<T>(string key)
     {
         var path = PathFor(key);
-        if (!File.Exists(path))
-            return default;
+        await _lock.WaitAsync();
+        try
+        {
+            if (!File.Exists(path))
+                return default;
 
-        await using var stream = File.OpenRead(path);
-        return await JsonSerializer.DeserializeAsync<T>(stream);
+            await using var stream = File.OpenRead(path);
+            return await JsonSerializer.DeserializeAsync<T>(stream);
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 
     public async ValueTask SetItemAsync<T>(string key, T value)
@@ -32,14 +42,30 @@ public class FileAppStorage : IAppStorage
         // Skriv till en temporär fil och byt sedan, så att en krasch mitt i inte lämnar trasig passdata.
         var path = PathFor(key);
         var temp = path + ".tmp";
-        await File.WriteAllTextAsync(temp, JsonSerializer.Serialize(value));
-        File.Move(temp, path, overwrite: true);
+        await _lock.WaitAsync();
+        try
+        {
+            await File.WriteAllTextAsync(temp, JsonSerializer.Serialize(value));
+            File.Move(temp, path, overwrite: true);
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 
-    public ValueTask RemoveItemAsync(string key)
+    public async ValueTask RemoveItemAsync(string key)
     {
-        File.Delete(PathFor(key));
-        return ValueTask.CompletedTask;
+        var path = PathFor(key);
+        await _lock.WaitAsync();
+        try
+        {
+            File.Delete(path);
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 
     public ValueTask<IEnumerable<string>> KeysAsync() =>
