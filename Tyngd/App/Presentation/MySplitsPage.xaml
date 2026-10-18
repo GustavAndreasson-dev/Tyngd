@@ -1,14 +1,187 @@
 <Page x:Class="Tyngd.App.Presentation.MySplitsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:utu="using:Uno.Toolkit.UI"
+      xmlns:local="using:Tyngd.App.Presentation"
+      xmlns:controls="using:Tyngd.App.Presentation.Controls"
       Background="{ThemeResource BackgroundBrush}">
-  <StackPanel utu:SafeArea.Insets="VisibleBounds"
-              Padding="24"
-              Spacing="8">
-    <TextBlock Text="Mina splits"
-               Style="{StaticResource HeadlineMedium}" />
-    <TextBlock Text="Kommer snart"
-               Style="{StaticResource BodyLarge}" />
-  </StackPanel>
+  <ScrollViewer>
+    <StackPanel Padding="16"
+                Spacing="16"
+                MaxWidth="600">
+      <Grid ColumnSpacing="8">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="Mina splits"
+                   Style="{StaticResource HeadlineMedium}"
+                   VerticalAlignment="Center" />
+        <Button Grid.Column="1"
+                Style="{StaticResource FilledTonalButtonStyle}"
+                Command="{x:Bind ViewModel.NewSplitCommand, Mode=OneWay}"
+                MinHeight="44"
+                AutomationProperties.AutomationId="NewSplitButton">
+          <StackPanel Orientation="Horizontal"
+                      Spacing="8">
+            <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+            <TextBlock Text="Ny split" />
+          </StackPanel>
+        </Button>
+      </Grid>
+
+      <ProgressBar IsIndeterminate="True"
+                   Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
+
+      <TextBlock Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                 Visibility="{x:Bind ViewModel.HasError, Mode=OneWay}"
+                 Foreground="{ThemeResource ErrorBrush}"
+                 TextWrapping="Wrap"
+                 AutomationProperties.LiveSetting="Assertive" />
+
+      <TextBlock Text="{x:Bind ViewModel.SuccessMessage, Mode=OneWay}"
+                 Visibility="{x:Bind ViewModel.HasSuccess, Mode=OneWay}"
+                 Foreground="{ThemeResource PrimaryBrush}"
+                 TextWrapping="Wrap"
+                 AutomationProperties.LiveSetting="Polite" />
+
+      <StackPanel Spacing="8"
+                  Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
+        <TextBlock Text="Du har inga egna splits ännu."
+                   Style="{StaticResource BodyLarge}"
+                   Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+        <Button Content="Skapa en split"
+                Style="{StaticResource TextButtonStyle}"
+                Command="{x:Bind ViewModel.NewSplitCommand, Mode=OneWay}" />
+      </StackPanel>
+
+      <ItemsControl ItemsSource="{x:Bind ViewModel.Splits, Mode=OneWay}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="local:SplitItem">
+            <Border Background="{ThemeResource SurfaceBrush}"
+                    CornerRadius="12"
+                    Padding="16"
+                    Margin="0,0,0,16">
+              <StackPanel Spacing="8">
+                <Grid ColumnSpacing="4">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="{x:Bind Name}"
+                             Style="{StaticResource TitleLarge}"
+                             TextWrapping="Wrap"
+                             VerticalAlignment="Center" />
+                  <Button Grid.Column="1"
+                          Style="{StaticResource IconButtonStyle}"
+                          MinWidth="44"
+                          MinHeight="44"
+                          Command="{x:Bind ToggleMusclesCommand}"
+                          ToolTipService.ToolTip="Visa muskler"
+                          AutomationProperties.Name="Visa muskler för splitten">
+                    <PathIcon Data="M20.5 6c-2.61.7-5.67 1-8.5 1s-5.89-.3-8.5-1L3 8c1.86.5 4 .83 6 1v13h2v-6h2v6h2V9c2-.17 4.14-.5 6-1l-.5-2zM12 6c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" />
+                  </Button>
+                  <Button Grid.Column="2"
+                          Style="{StaticResource IconButtonStyle}"
+                          MinWidth="44"
+                          MinHeight="44"
+                          Command="{x:Bind EditCommand}"
+                          ToolTipService.ToolTip="Redigera"
+                          AutomationProperties.Name="Redigera split">
+                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                              Foreground="{ThemeResource PrimaryBrush}" />
+                  </Button>
+                  <Button Grid.Column="3"
+                          Style="{StaticResource IconButtonStyle}"
+                          MinWidth="44"
+                          MinHeight="44"
+                          Click="OnDeleteClick"
+                          ToolTipService.ToolTip="Arkivera"
+                          AutomationProperties.Name="Arkivera split">
+                    <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                              Foreground="{ThemeResource ErrorBrush}" />
+                  </Button>
+                </Grid>
+
+                <StackPanel Visibility="{x:Bind ShowMuscles, Mode=OneWay}">
+                  <ProgressBar IsIndeterminate="True"
+                               Visibility="{x:Bind IsMusclesLoading, Mode=OneWay}" />
+                  <controls:MuscleMap MuscleLoad="{x:Bind MuscleLoad, Mode=OneWay}"
+                                              Visibility="{x:Bind HasMuscleLoad, Mode=OneWay}" />
+                </StackPanel>
+
+                <ItemsControl ItemsSource="{x:Bind Passes}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:PassItem">
+                      <StackPanel BorderBrush="{ThemeResource OutlineVariantBrush}"
+                                  BorderThickness="0,1,0,0">
+                        <Button Style="{StaticResource TextButtonStyle}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                MinHeight="48"
+                                Command="{x:Bind ToggleCommand}"
+                                AutomationProperties.Name="{x:Bind Name}">
+                          <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="*" />
+                              <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{x:Bind Name}"
+                                       Style="{StaticResource TitleMedium}"
+                                       Foreground="{ThemeResource OnSurfaceBrush}"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
+                            <PathIcon Grid.Column="1"
+                                      Data="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"
+                                      Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                                      RenderTransformOrigin="0.5,0.5">
+                              <PathIcon.RenderTransform>
+                                <RotateTransform Angle="{x:Bind ChevronAngle, Mode=OneWay}" />
+                              </PathIcon.RenderTransform>
+                            </PathIcon>
+                          </Grid>
+                        </Button>
+
+                        <StackPanel Spacing="8"
+                                    Padding="8,4,8,12"
+                                    Visibility="{x:Bind IsExpanded, Mode=OneWay}">
+                          <Button Command="{x:Bind StartCommand}"
+                                  MinHeight="44">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="8">
+                              <PathIcon Data="M8 5v14l11-7z" />
+                              <TextBlock Text="Öppna pass" />
+                            </StackPanel>
+                          </Button>
+                          <ProgressBar IsIndeterminate="True"
+                                       Visibility="{x:Bind IsLoading, Mode=OneWay}" />
+                          <ItemsControl ItemsSource="{x:Bind Exercises, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="local:ExerciseLine">
+                                <StackPanel Padding="0,4">
+                                  <TextBlock Text="{x:Bind Name}"
+                                             Style="{StaticResource BodyLarge}"
+                                             TextWrapping="Wrap" />
+                                  <TextBlock Text="{x:Bind Detail}"
+                                             Style="{StaticResource BodySmall}"
+                                             Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+                                </StackPanel>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                          <controls:MuscleMap MuscleLoad="{x:Bind MuscleLoad, Mode=OneWay}"
+                                              Visibility="{x:Bind HasMuscleLoad, Mode=OneWay}" />
+                        </StackPanel>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
 </Page>
