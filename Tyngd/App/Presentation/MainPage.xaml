@@ -3,11 +3,13 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:uen="using:Uno.Extensions.Navigation.UI"
       xmlns:utu="using:Uno.Toolkit.UI"
+      xmlns:controls="using:Tyngd.App.Presentation.Controls"
       Background="{ThemeResource BackgroundBrush}">
   <!-- Appens skal: flikarna i bottenmenyn (som BottomNav.razor i webbappen) växlar innehållet ovanför. -->
   <Grid utu:SafeArea.Insets="VisibleBounds">
     <Grid.RowDefinitions>
       <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
@@ -15,7 +17,13 @@
     <Grid uen:Region.Attached="True"
           uen:Region.Navigator="Visibility" />
 
-    <utu:TabBar Grid.Row="1"
+    <!-- Pågående vila syns på alla flikar, som RestPill i webbappens appfält. -->
+    <controls:RestPill Grid.Row="1"
+                       Timer="{Binding RestTimer}"
+                       HorizontalAlignment="Center"
+                       Margin="0,8" />
+
+    <utu:TabBar Grid.Row="2"
                 Style="{StaticResource BottomTabBarStyle}"
                 uen:Region.Attached="True">
       <utu:TabBarItem Content="Översikt"

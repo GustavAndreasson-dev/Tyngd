@@ -15,6 +15,8 @@ public partial class MainViewModel : ObservableObject
         _ = LoadSettingsAsync();
     }
 
+    public RestTimerState RestTimer => _restTimer;
+
     private async Task LoadSettingsAsync()
     {
         await _restTimer.RestoreAsync();
