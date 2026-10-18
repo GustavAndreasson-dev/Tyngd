@@ -77,23 +77,55 @@ public partial class App : Application
             );
         MainWindow = builder.Window;
 
-        #if DEBUG
+#if DEBUG
         MainWindow.UseStudio();
 #endif
-                MainWindow.SetWindowIcon();
+        MainWindow.SetWindowIcon();
 
         Host = await MainWindow.InitializeNavigationAsync(
             async () =>
             {
                 var host = builder.Build();
-                // Läs sparad inloggning innan första sidan visas, som MainLayout gör i webbappen.
+                // Läs sparad inloggning och senaste tema innan första sidan visas, som MainLayout gör i webbappen.
                 await host.Services.GetRequiredService<LoginState>().InitializeAsync();
+                if (await host.Services.GetRequiredService<IAppStorage>().GetItemAsync<bool?>(DarkModeKey) is bool dark)
+                    host.Services.GetRequiredService<ThemeState>().SetDarkMode(dark);
                 return host;
             },
-            initialNavigate: (services, navigator) => services.GetRequiredService<LoginState>().IsLoggedIn
-                ? navigator.NavigateViewModelAsync<MainViewModel>(this)
-                : navigator.NavigateViewModelAsync<LoginViewModel>(this)
+            initialNavigate: async (services, navigator) =>
+            {
+                var loginState = services.GetRequiredService<LoginState>();
+                // Utloggad, via knappen eller för att AuthTokenHandler fått 401 på en utgången token: tillbaka till inloggningen.
+                loginState.OnChange += () =>
+                {
+                    if (!loginState.IsLoggedIn)
+                        MainWindow.DispatcherQueue.TryEnqueue(async () =>
+                            await navigator.NavigateViewModelAsync<LoginViewModel>(this, qualifier: Qualifiers.ClearBackStack));
+                };
+
+                if (loginState.IsLoggedIn)
+                    await navigator.NavigateViewModelAsync<MainViewModel>(this);
+                else
+                    await navigator.NavigateViewModelAsync<LoginViewModel>(this);
+            }
         );
+
+        var themeState = Host.Services.GetRequiredService<ThemeState>();
+        var storage = Host.Services.GetRequiredService<IAppStorage>();
+        ApplyTheme(themeState.IsDarkMode);
+        themeState.OnChange += () =>
+        {
+            MainWindow.DispatcherQueue.TryEnqueue(() => ApplyTheme(themeState.IsDarkMode));
+            _ = storage.SetItemAsync(DarkModeKey, themeState.IsDarkMode);
+        };
+    }
+
+    private const string DarkModeKey = "tyngd-dark";
+
+    private void ApplyTheme(bool dark)
+    {
+        if (MainWindow?.Content is FrameworkElement root)
+            root.RequestedTheme = dark ? ElementTheme.Dark : ElementTheme.Light;
     }
 
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
@@ -105,7 +137,15 @@ public partial class App : Application
 
         routes.Register(
             new RouteMap("Login", View: views.FindByViewModel<LoginViewModel>()),
-            new RouteMap("Main", View: views.FindByViewModel<MainViewModel>())
+            new RouteMap("Main", View: views.FindByViewModel<MainViewModel>(), Nested:
+            [
+                // Flikarna i MainPage (innehållet ligger direkt i sidan).
+                new RouteMap("Oversikt", IsDefault: true),
+                new RouteMap("Splits"),
+                new RouteMap("Mallar"),
+                new RouteMap("Ovningar"),
+                new RouteMap("Installningar"),
+            ])
         );
     }
 }
