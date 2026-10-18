@@ -228,6 +228,7 @@
                                   Spacing="8">
                         <Button Style="{StaticResource OutlinedButtonStyle}"
                                 Command="{Binding DecreaseCommand}"
+                                AllowFocusOnInteraction="False"
                                 Width="48"
                                 Height="48"
                                 Padding="0"
@@ -246,6 +247,7 @@
                         </StackPanel>
                         <Button Style="{StaticResource OutlinedButtonStyle}"
                                 Command="{Binding IncreaseCommand}"
+                                AllowFocusOnInteraction="False"
                                 Width="48"
                                 Height="48"
                                 Padding="0"
@@ -253,8 +255,10 @@
                           <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
                         </Button>
                       </StackPanel>
+                      <!-- AllowFocusOnInteraction=False: knappen döljs när setet växlar, och fokus hoppade då till anteckningarna. -->
                       <Grid Grid.Column="2">
                         <Button Command="{Binding ToggleCommand}"
+                                AllowFocusOnInteraction="False"
                                 Visibility="{Binding IsDone}"
                                 Width="56"
                                 Height="56"
@@ -264,6 +268,7 @@
                         </Button>
                         <Button Style="{StaticResource OutlinedButtonStyle}"
                                 Command="{Binding ToggleCommand}"
+                                AllowFocusOnInteraction="False"
                                 Visibility="{Binding IsNotDone}"
                                 Width="56"
                                 Height="56"

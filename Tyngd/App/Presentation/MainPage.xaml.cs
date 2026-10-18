@@ -1,9 +1,40 @@
-﻿namespace Tyngd.App.Presentation;
+namespace Tyngd.App.Presentation;
 
 public sealed partial class MainPage : Page
 {
+    private readonly Page[] _tabs;
+    private readonly Type[] _tabViewModels =
+        [typeof(OverviewViewModel), typeof(MySplitsViewModel), typeof(TemplatesViewModel), typeof(ExercisesViewModel), typeof(SettingsViewModel)];
+    private readonly bool[] _created = new bool[5];
+
     public MainPage()
     {
         this.InitializeComponent();
+        _tabs = [OverviewTab, SplitsTab, TemplatesTab, ExercisesTab, SettingsTab];
+        Loaded += (_, _) => ShowTab(Math.Max(0, Tabs.SelectedIndex));
+    }
+
+    // Flikarna växlas här i stället för med Uno-navigeringens regioner: TabBar-navigatorn hittade inte flikarnas
+    // sidor ("has no children to forward request to") och visade fel eller tomt innehåll på telefonen.
+    private void OnTabChanged(TabBar sender, TabBarSelectionChangedEventArgs args) => ShowTab(sender.SelectedIndex);
+
+    private void ShowTab(int index)
+    {
+        if (index < 0 || index >= _tabs.Length)
+            return;
+
+        if (!_created[index])
+        {
+            // Skalets navigator till de flikar som tar en, så att de kan öppna helskärmssidorna (Pass, EditSplit, ExerciseInfo).
+            var type = _tabViewModels[index];
+            object[] args = type.GetConstructors()[0].GetParameters().Any(p => p.ParameterType == typeof(INavigator))
+                ? [this.Navigator()!]
+                : [];
+            _tabs[index].DataContext = ActivatorUtilities.CreateInstance(this.FindServiceProvider()!, type, args);
+            _created[index] = true;
+        }
+
+        for (var i = 0; i < _tabs.Length; i++)
+            _tabs[i].Visibility = i == index ? Visibility.Visible : Visibility.Collapsed;
     }
 }

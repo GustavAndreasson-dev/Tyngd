@@ -22,7 +22,27 @@
         </utum:MaterialToolkitTheme>
       </ResourceDictionary.MergedDictionaries>
 
-      <!-- Add resources here -->
+      <!-- Kontroller utan Material-stil (t.ex. NumberBox) använder Windows accentfärg (blå); ge dem appens primärfärg. -->
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <Color x:Key="SystemAccentColor">#57737A</Color>
+          <Color x:Key="SystemAccentColorLight1">#57737A</Color>
+          <Color x:Key="SystemAccentColorLight2">#57737A</Color>
+          <Color x:Key="SystemAccentColorLight3">#57737A</Color>
+          <Color x:Key="SystemAccentColorDark1">#57737A</Color>
+          <Color x:Key="SystemAccentColorDark2">#57737A</Color>
+          <Color x:Key="SystemAccentColorDark3">#57737A</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <Color x:Key="SystemAccentColor">#C9FBFF</Color>
+          <Color x:Key="SystemAccentColorLight1">#C9FBFF</Color>
+          <Color x:Key="SystemAccentColorLight2">#C9FBFF</Color>
+          <Color x:Key="SystemAccentColorLight3">#C9FBFF</Color>
+          <Color x:Key="SystemAccentColorDark1">#C9FBFF</Color>
+          <Color x:Key="SystemAccentColorDark2">#C9FBFF</Color>
+          <Color x:Key="SystemAccentColorDark3">#C9FBFF</Color>
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
 
     </ResourceDictionary>
   </Application.Resources>
