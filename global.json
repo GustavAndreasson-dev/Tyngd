@@ -1,0 +1,6 @@
+{
+  // Uno.Sdk-version för Uno-appen. Uppgradera Uno genom att ändra versionen här: https://aka.platform.uno/upgrade-uno-packages
+  "msbuild-sdks": {
+    "Uno.Sdk": "6.7.30"
+  }
+}
