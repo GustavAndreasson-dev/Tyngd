@@ -1,14 +1,241 @@
 <Page x:Class="Tyngd.App.Presentation.OverviewPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:utu="using:Uno.Toolkit.UI"
       Background="{ThemeResource BackgroundBrush}">
-  <StackPanel utu:SafeArea.Insets="VisibleBounds"
-              Padding="24"
-              Spacing="8">
-    <TextBlock Text="Översikt"
-               Style="{StaticResource HeadlineMedium}" />
-    <TextBlock Text="Kommer snart"
-               Style="{StaticResource BodyLarge}" />
-  </StackPanel>
+  <ScrollViewer>
+    <StackPanel Padding="16,24"
+                Spacing="16">
+      <StackPanel Spacing="2">
+        <TextBlock Text="Översikt"
+                   Style="{StaticResource HeadlineMedium}" />
+        <TextBlock Text="{Binding Today}"
+                   Style="{StaticResource BodyMedium}"
+                   Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+      </StackPanel>
+
+      <TextBlock Text="{Binding ErrorMessage}"
+                 Foreground="{ThemeResource ErrorBrush}"
+                 TextWrapping="Wrap"
+                 AutomationProperties.LiveSetting="Assertive" />
+
+      <ProgressRing IsActive="{Binding IsLoading}"
+                    Visibility="{Binding LoadingVisibility}"
+                    HorizontalAlignment="Center" />
+
+      <StackPanel Spacing="16"
+                  Visibility="{Binding ContentVisibility}">
+        <!-- Nästa eller pågående pass -->
+        <Border Visibility="{Binding HeroVisibility}"
+                Background="{ThemeResource PrimaryBrush}"
+                CornerRadius="16"
+                Padding="20">
+          <StackPanel Spacing="16">
+            <StackPanel Spacing="4">
+              <TextBlock Text="{Binding HeroLabel}"
+                         Style="{StaticResource LabelLarge}"
+                         Foreground="{ThemeResource OnPrimaryBrush}"
+                         Opacity="0.85" />
+              <TextBlock Text="{Binding Hero.PassName}"
+                         Style="{StaticResource HeadlineMedium}"
+                         FontWeight="Bold"
+                         Foreground="{ThemeResource OnPrimaryBrush}"
+                         TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Hero.SplitName}"
+                         Style="{StaticResource BodyMedium}"
+                         Foreground="{ThemeResource OnPrimaryBrush}"
+                         Opacity="0.85" />
+            </StackPanel>
+            <Button Content="{Binding HeroButtonText}"
+                    Command="{Binding StartHeroCommand}"
+                    Style="{StaticResource FilledTonalButtonStyle}"
+                    HorizontalAlignment="Stretch"
+                    MinHeight="44" />
+          </StackPanel>
+        </Border>
+
+        <Border Visibility="{Binding EmptyVisibility}"
+                Background="{ThemeResource SurfaceBrush}"
+                CornerRadius="12"
+                Padding="16">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Ingen aktiv split"
+                       Style="{StaticResource TitleMedium}" />
+            <Button Content="Skapa split"
+                    Command="{Binding CreateSplitCommand}"
+                    MinHeight="44" />
+          </StackPanel>
+        </Border>
+
+        <Button Click="OnStartFreeSession"
+                Style="{StaticResource OutlinedButtonStyle}"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                CornerRadius="12"
+                Padding="16"
+                AutomationProperties.Name="Starta löst pass">
+          <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <PathIcon Data="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"
+                      VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1">
+              <TextBlock Text="Starta löst pass"
+                         Style="{StaticResource TitleMedium}"
+                         Foreground="{ThemeResource OnSurfaceBrush}" />
+              <TextBlock Text="Välj övningar fritt, utan split"
+                         Style="{StaticResource BodySmall}"
+                         Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+            <PathIcon Grid.Column="2"
+                      Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                      VerticalAlignment="Center" />
+          </Grid>
+        </Button>
+
+        <!-- Aktivitet -->
+        <Grid ColumnSpacing="10">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Border Background="{ThemeResource SurfaceBrush}"
+                  CornerRadius="12"
+                  Padding="14">
+            <StackPanel Spacing="4">
+              <TextBlock Text="7 dagar"
+                         Style="{StaticResource LabelMedium}"
+                         Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+              <TextBlock Text="{Binding Dashboard.CompletedSessionsLast7Days}"
+                         Style="{StaticResource HeadlineMedium}"
+                         FontWeight="Bold" />
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="1"
+                  Background="{ThemeResource SurfaceBrush}"
+                  CornerRadius="12"
+                  Padding="14">
+            <StackPanel Spacing="4">
+              <TextBlock Text="30 dagar"
+                         Style="{StaticResource LabelMedium}"
+                         Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+              <TextBlock Text="{Binding Dashboard.CompletedSessionsLast30Days}"
+                         Style="{StaticResource HeadlineMedium}"
+                         FontWeight="Bold" />
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="2"
+                  Background="{ThemeResource SurfaceBrush}"
+                  CornerRadius="12"
+                  Padding="14">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Totalt"
+                         Style="{StaticResource LabelMedium}"
+                         Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+              <TextBlock Text="{Binding Dashboard.TotalCompletedSessions}"
+                         Style="{StaticResource HeadlineMedium}"
+                         FontWeight="Bold" />
+            </StackPanel>
+          </Border>
+        </Grid>
+
+        <Border Background="{ThemeResource SurfaceBrush}"
+                CornerRadius="12"
+                Padding="16">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Denna vecka"
+                       Style="{StaticResource LabelMedium}"
+                       Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+            <ItemsRepeater ItemsSource="{Binding WeekDays}">
+              <ItemsRepeater.Layout>
+                <UniformGridLayout MaximumRowsOrColumns="7"
+                                   MinItemWidth="32"
+                                   MinColumnSpacing="6"
+                                   ItemsStretch="Fill" />
+              </ItemsRepeater.Layout>
+              <ItemsRepeater.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Spacing="6"
+                              AutomationProperties.Name="{Binding AutomationName}">
+                    <Grid Height="40">
+                      <Border Background="{ThemeResource SurfaceVariantBrush}"
+                              CornerRadius="12" />
+                      <Border Background="{ThemeResource PrimaryBrush}"
+                              CornerRadius="12"
+                              Visibility="{Binding DoneVisibility}" />
+                      <Border BorderBrush="{ThemeResource OnSurfaceBrush}"
+                              BorderThickness="2"
+                              CornerRadius="12"
+                              Visibility="{Binding TodayVisibility}" />
+                    </Grid>
+                    <TextBlock Text="{Binding Label}"
+                               Style="{StaticResource LabelMedium}"
+                               HorizontalAlignment="Center" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+          </StackPanel>
+        </Border>
+
+        <!-- Aktiva splits -->
+        <StackPanel Spacing="12"
+                    Visibility="{Binding SplitsVisibility}">
+          <Grid>
+            <TextBlock Text="Aktiva splits"
+                       Style="{StaticResource TitleLarge}"
+                       VerticalAlignment="Center" />
+            <Button Content="Ny split"
+                    Command="{Binding CreateSplitCommand}"
+                    Style="{StaticResource TextButtonStyle}"
+                    HorizontalAlignment="Right"
+                    MinHeight="44" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Splits}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="{ThemeResource SurfaceBrush}"
+                        CornerRadius="12"
+                        Padding="16"
+                        Margin="0,0,0,12">
+                  <StackPanel Spacing="12">
+                    <Grid>
+                      <TextBlock Text="{Binding SplitName}"
+                                 Style="{StaticResource TitleMedium}"
+                                 TextWrapping="Wrap"
+                                 Margin="0,0,64,0" />
+                      <TextBlock Text="{Binding PassCount}"
+                                 Style="{StaticResource BodySmall}"
+                                 Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                                 HorizontalAlignment="Right" />
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding Passes}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <Button Content="{Binding PassName}"
+                                  Click="OnPassChipClick"
+                                  Style="{StaticResource OutlinedButtonStyle}"
+                                  MinHeight="44"
+                                  Margin="0,0,8,8" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
 </Page>

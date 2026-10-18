@@ -1,7 +1,10 @@
 namespace Tyngd.App.Presentation;
 
-/// <summary>Ett pass i en split (som /TP/split/{SplitId}/pass/{PassId} i webbappen). Fria pass har också ett SplitId/PassId.</summary>
-public record PassArgs(int SplitId, int PassId);
+/// <summary>
+/// Ett pass i en split (som /TP/split/{SplitId}/pass/{PassId} i webbappen). Fria pass har också ett SplitId/PassId.
+/// <paramref name="StartNew"/> motsvarar webbens ?new=1: starta en ny session i stället för att återuppta.
+/// </summary>
+public record PassArgs(int SplitId, int PassId, bool StartNew = false);
 
 /// <summary>Skapa en ny split (SplitId null) eller redigera en befintlig (som /create-split och /edit-split/{SplitId}).</summary>
 public record EditSplitArgs(int? SplitId);

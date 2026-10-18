@@ -1,0 +1,40 @@
+<UserControl x:Class="Tyngd.App.Presentation.Controls.FreeSessionExercisePicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <UserControl.Resources>
+    <Style x:Key="FavoriteChipStyle"
+           TargetType="Button"
+           BasedOn="{StaticResource OutlinedButtonStyle}">
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="Margin" Value="0,0,6,6" />
+    </Style>
+  </UserControl.Resources>
+  <!-- Väljer en övning att lägga till: snabbval bland favoriter, eller sök i katalogen (egen övning sist). -->
+  <StackPanel Spacing="8">
+    <TextBlock x:Name="FavoritesHeader"
+               Text="Favoriter"
+               Style="{StaticResource LabelMedium}"
+               Foreground="{ThemeResource OnSurfaceVariantBrush}"
+               Visibility="Collapsed" />
+    <WrapPanel x:Name="FavoritesPanel" />
+    <AutoSuggestBox x:Name="SearchBox"
+                    Header="Sök övning"
+                    PlaceholderText="Sök på svenska eller engelska"
+                    UpdateTextOnSelect="False"
+                    TextChanged="OnTextChanged"
+                    QuerySubmitted="OnQuerySubmitted">
+      <AutoSuggestBox.ItemTemplate>
+        <DataTemplate>
+          <StackPanel Padding="0,4">
+            <TextBlock Text="{Binding Title}"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Subtitle}"
+                       Style="{StaticResource BodySmall}"
+                       Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </DataTemplate>
+      </AutoSuggestBox.ItemTemplate>
+    </AutoSuggestBox>
+  </StackPanel>
+</UserControl>
