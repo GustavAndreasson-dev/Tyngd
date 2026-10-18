@@ -374,8 +374,11 @@ public partial class PassPage : IDisposable
             ? $" · förra {ex.Weight:0.##} kg" + (_previousDate is { } date ? $" ({SvDate.Short(date)})" : "")
             : "";
 
+    /// <summary>Förra setet, men bara om vikten är densamma som nu; reps på en annan vikt går inte att jämföra.</summary>
     private Tyngd.Shared.DTOs.LastSessionSetDto? PreviousSet(int exerciseId, int setIndex) =>
-        _previous.TryGetValue(exerciseId, out var ex) ? ex.Sets.FirstOrDefault(s => s.SetIndex == setIndex) : null;
+        _previous.TryGetValue(exerciseId, out var ex)
+            ? ex.Sets.FirstOrDefault(s => s.SetIndex == setIndex && s.Weight == (GetWeight(exerciseId) ?? 0))
+            : null;
 
     private static PassData CreateNewPassData(DateTimeOffset now) => new()
     {
