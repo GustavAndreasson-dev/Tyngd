@@ -1,0 +1,49 @@
+<Project Sdk="Uno.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-android;net10.0-desktop</TargetFrameworks>
+
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- NETSDK1201: RID ger inte self-contained app. PRI257: standardspråket en saknas bland resurserna. -->
+    <NoWarn>$(NoWarn);NETSDK1201;PRI257</NoWarn>
+
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+
+    <!-- Display name -->
+    <ApplicationTitle>Tyngd</ApplicationTitle>
+    <!-- App Identifier -->
+    <ApplicationId>se.tyngd.app</ApplicationId>
+    <!-- Versions -->
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <!-- Package Publisher -->
+    <ApplicationPublisher>Tyngd</ApplicationPublisher>
+    <!-- Package Description -->
+    <Description>Tyngd – träningslogg.</Description>
+
+    <!--
+      UnoFeatures are used to quickly add and manage features enabled for your app.
+      https://aka.platform.uno/singleproject-features
+    -->
+    <UnoFeatures>
+      Material;
+      Hosting;
+      Toolkit;
+      Logging;
+      Mvvm;
+      Configuration;
+      Http;
+      Serialization;
+      Navigation;
+      ThemeService;
+      SkiaRenderer;
+    </UnoFeatures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Tyngd.Shared.csproj" />
+    <ProjectReference Include="..\Client.Core\Tyngd.Client.Core.csproj" />
+  </ItemGroup>
+
+</Project>
