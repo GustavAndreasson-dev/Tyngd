@@ -1,0 +1,32 @@
+<Page x:Class="Tyngd.App.Presentation.SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="{ThemeResource BackgroundBrush}">
+  <ScrollViewer>
+    <StackPanel Padding="24"
+                Spacing="16">
+      <TextBlock Text="Inställningar"
+                 Style="{StaticResource HeadlineMedium}" />
+      <Grid ColumnSpacing="16">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="Mörkt läge"
+                   Style="{StaticResource BodyLarge}"
+                   VerticalAlignment="Center" />
+        <ToggleSwitch Grid.Column="1"
+                      IsOn="{Binding IsDarkMode, Mode=TwoWay}"
+                      OnContent=""
+                      OffContent=""
+                      AutomationProperties.Name="Mörkt läge"
+                      AutomationProperties.AutomationId="DarkModeSwitch" />
+      </Grid>
+      <TextBlock Text="{Binding UserName}"
+                 Style="{StaticResource BodyMedium}" />
+      <Button Content="Logga ut"
+              Command="{Binding LogoutCommand}"
+              AutomationProperties.AutomationId="LogoutButton" />
+    </StackPanel>
+  </ScrollViewer>
+</Page>

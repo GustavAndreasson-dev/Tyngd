@@ -4,6 +4,7 @@ global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Options;
 global using Tyngd.App.Presentation;
+global using Tyngd.App.Services;
 global using Tyngd.Client.Services;
 global using ApplicationExecutionState = Windows.ApplicationModel.Activation.ApplicationExecutionState;
 global using CommunityToolkit.Mvvm.ComponentModel;

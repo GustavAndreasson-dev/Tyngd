@@ -11,65 +11,9 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
+    <!-- Flikarnas sidor skapas av navigeringen (nästlade routes i App.xaml.cs). -->
     <Grid uen:Region.Attached="True"
-          uen:Region.Navigator="Visibility">
-      <StackPanel uen:Region.Name="Oversikt"
-                  Padding="24"
-                  Spacing="8">
-        <TextBlock Text="Översikt"
-                   Style="{StaticResource HeadlineMedium}" />
-        <TextBlock Text="{Binding Greeting}"
-                   Style="{StaticResource BodyLarge}"
-                   AutomationProperties.AutomationId="MainGreeting" />
-      </StackPanel>
-
-      <TextBlock uen:Region.Name="Splits"
-                 Visibility="Collapsed"
-                 Text="Mina splits – kommer snart"
-                 Style="{StaticResource TitleMedium}"
-                 Margin="24" />
-
-      <TextBlock uen:Region.Name="Mallar"
-                 Visibility="Collapsed"
-                 Text="Split-mallar – kommer snart"
-                 Style="{StaticResource TitleMedium}"
-                 Margin="24" />
-
-      <TextBlock uen:Region.Name="Ovningar"
-                 Visibility="Collapsed"
-                 Text="Övningar – kommer snart"
-                 Style="{StaticResource TitleMedium}"
-                 Margin="24" />
-
-      <ScrollViewer uen:Region.Name="Installningar"
-                    Visibility="Collapsed">
-        <StackPanel Padding="24"
-                    Spacing="16">
-          <TextBlock Text="Inställningar"
-                     Style="{StaticResource HeadlineMedium}" />
-          <Grid ColumnSpacing="16">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="Mörkt läge"
-                       Style="{StaticResource BodyLarge}"
-                       VerticalAlignment="Center" />
-            <ToggleSwitch Grid.Column="1"
-                          IsOn="{Binding IsDarkMode, Mode=TwoWay}"
-                          OnContent=""
-                          OffContent=""
-                          AutomationProperties.Name="Mörkt läge"
-                          AutomationProperties.AutomationId="DarkModeSwitch" />
-          </Grid>
-          <TextBlock Text="{Binding UserName}"
-                     Style="{StaticResource BodyMedium}" />
-          <Button Content="Logga ut"
-                  Command="{Binding LogoutCommand}"
-                  AutomationProperties.AutomationId="LogoutButton" />
-        </StackPanel>
-      </ScrollViewer>
-    </Grid>
+          uen:Region.Navigator="Visibility" />
 
     <utu:TabBar Grid.Row="1"
                 Style="{StaticResource BottomTabBarStyle}"

@@ -58,6 +58,7 @@ public partial class App : Application
                     services.AddSingleton(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Tyngd.ServerAPI"));
 
                     services.AddSingleton<ThemeState>();
+                    services.AddSingleton<RestTimerState>();
                     services.AddSingleton<SessionState>();
                     services.AddSingleton<LoginState>();
                     services.AddSingleton<PendingSyncState>();
@@ -132,20 +133,32 @@ public partial class App : Application
     {
         views.Register(
             new ViewMap<LoginPage, LoginViewModel>(),
-            new ViewMap<MainPage, MainViewModel>()
+            new ViewMap<MainPage, MainViewModel>(),
+            new ViewMap<OverviewPage, OverviewViewModel>(),
+            new ViewMap<MySplitsPage, MySplitsViewModel>(),
+            new ViewMap<TemplatesPage, TemplatesViewModel>(),
+            new ViewMap<ExercisesPage, ExercisesViewModel>(),
+            new ViewMap<SettingsPage, SettingsViewModel>(),
+            new DataViewMap<PassPage, PassViewModel, PassArgs>(),
+            new DataViewMap<EditSplitPage, EditSplitViewModel, EditSplitArgs>(),
+            new DataViewMap<ExerciseInfoPage, ExerciseInfoViewModel, ExerciseInfoArgs>()
         );
 
         routes.Register(
             new RouteMap("Login", View: views.FindByViewModel<LoginViewModel>()),
             new RouteMap("Main", View: views.FindByViewModel<MainViewModel>(), Nested:
             [
-                // Flikarna i MainPage (innehållet ligger direkt i sidan).
-                new RouteMap("Oversikt", IsDefault: true),
-                new RouteMap("Splits"),
-                new RouteMap("Mallar"),
-                new RouteMap("Ovningar"),
-                new RouteMap("Installningar"),
-            ])
+                // Flikarna i bottenmenyn; namnen matchar Region.Name i MainPage.xaml.
+                new RouteMap("Oversikt", View: views.FindByViewModel<OverviewViewModel>(), IsDefault: true),
+                new RouteMap("Splits", View: views.FindByViewModel<MySplitsViewModel>()),
+                new RouteMap("Mallar", View: views.FindByViewModel<TemplatesViewModel>()),
+                new RouteMap("Ovningar", View: views.FindByViewModel<ExercisesViewModel>()),
+                new RouteMap("Installningar", View: views.FindByViewModel<SettingsViewModel>()),
+            ]),
+            // Helskärmssidor utan bottenmeny (passidan döljer den även i webbappen).
+            new RouteMap("Pass", View: views.FindByViewModel<PassViewModel>()),
+            new RouteMap("EditSplit", View: views.FindByViewModel<EditSplitViewModel>()),
+            new RouteMap("ExerciseInfo", View: views.FindByViewModel<ExerciseInfoViewModel>())
         );
     }
 }

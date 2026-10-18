@@ -1,0 +1,14 @@
+<Page x:Class="Tyngd.App.Presentation.ExercisesPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      Background="{ThemeResource BackgroundBrush}">
+  <StackPanel utu:SafeArea.Insets="VisibleBounds"
+              Padding="24"
+              Spacing="8">
+    <TextBlock Text="Övningar"
+               Style="{StaticResource HeadlineMedium}" />
+    <TextBlock Text="Kommer snart"
+               Style="{StaticResource BodyLarge}" />
+  </StackPanel>
+</Page>
