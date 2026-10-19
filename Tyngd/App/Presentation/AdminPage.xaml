@@ -2,6 +2,7 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:utu="using:Uno.Toolkit.UI"
+      NavigationCacheMode="Required"
       Background="{ThemeResource BackgroundBrush}">
   <Page.Resources>
     <Style x:Key="IconButtonStyle"
@@ -102,6 +103,8 @@
                      AutomationProperties.Name="Adminsektioner" />
     </ScrollViewer>
 
+    <!-- Avsnitten laddas med x:Load i stället för Visibility: ett dolt Användare-avsnitt (med sina switchar) ritades kvar
+         under nästa avsnitt på Android (Uno Skia). -->
     <ScrollViewer Grid.Row="2">
       <StackPanel Padding="16,8,16,24"
                   Spacing="16">
@@ -113,7 +116,8 @@
 
         <!-- Översikt -->
         <StackPanel Spacing="16"
-                    Visibility="{Binding IsOverviewSection}">
+                    x:Name="OverviewSection"
+              x:Load="{x:Bind ViewModel.IsOverviewSection, Mode=OneWay}">
           <TextBlock Text="Följ användning och hantera användare och träningsmallar."
                      Style="{StaticResource SecondaryTextStyle}" />
           <Grid ColumnSpacing="12"
@@ -188,15 +192,18 @@
         </StackPanel>
 
         <!-- Användare -->
-        <Border Style="{StaticResource CardStyle}"
-                Visibility="{Binding IsUsersSection}">
+        <Grid x:Name="UsersSection"
+              x:Load="{x:Bind ViewModel.IsUsersSection, Mode=OneWay}">
+        <Border Style="{StaticResource CardStyle}">
           <StackPanel Spacing="12">
             <Grid ColumnSpacing="8">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
-              <TextBox Text="{Binding UserSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+              <!-- x:Name behövs: Unos generator gör annars en variabel av AutomationProperties.Name i x:Load-avsnitt. -->
+              <TextBox x:Name="UserSearchBox"
+                       Text="{Binding UserSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                        PlaceholderText="Sök användare eller e-post"
                        AutomationProperties.Name="Sök användare eller e-post"
                        InputScope="EmailNameOrAddress"
@@ -275,10 +282,12 @@
             </Grid>
           </StackPanel>
         </Border>
+        </Grid>
 
         <!-- Mallar -->
         <StackPanel Spacing="16"
-                    Visibility="{Binding IsTemplatesSection}">
+                    x:Name="TemplatesSection"
+              x:Load="{x:Bind ViewModel.IsTemplatesSection, Mode=OneWay}">
           <TextBlock Text="Redigering behåller stabila id:n. Borttagning arkiverar."
                      Style="{StaticResource SecondaryTextStyle}" />
           <Button Command="{Binding NewTemplateCommand}"
@@ -349,7 +358,8 @@
         </StackPanel>
 
         <!-- Övningskatalog (som AdminCatalogPanel.razor) -->
-        <Grid Visibility="{Binding IsCatalogSection}">
+        <Grid x:Name="CatalogSection"
+              x:Load="{x:Bind ViewModel.IsCatalogSection, Mode=OneWay}">
         <StackPanel Spacing="12"
                     DataContext="{Binding Catalog}">
           <Button Command="{Binding SyncCommand}"
@@ -379,7 +389,8 @@
               </DataTemplate>
             </ComboBox.ItemTemplate>
           </ComboBox>
-          <TextBox Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+          <TextBox x:Name="CatalogSearchBox"
+                   Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                    PlaceholderText="Sök"
                    AutomationProperties.Name="Sök"
                    IsSpellCheckEnabled="False" />

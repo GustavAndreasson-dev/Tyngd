@@ -12,7 +12,12 @@ public sealed partial class AdminPage : Page
         this.InitializeComponent();
         this.GoBackOnBackButton();
         this.KeepFocusedInputVisible();
-        DataContextChanged += (_, _) => _ = ViewModel?.LoadAsync();
+        DataContextChanged += (_, _) =>
+        {
+            ViewModel = DataContext as AdminViewModel;
+            Bindings.Update();
+            _ = ViewModel?.LoadAsync();
+        };
         // Tillbaka från mallredigeraren: ladda om så att sparade mallar syns.
         Unloaded += (_, _) => _reloadWhenShown = true;
         Loaded += (_, _) =>
@@ -24,7 +29,7 @@ public sealed partial class AdminPage : Page
         };
     }
 
-    private AdminViewModel? ViewModel => DataContext as AdminViewModel;
+    public AdminViewModel? ViewModel { get; private set; }
 
     private void OnUserSearchKeyDown(object sender, KeyRoutedEventArgs e)
     {
