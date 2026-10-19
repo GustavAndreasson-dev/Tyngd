@@ -74,6 +74,10 @@
         <TextBlock Text="{Binding Error}"
                    Foreground="{ThemeResource ErrorBrush}"
                    TextWrapping="Wrap" />
+        <TextBlock Text="{Binding Notice}"
+                   Foreground="{ThemeResource PrimaryBrush}"
+                   TextWrapping="Wrap"
+                   AutomationProperties.LiveSetting="Polite" />
         <TextBlock Text="{Binding EmptyText}"
                    Style="{StaticResource BodyMedium}"
                    Foreground="{ThemeResource OnSurfaceVariantBrush}"

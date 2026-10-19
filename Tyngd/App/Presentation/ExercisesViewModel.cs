@@ -57,6 +57,10 @@ public partial class ExercisesViewModel : ObservableObject
     [ObservableProperty]
     private string? _error;
 
+    /// <summary>Bekräftelse efter favoritändring (som webbappens snackbar).</summary>
+    [ObservableProperty]
+    private string? _notice;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(LoadingVisibility))]
     private bool _isLoading;
@@ -132,10 +136,12 @@ public partial class ExercisesViewModel : ObservableObject
     private async Task ToggleFavoriteAsync(ExerciseItem item)
     {
         Error = null;
+        Notice = null;
         try
         {
             // FavoritesService.OnChange anropar SyncFavorites.
-            await _favoritesService.ToggleAsync(item.Exercise.CatalogExerciseId);
+            var added = await _favoritesService.ToggleAsync(item.Exercise.CatalogExerciseId);
+            Notice = added ? $"{item.Exercise.Name} sparad som favorit." : $"{item.Exercise.Name} borttagen från favoriter.";
         }
         catch (HttpRequestException)
         {

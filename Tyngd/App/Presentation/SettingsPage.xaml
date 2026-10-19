@@ -53,13 +53,32 @@
                           AutomationProperties.Name="Aktivera vilotimer"
                           AutomationProperties.AutomationId="RestTimerSwitch" />
           </Grid>
-          <ComboBox Header="Vilotid (minuter)"
-                    ItemsSource="{Binding RestMinuteChoices}"
+          <!-- Material-stilen visar inte Header; egen etikett. -->
+          <TextBlock Text="Vilotid (minuter)"
+                     Style="{StaticResource BodyMedium}" />
+          <ComboBox ItemsSource="{Binding RestMinuteChoices}"
+                    AutomationProperties.Name="Vilotid i minuter"
                     SelectedItem="{Binding RestTimerMinutes, Mode=TwoWay}"
                     IsEnabled="{Binding IsRestTimerEnabled}"
                     MinWidth="180"
                     HorizontalAlignment="Left"
                     AutomationProperties.AutomationId="RestTimerMinutes" />
+          <StackPanel Visibility="{Binding ShowEnableNotifications}"
+                      Spacing="4">
+            <Button Content="Visa notis när vilan är slut"
+                    Command="{Binding EnableNotificationsCommand}"
+                    Style="{StaticResource TextButtonStyle}"
+                    MinHeight="44" />
+            <TextBlock Text="Då får du en notis om appen ligger i bakgrunden när vilan tar slut."
+                       Style="{StaticResource BodySmall}"
+                       Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+          <TextBlock Text="Notis visas när vilan är slut och appen ligger i bakgrunden."
+                     Visibility="{Binding ShowNotificationsOn}"
+                     Style="{StaticResource BodySmall}"
+                     Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                     TextWrapping="Wrap" />
         </StackPanel>
       </Border>
 

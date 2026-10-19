@@ -18,8 +18,9 @@ public partial class SettingsViewModel : ObservableObject
     private bool _settingsLoaded;
 
     public SettingsViewModel(LoginState loginState, ThemeState themeState, RestTimerState restTimer,
-        UserSettingsService userSettingsService, PendingSyncState pendingSync, INavigator navigator)
+        UserSettingsService userSettingsService, PendingSyncState pendingSync, INavigator navigator, IDispatcher dispatcher)
     {
+        RestNotifications.PermissionChanged += () => dispatcher.TryEnqueue(RefreshNotificationState);
         _navigator = navigator;
         _loginState = loginState;
         _themeState = themeState;
@@ -71,6 +72,22 @@ public partial class SettingsViewModel : ObservableObject
 
     public Visibility AdminNoteVisibility =>
         _loginState.CurrentUser?.IsAdmin == true ? Visibility.Visible : Visibility.Collapsed;
+
+    // Notis när vilan är slut (som webbappens inställning); bara där plattformen har notiser.
+    public bool NotificationsSupported { get; } = RestNotifications.IsSupported;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowEnableNotifications), nameof(ShowNotificationsOn))]
+    private bool _notificationsAllowed = RestNotifications.AreAllowed;
+
+    public bool ShowEnableNotifications => NotificationsSupported && !NotificationsAllowed;
+
+    public bool ShowNotificationsOn => NotificationsSupported && NotificationsAllowed;
+
+    private void RefreshNotificationState() => NotificationsAllowed = RestNotifications.AreAllowed;
+
+    [RelayCommand]
+    private void EnableNotifications() => RestNotifications.AskOrOpenSettings();
 
     [RelayCommand]
     private Task OpenAdminAsync() => _navigator.NavigateViewModelAsync<AdminViewModel>(this);

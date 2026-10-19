@@ -91,8 +91,10 @@ public partial class App : Application
                 var host = builder.Build();
                 // Läs sparad inloggning och senaste tema innan första sidan visas, som MainLayout gör i webbappen.
                 await host.Services.GetRequiredService<LoginState>().InitializeAsync();
-                if (await host.Services.GetRequiredService<IAppStorage>().GetItemAsync<bool?>(DarkModeKey) is bool dark)
-                    host.Services.GetRequiredService<ThemeState>().SetDarkMode(dark);
+                // Inget sparat tema (första start): följ telefonens mörka läge, som webbappen.
+                var dark = await host.Services.GetRequiredService<IAppStorage>().GetItemAsync<bool?>(DarkModeKey)
+                    ?? Current.RequestedTheme == ApplicationTheme.Dark;
+                host.Services.GetRequiredService<ThemeState>().SetDarkMode(dark);
                 return host;
             },
             initialNavigate: async (services, navigator) =>

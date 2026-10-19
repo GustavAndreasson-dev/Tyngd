@@ -9,11 +9,26 @@ public sealed partial class MainPage : Page
         [typeof(OverviewViewModel), typeof(MySplitsViewModel), typeof(TemplatesViewModel), typeof(ExercisesViewModel), typeof(SettingsViewModel)];
     private readonly bool[] _created = new bool[5];
 
+    public const int SplitsTabIndex = 1;
+
+    // Flik som ska visas nästa gång skalet visas, t.ex. Mina splits efter att ett löst pass sparats.
+    private static int? s_requestedTab;
+
+    public static void RequestTab(int index) => s_requestedTab = index;
+
     public MainPage()
     {
         this.InitializeComponent();
         _tabs = [OverviewTab, SplitsTab, TemplatesTab, ExercisesTab, SettingsTab];
-        Loaded += (_, _) => ShowTab(Math.Max(0, Tabs.SelectedIndex));
+        Loaded += (_, _) =>
+        {
+            if (s_requestedTab is int requested)
+            {
+                s_requestedTab = null;
+                Tabs.SelectedIndex = requested;
+            }
+            ShowTab(Math.Max(0, Tabs.SelectedIndex));
+        };
         Unloaded += (_, _) => SetBackToOverview(false);
     }
 

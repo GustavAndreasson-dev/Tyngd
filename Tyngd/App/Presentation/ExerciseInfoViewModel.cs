@@ -10,14 +10,15 @@ public partial class ExerciseInfoViewModel : ObservableObject
     private readonly PassLogService _passLogService;
     private readonly INavigator _navigator;
 
-    public ExerciseInfoViewModel(ExerciseInfoArgs args, CatalogService catalogService, FavoritesService favoritesService, PassLogService passLogService, INavigator navigator)
+    public ExerciseInfoViewModel(ExerciseInfoArgs args, CatalogService catalogService, FavoritesService favoritesService, PassLogService passLogService, INavigator navigator, IDispatcher dispatcher)
     {
         Args = args;
         _catalogService = catalogService;
         _favoritesService = favoritesService;
         _passLogService = passLogService;
         _navigator = navigator;
-        _ = LoadAsync();
+        // Navigeringen skapar ViewModel på en bakgrundstråd; ladda på UI-tråden.
+        dispatcher.TryEnqueue(() => _ = LoadAsync());
     }
 
     public ExerciseInfoArgs Args { get; }

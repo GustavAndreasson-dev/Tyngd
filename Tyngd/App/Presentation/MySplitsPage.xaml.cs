@@ -17,6 +17,8 @@ public sealed partial class MySplitsPage : Page
         {
             if (Visibility == Visibility.Visible)
                 _ = ViewModel?.LoadAsync();
+            else if (ViewModel is not null)
+                ViewModel.SuccessMessage = null; // Meddelandet gäller bara tills man lämnar fliken.
         });
     }
 

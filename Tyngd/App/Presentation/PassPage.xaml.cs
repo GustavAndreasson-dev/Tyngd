@@ -83,7 +83,13 @@ public sealed partial class PassPage : Page
                 return;
 
             if (vm.IsFreeSession)
-                await new FinishFreeSessionDialog(vm.FreeSessions, vm.UserSplits, vm.Args.PassId, vm.PassName) .ShowOverAsync(this);
+            {
+                var dialog = new FinishFreeSessionDialog(vm.FreeSessions, vm.UserSplits, vm.Args.PassId, vm.PassName);
+                await dialog.ShowOverAsync(this);
+                // Som webbappen: ett sparat pass visas i Mina splits.
+                if (dialog.Kept is not null)
+                    MainPage.RequestTab(MainPage.SplitsTabIndex);
+            }
 
             await vm.GoBackCommand.ExecuteAsync(null);
         }

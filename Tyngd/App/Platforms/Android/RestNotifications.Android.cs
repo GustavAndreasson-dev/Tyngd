@@ -30,6 +30,29 @@ public static partial class RestNotifications
         }
     }
 
+    static partial void CheckSupported(ref bool supported) => supported = true;
+
+    static partial void CheckAllowed(ref bool allowed) =>
+        allowed = NotificationManagerCompat.From(AppContext)!.AreNotificationsEnabled();
+
+    static partial void OnAskOrOpenSettings()
+    {
+        // Första gången (eller om Android får fråga igen) visas Androids fråga; annars appens notisinställningar.
+        var activity = Uno.UI.ContextHelper.Current as Activity;
+        if (OperatingSystem.IsAndroidVersionAtLeast(33) && activity is not null
+            && (!s_permissionRequested || ActivityCompat.ShouldShowRequestPermissionRationale(activity, Manifest.Permission.PostNotifications)))
+        {
+            s_permissionRequested = true;
+            ActivityCompat.RequestPermissions(activity, [Manifest.Permission.PostNotifications], requestCode: 1);
+            return;
+        }
+
+        var intent = new Intent(Android.Provider.Settings.ActionAppNotificationSettings)
+            .PutExtra(Android.Provider.Settings.ExtraAppPackage, AppContext.PackageName)
+            .AddFlags(ActivityFlags.NewTask);
+        AppContext.StartActivity(intent);
+    }
+
     static partial void OnHidden(RestTimerState timer)
     {
         if (!timer.IsResting || timer.EndsAtUtc is not { } endsAt)

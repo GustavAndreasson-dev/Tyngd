@@ -44,7 +44,6 @@ public partial class MySplitsViewModel : ObservableObject
 
         IsLoading = true;
         ErrorMessage = null;
-        SuccessMessage = null;
         try
         {
             var splits = await _userSplitsService.GetMySplitsAsync();
@@ -81,14 +80,25 @@ public partial class MySplitsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private Task NewSplitAsync() =>
-        _navigator.NavigateViewModelAsync<EditSplitViewModel>(this, data: new EditSplitArgs(null));
+    private Task NewSplitAsync() => OpenEditorAsync(null);
 
-    internal Task EditSplitAsync(int splitId) =>
-        _navigator.NavigateViewModelAsync<EditSplitViewModel>(this, data: new EditSplitArgs(splitId));
+    internal Task EditSplitAsync(int splitId) => OpenEditorAsync(splitId);
 
-    internal Task StartPassAsync(int splitId, int passId) =>
-        _navigator.NavigateViewModelAsync<PassViewModel>(this, data: new PassArgs(splitId, passId));
+    private async Task OpenEditorAsync(int? splitId)
+    {
+        SuccessMessage = null;
+        var saved = await _navigator
+            .NavigateViewModelForResultAsync<EditSplitViewModel, string>(this, data: new EditSplitArgs(splitId))
+            .AsResult();
+        if (saved.SomeOrDefault() is { } status)
+            SuccessMessage = status == "created" ? "Splitten har skapats." : "Ändringarna har sparats.";
+    }
+
+    internal Task StartPassAsync(int splitId, int passId)
+    {
+        SuccessMessage = null;
+        return _navigator.NavigateViewModelAsync<PassViewModel>(this, data: new PassArgs(splitId, passId));
+    }
 
     /// <summary>Hela splitten hämtas på en gång, så alla pass i den får sina övningar.</summary>
     internal async Task LoadExercisesAsync(SplitItem split, PassItem expandedPass)

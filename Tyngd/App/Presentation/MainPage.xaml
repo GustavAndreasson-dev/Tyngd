@@ -4,6 +4,7 @@
       xmlns:local="using:Tyngd.App.Presentation"
       xmlns:utu="using:Uno.Toolkit.UI"
       xmlns:controls="using:Tyngd.App.Presentation.Controls"
+      NavigationCacheMode="Required"
       Background="{ThemeResource BackgroundBrush}">
   <!-- Appens skal: flikarna i bottenmenyn (som BottomNav.razor i webbappen) växlar innehållet ovanför. -->
   <Grid utu:SafeArea.Insets="VisibleBounds,SoftInput">

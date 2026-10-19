@@ -11,7 +11,7 @@ public partial class EditSplitViewModel : ObservableObject
     private readonly SplitTemplateService _splitTemplateService;
     private readonly INavigator _navigator;
 
-    public EditSplitViewModel(EditSplitArgs args, UserSplitsService userSplitsService, SplitTemplateService splitTemplateService, INavigator navigator)
+    public EditSplitViewModel(EditSplitArgs args, UserSplitsService userSplitsService, SplitTemplateService splitTemplateService, INavigator navigator, IDispatcher dispatcher)
     {
         Args = args;
         _userSplitsService = userSplitsService;
@@ -19,7 +19,8 @@ public partial class EditSplitViewModel : ObservableObject
         _navigator = navigator;
 
         if (IsEditMode)
-            _ = LoadForEditAsync(args.SplitId!.Value);
+            // Navigeringen skapar ViewModel på en bakgrundstråd; ladda på UI-tråden så att listorna kan uppdateras.
+            dispatcher.TryEnqueue(() => _ = LoadForEditAsync(args.SplitId!.Value));
         else
             AddPass();
     }
@@ -202,7 +203,8 @@ public partial class EditSplitViewModel : ObservableObject
             IsSaving = false;
         }
 
-        await _navigator.NavigateBackAsync(this);
+        // Mina splits visar "Splitten har skapats." / "Ändringarna har sparats." som webbappens ?saved=.
+        await _navigator.NavigateBackWithResultAsync(this, data: Option.Some(Args.SplitId is null ? "created" : "updated"));
     }
 
     private void ClearErrors() => ApplyErrors(new Dictionary<string, string>());
