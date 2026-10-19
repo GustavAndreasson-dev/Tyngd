@@ -86,7 +86,7 @@
                      Foreground="{ThemeResource OnSurfaceVariantBrush}"
                      TextWrapping="Wrap" />
           <Button Content="Logga ut"
-                  Command="{Binding LogoutCommand}"
+                  Click="OnLogoutClick"
                   Style="{StaticResource OutlinedButtonStyle}"
                   MinHeight="44"
                   AutomationProperties.AutomationId="LogoutButton" />

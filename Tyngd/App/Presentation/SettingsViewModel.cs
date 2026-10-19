@@ -10,16 +10,39 @@ public partial class SettingsViewModel : ObservableObject
     private readonly ThemeState _themeState;
     private readonly RestTimerState _restTimer;
     private readonly UserSettingsService _userSettingsService;
+    private readonly PendingSyncState _pendingSync;
 
-    public SettingsViewModel(LoginState loginState, ThemeState themeState, RestTimerState restTimer, UserSettingsService userSettingsService)
+    // Sparar bara ovanpå inställningar som hämtats från servern: annars skulle standardvärden (t.ex. vilotiden)
+    // skriva över användarens sparade inställningar om något ändras innan de laddats eller när appen är offline.
+    private bool _settingsLoaded;
+
+    public SettingsViewModel(LoginState loginState, ThemeState themeState, RestTimerState restTimer,
+        UserSettingsService userSettingsService, PendingSyncState pendingSync)
     {
         _loginState = loginState;
         _themeState = themeState;
         _restTimer = restTimer;
         _userSettingsService = userSettingsService;
+        _pendingSync = pendingSync;
         _isDarkMode = themeState.IsDarkMode;
         _isRestTimerEnabled = restTimer.IsEnabled;
         _restTimerMinutes = restTimer.Seconds / 60;
+        _ = LoadSettingsAsync();
+    }
+
+    private async Task LoadSettingsAsync()
+    {
+        var settings = await _userSettingsService.GetSettingsAsync();
+        if (settings is null)
+        {
+            SavedMessage = "Kunde inte hämta dina inställningar. Ändringar sparas inte förrän appen är online igen.";
+            return;
+        }
+
+        IsDarkMode = settings.IsDarkMode;
+        IsRestTimerEnabled = settings.IsRestTimerEnabled;
+        RestTimerMinutes = settings.RestTimerSeconds / 60;
+        _settingsLoaded = true;
     }
 
     // "2026.10.17.1605+<hash>" från bygget blir "2026.10.17.1605 · 267123a", som i webbappen.
@@ -79,6 +102,9 @@ public partial class SettingsViewModel : ObservableObject
     /// <summary>Sparar alla inställningar från appens tillstånd, som PersistSettingsAsync i webbappens Inställningar.</summary>
     private async Task PersistSettingsAsync()
     {
+        if (!_settingsLoaded)
+            return;
+
         try
         {
             await _userSettingsService.SaveSettingsAsync(new UserSettings
@@ -95,7 +121,18 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Försöker synka osynkade pass innan utloggning (utloggning raderar dem från telefonen).
+    /// Returnerar true om det fortfarande finns osynkade pass.
+    /// </summary>
+    public async Task<bool> HasUnsyncedPassesAfterSyncAsync()
+    {
+        await _pendingSync.RefreshAsync();
+        if (_pendingSync.HasPendingSync)
+            await _pendingSync.SyncVisiblePendingAsync();
+        return _pendingSync.HasPendingSync;
+    }
+
     // App.xaml.cs går tillbaka till inloggningen när LoginState loggas ut.
-    [RelayCommand]
-    private Task LogoutAsync() => _loginState.LogoutAsync();
+    public Task LogoutAsync() => _loginState.LogoutAsync();
 }
