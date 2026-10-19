@@ -111,9 +111,15 @@ public partial class App : Application
             }
         );
 
-        // Vibrera när vilan är slut, oavsett vilken sida som visas (som webbappen när den är synlig).
-        Host.Services.GetRequiredService<RestTimerState>().Finished += () =>
+        // Vilans larm: i förgrunden vibrerar appen själv (oavsett sida, som webbappen när den är synlig);
+        // i bakgrunden visar systemet nedräkning och larm (RestNotifications).
+        var restTimer = Host.Services.GetRequiredService<RestTimerState>();
+        var appVisible = true;
+        restTimer.Started += () => MainWindow.DispatcherQueue.TryEnqueue(RestNotifications.RequestPermission);
+        restTimer.Finished += () =>
         {
+            if (!appVisible)
+                return;
             try
             {
                 Windows.Phone.Devices.Notification.VibrationDevice.GetDefault()?.Vibrate(TimeSpan.FromMilliseconds(600));
@@ -122,6 +128,14 @@ public partial class App : Application
             {
                 // Ingen vibrator (t.ex. desktop).
             }
+        };
+        MainWindow.VisibilityChanged += (_, e) =>
+        {
+            appVisible = e.Visible;
+            if (e.Visible)
+                RestNotifications.AppShown();
+            else
+                RestNotifications.AppHidden(restTimer);
         };
 
         var themeState = Host.Services.GetRequiredService<ThemeState>();

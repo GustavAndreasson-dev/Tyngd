@@ -6,7 +6,7 @@
 
 @* Vilan i sidhuvudet på alla sidor utom passet den startades från, som har en egen stor timer.
    Egen komponent så att bara den renderas om varje tick, inte hela layouten. *@
-@if (RestTimer.IsResting && RestTimer.PassUrl is { } passUrl
+@if (RestTimer.IsResting && PassUrl is { } passUrl
      && !Nav.ToBaseRelativePath(Nav.Uri).StartsWith(passUrl, StringComparison.OrdinalIgnoreCase))
 {
     <a class="rest-pill" href="@passUrl" role="timer" aria-label="Vila pågår, tryck för att gå till passet">
@@ -16,6 +16,9 @@
 }
 
 @code {
+    private string? PassUrl =>
+        RestTimer is { SplitId: { } splitId, PassId: { } passId } ? $"TP/split/{splitId}/pass/{passId}" : null;
+
     protected override void OnInitialized()
     {
         RestTimer.OnTick += Refresh;

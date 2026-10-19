@@ -1,19 +1,19 @@
-using Microsoft.JSInterop;
-
 namespace Tyngd.Client.Services;
 
 /// <summary>
-/// Singleton-tjänst för vilotimern: inställningar och pågående vila.
-/// Vilan räknas mot klockan (<see cref="EndsAtUtc"/>), så den stämmer även när webbläsaren pausat appen,
-/// och sluttiden sparas lokalt så att den överlever omladdning och byte av sida.
+/// Singleton-tjänst för vilotimern: inställningar och pågående vila. Delas av webbappen och Uno-appen.
+/// Vilan räknas mot klockan (<see cref="EndsAtUtc"/>), så den stämmer även när appen pausats eller legat i bakgrunden,
+/// och sluttiden sparas lokalt så att den överlever omladdning, omstart och byte av sida.
+/// Larmet när vilan är slut sköts av respektive app via <see cref="Finished"/>.
 /// </summary>
+/// <remarks>Händelserna kan utlösas från en bakgrundstråd.</remarks>
 public class RestTimerState
 {
     private const string StorageKey = "rest-timer";
-    private readonly IJSRuntime _js;
+    private readonly IAppStorage _storage;
     private CancellationTokenSource? _ticker;
 
-    public RestTimerState(IJSRuntime js) => _js = js;
+    public RestTimerState(IAppStorage storage) => _storage = storage;
 
     /// <summary>Anger om vilotimern är aktiverad.</summary>
     public bool IsEnabled { get; private set; } = true;
@@ -27,8 +27,11 @@ public class RestTimerState
     /// <summary>Längden på pågående vila i sekunder (för förloppsindikatorn).</summary>
     public int DurationSeconds { get; private set; }
 
-    /// <summary>Passidan vilan startades från, för länken tillbaka.</summary>
-    public string? PassUrl { get; private set; }
+    /// <summary>Passet vilan startades från, för vägen tillbaka.</summary>
+    public int? SplitId { get; private set; }
+
+    /// <inheritdoc cref="SplitId"/>
+    public int? PassId { get; private set; }
 
     public bool IsResting => RemainingSeconds > 0;
 
@@ -43,26 +46,34 @@ public class RestTimerState
     /// <summary>Utlöses ungefär varje sekund medan vilan pågår, och när den startar, avbryts eller tar slut.</summary>
     public event Action? OnTick;
 
-    /// <summary>Sätter om timern är aktiverad och notifierar prenumeranter.</summary>
+    /// <summary>Utlöses när en vila startar (även när den återställs), t.ex. för att schemalägga en notis.</summary>
+    public event Action? Started;
+
+    /// <summary>Utlöses när en vila avbryts med <see cref="CancelAsync"/>.</summary>
+    public event Action? Cancelled;
+
+    /// <summary>Utlöses när en vila tar slut av sig själv (inte när den avbryts) – dags för larm.</summary>
+    public event Action? Finished;
+
     public void SetEnabled(bool value)
     {
         IsEnabled = value;
         OnChange?.Invoke();
     }
 
-    /// <summary>Sätter vilotiden i sekunder och notifierar prenumeranter.</summary>
     public void SetSeconds(int value)
     {
         Seconds = value;
         OnChange?.Invoke();
     }
 
-    /// <summary>Startar en ny vila med inställd längd.</summary>
-    public async Task StartAsync(string passUrl)
+    /// <summary>Startar en ny vila med inställd längd från passet <paramref name="splitId"/>/<paramref name="passId"/>.</summary>
+    public async Task StartAsync(int splitId, int passId)
     {
         EndsAtUtc = DateTimeOffset.UtcNow.AddSeconds(Seconds);
         DurationSeconds = Seconds;
-        PassUrl = passUrl;
+        SplitId = splitId;
+        PassId = passId;
         await SaveAsync();
         StartTicker();
     }
@@ -77,30 +88,35 @@ public class RestTimerState
         EndsAtUtc = null;
         await SaveAsync();
         OnTick?.Invoke();
+        Cancelled?.Invoke();
     }
 
     /// <summary>Läser en vila som pågick när appen stängdes. En vila som redan tagit slut tas bort utan larm.</summary>
     public async Task RestoreAsync()
     {
+        StoredRest? stored;
         try
         {
-            var stored = await _js.InvokeAsync<StoredRest?>("tyngd.restTimer.load", StorageKey);
-            if (stored is null || stored.EndsAtUtc <= DateTimeOffset.UtcNow)
-            {
-                if (stored is not null)
-                    await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
-                return;
-            }
-
-            EndsAtUtc = stored.EndsAtUtc;
-            DurationSeconds = stored.DurationSeconds;
-            PassUrl = stored.PassUrl;
-            StartTicker();
+            stored = await _storage.GetItemAsync<StoredRest>(StorageKey);
         }
-        catch (JSException)
+        catch (Exception)
         {
             // Trasig eller blockerad lagring: ingen vila att återställa.
+            return;
         }
+
+        if (stored is null || stored.EndsAtUtc <= DateTimeOffset.UtcNow)
+        {
+            if (stored is not null)
+                await RemoveStoredAsync();
+            return;
+        }
+
+        EndsAtUtc = stored.EndsAtUtc;
+        DurationSeconds = stored.DurationSeconds;
+        SplitId = stored.SplitId;
+        PassId = stored.PassId;
+        StartTicker();
     }
 
     private void StartTicker()
@@ -108,6 +124,7 @@ public class RestTimerState
         StopTicker();
         var cts = _ticker = new CancellationTokenSource();
         OnTick?.Invoke();
+        Started?.Invoke();
         _ = TickAsync(cts.Token);
     }
 
@@ -122,7 +139,7 @@ public class RestTimerState
     {
         try
         {
-            // Bakgrundsflikar kan sakta ner fördröjningen; tiden räknas ändå mot klockan.
+            // Bakgrundsflikar och appar kan sakta ner fördröjningen; tiden räknas ändå mot klockan.
             while (RemainingSeconds > 0)
             {
                 await Task.Delay(500, token);
@@ -132,24 +149,37 @@ public class RestTimerState
             EndsAtUtc = null;
             await SaveAsync();
             OnTick?.Invoke();
-            await _js.InvokeVoidAsync("tyngd.restTimer.finished", token);
+            Finished?.Invoke();
         }
         catch (OperationCanceledException) { }
-        catch (JSException) { }
     }
 
     private async Task SaveAsync()
     {
+        if (EndsAtUtc is null)
+        {
+            await RemoveStoredAsync();
+            return;
+        }
+
         try
         {
-            if (EndsAtUtc is null)
-                await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
-            else
-                await _js.InvokeVoidAsync("tyngd.restTimer.save", StorageKey,
-                    new StoredRest(EndsAtUtc.Value, DurationSeconds, PassUrl));
+            await _storage.SetItemAsync(StorageKey, new StoredRest(EndsAtUtc.Value, DurationSeconds, SplitId, PassId));
         }
-        catch (JSException) { }
+        catch (Exception)
+        {
+            // Vilan fungerar ändå i minnet; den överlever bara inte en omstart.
+        }
     }
 
-    private sealed record StoredRest(DateTimeOffset EndsAtUtc, int DurationSeconds, string? PassUrl);
+    private async Task RemoveStoredAsync()
+    {
+        try
+        {
+            await _storage.RemoveItemAsync(StorageKey);
+        }
+        catch (Exception) { }
+    }
+
+    public sealed record StoredRest(DateTimeOffset EndsAtUtc, int DurationSeconds, int? SplitId, int? PassId);
 }

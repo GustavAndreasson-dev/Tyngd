@@ -410,7 +410,7 @@ public partial class PassViewModel : ObservableObject
         {
             IsStatusOpen = false;
             // Vägen tillbaka från vilan ska återuppta passet, inte starta om det.
-            _ = _restTimer.StartAsync(Args with { StartNew = false });
+            _ = _restTimer.StartAsync(Args.SplitId, Args.PassId);
         }
         else
             _ = _restTimer.CancelAsync();

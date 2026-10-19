@@ -8,6 +8,8 @@
     <NoWarn>$(NoWarn);NETSDK1201;PRI257</NoWarn>
 
     <OutputType>Exe</OutputType>
+    <!-- Android 8 (API 26) eller senare: notiskanaler för vilotimern. -->
+    <SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-android'))">26.0</SupportedOSPlatformVersion>
     <UnoSingleProject>true</UnoSingleProject>
 
     <!-- Display name -->

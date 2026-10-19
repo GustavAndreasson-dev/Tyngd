@@ -74,17 +74,17 @@ public sealed partial class RestPill : UserControl
 
         var remaining = timer?.RemainingSeconds ?? 0;
         TimeText.Text = _finished ? "Vila klar" : $"{remaining / 60}:{remaining % 60:00}";
-        Visibility = timer is not null && (timer.IsResting || _finished) && timer.Pass is not null
+        Visibility = timer is not null && (timer.IsResting || _finished) && timer.PassId is not null
             ? Visibility.Visible
             : Visibility.Collapsed;
     }
 
     private async void OnClick(object sender, RoutedEventArgs e)
     {
-        if (Timer?.Pass is not { } pass)
+        if (Timer is not { SplitId: { } splitId, PassId: { } passId })
             return;
         _finished = false;
         Update();
-        await this.Navigator()!.NavigateViewModelAsync<PassViewModel>(this, data: pass);
+        await this.Navigator()!.NavigateViewModelAsync<PassViewModel>(this, data: new PassArgs(splitId, passId));
     }
 }

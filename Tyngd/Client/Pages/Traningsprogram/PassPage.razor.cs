@@ -565,7 +565,7 @@ public partial class PassPage : IDisposable
     }
 
     /// <summary>Startar vilan. Den fortsätter även om man lämnar passidan (se RestTimerState).</summary>
-    private void StartRestTimer() => _ = RestTimer.StartAsync($"TP/split/{SplitId}/pass/{PassId}");
+    private void StartRestTimer() => _ = RestTimer.StartAsync(SplitId, PassId);
 
     /// <summary>Avbryter pågående vila.</summary>
     private void CancelRestTimer() => _ = RestTimer.CancelAsync();
