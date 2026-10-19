@@ -4,7 +4,7 @@
       xmlns:utu="using:Uno.Toolkit.UI"
       xmlns:controls="using:Tyngd.App.Presentation.Controls"
       Background="{ThemeResource BackgroundBrush}">
-  <Grid utu:SafeArea.Insets="VisibleBounds">
+  <Grid utu:SafeArea.Insets="VisibleBounds,SoftInput">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />

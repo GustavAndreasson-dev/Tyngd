@@ -3,7 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:utu="using:Uno.Toolkit.UI"
       Background="{ThemeResource BackgroundBrush}">
-  <ScrollViewer utu:SafeArea.Insets="VisibleBounds">
+  <ScrollViewer utu:SafeArea.Insets="VisibleBounds,SoftInput">
     <StackPanel MaxWidth="400"
                 Padding="24"
                 Spacing="16"

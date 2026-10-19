@@ -15,7 +15,7 @@
     </Style>
   </Page.Resources>
 
-  <Grid utu:SafeArea.Insets="VisibleBounds">
+  <Grid utu:SafeArea.Insets="VisibleBounds,SoftInput">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />

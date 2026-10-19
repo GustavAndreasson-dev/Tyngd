@@ -7,7 +7,7 @@
       Loaded="OnLoaded"
       Unloaded="OnUnloaded">
   <!-- Passet i helskärm utan bottenmeny, som /pass/ i webbappen. -->
-  <Grid utu:SafeArea.Insets="VisibleBounds">
+  <Grid utu:SafeArea.Insets="VisibleBounds,SoftInput">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />

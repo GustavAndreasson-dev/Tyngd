@@ -6,7 +6,7 @@
       xmlns:controls="using:Tyngd.App.Presentation.Controls"
       Background="{ThemeResource BackgroundBrush}">
   <!-- Appens skal: flikarna i bottenmenyn (som BottomNav.razor i webbappen) växlar innehållet ovanför. -->
-  <Grid utu:SafeArea.Insets="VisibleBounds">
+  <Grid utu:SafeArea.Insets="VisibleBounds,SoftInput">
     <Grid.RowDefinitions>
       <RowDefinition Height="*" />
       <RowDefinition Height="Auto" />
