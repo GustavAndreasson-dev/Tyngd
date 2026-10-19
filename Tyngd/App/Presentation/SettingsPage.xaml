@@ -53,17 +53,13 @@
                           AutomationProperties.Name="Aktivera vilotimer"
                           AutomationProperties.AutomationId="RestTimerSwitch" />
           </Grid>
-          <NumberBox Header="Vilotid (minuter)"
-                     Value="{Binding RestTimerMinutes, Mode=TwoWay}"
-                     IsEnabled="{Binding IsRestTimerEnabled}"
-                     Minimum="1"
-                     Maximum="10"
-                     SmallChange="1"
-                     SpinButtonPlacementMode="Inline"
-                     ValidationMode="InvalidInputOverwritten"
-                     MaxWidth="180"
-                     HorizontalAlignment="Left"
-                     AutomationProperties.AutomationId="RestTimerMinutes" />
+          <ComboBox Header="Vilotid (minuter)"
+                    ItemsSource="{Binding RestMinuteChoices}"
+                    SelectedItem="{Binding RestTimerMinutes, Mode=TwoWay}"
+                    IsEnabled="{Binding IsRestTimerEnabled}"
+                    MinWidth="180"
+                    HorizontalAlignment="Left"
+                    AutomationProperties.AutomationId="RestTimerMinutes" />
         </StackPanel>
       </Border>
 

@@ -208,29 +208,21 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                   </Grid.RowDefinitions>
-                                  <NumberBox Header="Set"
-                                             Value="{Binding DefaultSets, Mode=TwoWay}"
-                                             Minimum="1"
-                                             Maximum="20"
+                                  <TextBox Header="Set"
+                                             Text="{Binding DefaultSets, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                              InputScope="Number" />
-                                  <NumberBox Grid.Column="1"
+                                  <TextBox Grid.Column="1"
                                              Header="Vikt (kg)"
-                                             Value="{Binding DefaultWeight, Mode=TwoWay}"
-                                             Minimum="0"
-                                             Maximum="1000"
+                                             Text="{Binding DefaultWeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                              InputScope="Number" />
-                                  <NumberBox Grid.Row="1"
+                                  <TextBox Grid.Row="1"
                                              Header="Reps min"
-                                             Value="{Binding RepsMin, Mode=TwoWay}"
-                                             Minimum="1"
-                                             Maximum="100"
+                                             Text="{Binding RepsMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                              InputScope="Number" />
-                                  <NumberBox Grid.Row="1"
+                                  <TextBox Grid.Row="1"
                                              Grid.Column="1"
                                              Header="Reps max"
-                                             Value="{Binding RepsMax, Mode=TwoWay}"
-                                             Minimum="1"
-                                             Maximum="100"
+                                             Text="{Binding RepsMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                              InputScope="Number" />
                                 </Grid>
                                 <TextBlock Text="{Binding ValuesError}"

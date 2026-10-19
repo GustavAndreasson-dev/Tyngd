@@ -384,10 +384,10 @@ public partial class EditExerciseItem : ObservableObject
         _exerciseId = exercise.ExerciseId;
         _exerciseName = exercise.ExerciseName;
         _catalogExerciseId = exercise.CatalogExerciseId;
-        _defaultSets = exercise.DefaultSets;
-        _repsMin = exercise.RepsMin;
-        _repsMax = exercise.RepsMax;
-        _defaultWeight = (double)exercise.DefaultWeight;
+        _defaultSets = exercise.DefaultSets.ToString();
+        _repsMin = exercise.RepsMin.ToString();
+        _repsMax = exercise.RepsMax.ToString();
+        _defaultWeight = NumberInput.Format(exercise.DefaultWeight);
     }
 
     [ObservableProperty]
@@ -397,18 +397,18 @@ public partial class EditExerciseItem : ObservableObject
     [ObservableProperty]
     private int? _catalogExerciseId;
 
-    // NumberBox arbetar med double; tomt fält ger NaN, som valideringen sedan stoppar.
+    // Text (inte NumberBox) så att värdet finns i ViewModel vid varje tecken, även om man trycker Spara direkt.
     [ObservableProperty]
-    private double _defaultSets;
+    private string _defaultSets;
 
     [ObservableProperty]
-    private double _repsMin;
+    private string _repsMin;
 
     [ObservableProperty]
-    private double _repsMax;
+    private string _repsMax;
 
     [ObservableProperty]
-    private double _defaultWeight;
+    private string _defaultWeight;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Title))]
@@ -453,9 +453,10 @@ public partial class EditExerciseItem : ObservableObject
         DefaultSets = ToInt(DefaultSets),
         RepsMin = ToInt(RepsMin),
         RepsMax = ToInt(RepsMax),
-        DefaultWeight = DefaultWeight is >= -1 and <= 100_000 ? Math.Round((decimal)DefaultWeight, 2) : -1,
+        DefaultWeight = NumberInput.TryParse(DefaultWeight, out var weight) && weight <= 100_000 ? Math.Round(weight, 2) : -1,
     };
 
     // Ogiltiga värden blir 0/-1 så att SplitRequestValidator visar felet i stället för att det skickas.
-    private static int ToInt(double value) => value is >= 0 and <= 100_000 ? (int)Math.Round(value) : 0;
+    private static int ToInt(string text) =>
+        NumberInput.TryParse(text, out var value) && value <= 100_000 ? (int)Math.Round(value) : 0;
 }

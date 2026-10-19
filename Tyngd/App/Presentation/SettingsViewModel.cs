@@ -91,7 +91,10 @@ public partial class SettingsViewModel : ObservableObject
     private bool _isRestTimerEnabled;
 
     [ObservableProperty]
-    private double _restTimerMinutes;
+    private int _restTimerMinutes;
+
+    /// <summary>Vilotid 1–10 minuter, som webbappen.</summary>
+    public IReadOnlyList<int> RestMinuteChoices { get; } = Enumerable.Range(1, 10).ToList();
 
     [ObservableProperty]
     private string? _savedMessage;
@@ -108,13 +111,12 @@ public partial class SettingsViewModel : ObservableObject
         _ = PersistSettingsAsync();
     }
 
-    partial void OnRestTimerMinutesChanged(double value)
+    partial void OnRestTimerMinutesChanged(int value)
     {
-        // NumberBox ger NaN när fältet töms; spara bara giltiga värden (1–10 som i webbappen).
-        if (double.IsNaN(value) || value < 1 || value > 10)
+        if (value < 1 || value > 10)
             return;
 
-        _restTimer.SetSeconds((int)value * 60);
+        _restTimer.SetSeconds(value * 60);
         _ = PersistSettingsAsync();
     }
 
