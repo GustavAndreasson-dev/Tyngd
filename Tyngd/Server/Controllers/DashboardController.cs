@@ -19,6 +19,8 @@ public sealed class DashboardController : ApiControllerBase
         var now = DateTimeOffset.UtcNow;
         var sevenDaysAgo = now.AddDays(-7);
         var thirtyDaysAgo = now.AddDays(-30);
+        // Aktivitetsrutnätet visar 16 hela veckor (måndag–söndag) bakåt från innevarande vecka.
+        var activityStart = now.AddDays(-7 * 17);
 
         var splits = await _context.Split
             .Where(split => split.UserId == CurrentUserId && split.Visability && !split.IsFreeSessions)
@@ -42,7 +44,7 @@ public sealed class DashboardController : ApiControllerBase
             CompletedSessionsLast30Days = await completed.CountAsync(session => session.CompletedAtUtc >= thirtyDaysAgo),
             TotalCompletedSessions = await completed.CountAsync(),
             RecentCompletedAtUtc = await completed
-                .Where(session => session.CompletedAtUtc >= sevenDaysAgo)
+                .Where(session => session.CompletedAtUtc >= activityStart)
                 .Select(session => session.CompletedAtUtc!.Value)
                 .ToListAsync(),
             LastCompletedSession = await completed

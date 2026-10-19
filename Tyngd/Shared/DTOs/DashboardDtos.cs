@@ -8,7 +8,7 @@ public sealed class UserDashboardDto
     public int CompletedSessionsLast7Days { get; set; }
     public int CompletedSessionsLast30Days { get; set; }
     public int TotalCompletedSessions { get; set; }
-    /// <summary>Slutförandetid för pass de senaste 7 dagarna (veckovyn).</summary>
+    /// <summary>Slutförandetid för pass de senaste ~17 veckorna (aktivitetsrutnätet).</summary>
     public List<DateTimeOffset> RecentCompletedAtUtc { get; set; } = new();
     public DashboardSessionDto? LastCompletedSession { get; set; }
     /// <summary>De senaste lösa passen (dold split), så att ett pågående löst pass kan återupptas från översikten.</summary>

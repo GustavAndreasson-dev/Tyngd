@@ -66,16 +66,37 @@ else
                 <div class="ui-card dash-stat"><span class="ui-label">Totalt</span><span class="dash-stat__n">@dashboard.TotalCompletedSessions</span></div>
             </section>
 
-            <section class="ui-card" aria-label="Denna vecka">
-                <span class="ui-label">Denna vecka</span>
-                <div class="dash-week">
-                    @foreach (var day in WeekDays())
+            <section class="ui-card" aria-label="Träning senaste @ActivityWeeks veckorna">
+                @{ var counts = ActivityCounts(); var start = ActivityStart(); var today = DateTime.Now.Date; }
+                <div class="dash-row">
+                    <span class="ui-label">Senaste @ActivityWeeks veckorna</span>
+                    <span class="ui-sub">@counts.Where(c => c.Key >= start).Sum(c => c.Value) pass</span>
+                </div>
+                <div class="dash-grid">
+                    <span></span>
+                    @for (var w = 0; w < ActivityWeeks; w++)
                     {
-                        <div class="dash-day @(day.Done ? "dash-day--on" : "") @(day.Today ? "dash-day--today" : "")" aria-label="@(day.Done ? day.Label + ", tränat" : day.Label)">
-                            <i></i>@day.Label
-                        </div>
+                        <span class="dash-grid__month">@MonthLabel(start.AddDays(7 * w), w)</span>
+                    }
+                    @for (var d = 0; d < 7; d++)
+                    {
+                        <span class="dash-grid__day">@(d % 2 == 0 && d < 6 ? DayLabels[d] : "")</span>
+                        @for (var w = 0; w < ActivityWeeks; w++)
+                        {
+                            var date = start.AddDays(7 * w + d);
+                            var n = counts.GetValueOrDefault(date);
+                            if (date > today)
+                            {
+                                <i class="dash-cell dash-cell--future"></i>
+                            }
+                            else
+                            {
+                                <i class="dash-cell dash-cell--@Math.Min(n, 3) @(date == today ? "dash-cell--today" : "")" title="@($"{date.Day} {MonthNames[date.Month - 1]}: {n} pass")"></i>
+                            }
+                        }
                     }
                 </div>
+                <div class="dash-legend" aria-hidden="true">Mindre <i class="dash-cell dash-cell--0"></i><i class="dash-cell dash-cell--1"></i><i class="dash-cell dash-cell--2"></i><i class="dash-cell dash-cell--3"></i> Mer</div>
             </section>
 
             @if (dashboard.ActiveSplits.Count > 0)

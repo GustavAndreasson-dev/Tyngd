@@ -39,7 +39,7 @@ public class DashboardAndAdminControllerTests
         Assert.Equal(1, dto.CompletedSessionsLast7Days);
         Assert.Equal(2, dto.CompletedSessionsLast30Days);
         Assert.Equal(2, dto.TotalCompletedSessions);
-        Assert.Single(dto.RecentCompletedAtUtc);
+        Assert.Equal(2, dto.RecentCompletedAtUtc.Count);
         Assert.Single(dto.ActiveSplits);
         Assert.Equal("Min split", dto.LastCompletedSession!.SplitName);
     }

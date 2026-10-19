@@ -71,13 +71,24 @@ public partial class Index : PageComponentBase, IDisposable
 
     private static readonly string[] DayLabels =["M", "T", "O", "T", "F", "L", "S"];
 
-    /// <summary>Måndag–söndag för innevarande vecka, med markering för dagar där ett pass slutförts.</summary>
-    private IEnumerable<(string Label, bool Done, bool Today)> WeekDays()
+    private const int ActivityWeeks = 16;
+
+    /// <summary>Måndagen i den äldsta veckan i aktivitetsrutnätet; sista kolumnen är innevarande vecka.</summary>
+    private static DateTime ActivityStart()
     {
         var today = DateTime.Now.Date;
-        var monday = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
-        var done = dashboard!.RecentCompletedAtUtc.Select(d => d.ToLocalTime().Date).ToHashSet();
-        return Enumerable.Range(0, 7).Select(i => (DayLabels[i], done.Contains(monday.AddDays(i)), monday.AddDays(i) == today));
+        return today.AddDays(-(((int)today.DayOfWeek + 6) % 7) - 7 * (ActivityWeeks - 1));
+    }
+
+    /// <summary>Antal slutförda pass per lokalt datum.</summary>
+    private Dictionary<DateTime, int> ActivityCounts() =>
+        dashboard!.RecentCompletedAtUtc.GroupBy(d => d.ToLocalTime().Date).ToDictionary(g => g.Key, g => g.Count());
+
+    /// <summary>Månadens kortnamn ovanför första veckan i en ny månad, som GitHubs bidragsgraf.</summary>
+    private static string MonthLabel(DateTime monday, int week)
+    {
+        var starts = week == 0 ? monday.AddDays(7).Month == monday.Month : monday.AddDays(-7).Month != monday.Month;
+        return starts ? MonthNames[monday.Month - 1][..3] : "";
     }
 
     private static string PassUrl(DashboardPass pass, bool startNew = false) =>
