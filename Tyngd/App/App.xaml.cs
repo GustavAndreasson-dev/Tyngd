@@ -125,8 +125,16 @@ public partial class App : Application
 
     private void ApplyTheme(bool dark)
     {
+        // Hela appens tema (inte bara rotelementets): länkar i text och dialoger utanför sidan läser appens tema.
         if (MainWindow?.Content is FrameworkElement root)
+        {
             root.RequestedTheme = dark ? ElementTheme.Dark : ElementTheme.Light;
+            Uno.Toolkit.UI.SystemThemeHelper.SetApplicationTheme(root.XamlRoot, dark ? ElementTheme.Dark : ElementTheme.Light);
+        }
+#if __ANDROID__
+        // Statusfältets ikoner följer appens tema, inte telefonens: annars vita ikoner på ljus bakgrund.
+        Windows.UI.ViewManagement.StatusBar.GetForCurrentView().ForegroundColor = dark ? Microsoft.UI.Colors.White : Microsoft.UI.Colors.Black;
+#endif
     }
 
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)

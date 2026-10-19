@@ -46,8 +46,23 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     // "2026.10.17.1605+<hash>" från bygget blir "2026.10.17.1605 · 267123a", som i webbappen.
+    // Android-bygget saknar InformationalVersion; då används paketets version (byggtiden, se Tyngd.App.csproj).
     public string AppVersion { get; } = "Version " + FormatVersion(
-        typeof(SettingsViewModel).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+        typeof(SettingsViewModel).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? PackageVersion());
+
+    private static string? PackageVersion()
+    {
+        try
+        {
+            var v = Windows.ApplicationModel.Package.Current.Id.Version;
+            return $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}";
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 
     // Kopia av Installningar.FormatVersion i webbappen (Tyngd.Client refereras inte av appen).
     public static string FormatVersion(string? informational)
