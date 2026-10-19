@@ -60,7 +60,7 @@ public partial class PassViewModel : ObservableObject
     internal FreeSessionService FreeSessions => _freeSessions;
     internal UserSplitsService UserSplits => _userSplits;
 
-    private string PassKey => $"pass-{Args.SplitId}-{Args.PassId}";
+    private string PassKey => Tyngd.Client.Services.PassKey.Format(Args.SplitId, Args.PassId);
 
     public ObservableCollection<PassChip> Chips { get; } = new();
     public ObservableCollection<PassSet> Sets { get; } = new();

@@ -1,5 +1,6 @@
 @page "/"
 @inherits PageComponentBase
+@using Tyngd.Client.Services
 
 <PageTitle>@(LoginState.IsLoggedIn ? "Översikt" : "Tyngd")</PageTitle>
 <ErrorAlert Message="@ErrorMessage" OnClose="ClearError" />
@@ -13,7 +14,7 @@ else
     <div class="dash">
         <header class="dash-head">
             <h1 class="ui-title">Översikt</h1>
-            <span class="ui-sub">@Today()</span>
+            <span class="ui-sub">@SvDate.Long(DateTime.Now)</span>
         </header>
 
         @if (IsLoading || dashboard is null)
@@ -69,7 +70,7 @@ else
             <section class="ui-card" aria-label="Denna vecka">
                 <span class="ui-label">Denna vecka</span>
                 <div class="dash-week">
-                    @foreach (var day in WeekDays())
+                    @foreach (var day in DashboardPassFinder.WeekDays(dashboard!, DateTime.Now))
                     {
                         <div class="dash-day @(day.Done ? "dash-day--on" : "") @(day.Today ? "dash-day--today" : "")" aria-label="@(day.Done ? day.Label + ", tränat" : day.Label)">
                             <i></i>@day.Label

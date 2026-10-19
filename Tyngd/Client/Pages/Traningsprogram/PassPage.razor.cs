@@ -129,7 +129,7 @@ public partial class PassPage : IDisposable
 
     private Dictionary<int, decimal> _weights = new();
     private PassData data = new();
-    private string PassKey => $"pass-{SplitId}-{PassId}";
+    private string PassKey => Services.PassKey.Format(SplitId, PassId);
 
     // Används för att detektera PassId-byte vid navigering
     private bool _isInitialized;

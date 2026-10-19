@@ -7,11 +7,6 @@ namespace Tyngd.App.Presentation;
 /// <summary>Översikten (Index.razor i webbappen): nästa eller pågående pass, statistik, veckan och aktiva splits.</summary>
 public partial class OverviewViewModel : ObservableObject
 {
-    // Egna namn, som i webbappen, så att texten inte beror på enhetens kulturinställning.
-    private static readonly string[] DayNames = ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"];
-    private static readonly string[] MonthNames = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
-    private static readonly string[] DayLabels = ["M", "T", "O", "T", "F", "L", "S"];
-
     private readonly DashboardService _dashboardService;
     private readonly SessionState _session;
     private readonly IAppStorage _storage;
@@ -78,11 +73,8 @@ public partial class OverviewViewModel : ObservableObject
         {
             if (Dashboard is null)
                 return [];
-            var today = DateTime.Now.Date;
-            var monday = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
-            var done = Dashboard.RecentCompletedAtUtc.Select(d => d.ToLocalTime().Date).ToHashSet();
-            return Enumerable.Range(0, 7)
-                .Select(i => new WeekDay(DayLabels[i], done.Contains(monday.AddDays(i)), monday.AddDays(i) == today))
+            return DashboardPassFinder.WeekDays(Dashboard, DateTime.Now)
+                .Select(d => new WeekDay(d.Label, d.Done, d.Today))
                 .ToList();
         }
     }
@@ -103,15 +95,14 @@ public partial class OverviewViewModel : ObservableObject
         _loading = true;
         IsLoading = true;
         ErrorMessage = null;
-        var now = DateTime.Now;
-        Today = $"{DayNames[(int)now.DayOfWeek]} {now.Day} {MonthNames[now.Month - 1]}";
+        Today = SvDate.Long(DateTime.Now);
         try
         {
             var dashboard = await _dashboardService.GetAsync();
-            var active = await FindActivePassAsync(dashboard);
+            var active = await DashboardPassFinder.FindActivePassAsync(dashboard, _session, _storage, DateTimeOffset.UtcNow);
             Dashboard = dashboard;
             HeroIsActive = active is not null;
-            Hero = active ?? FindNextPass(dashboard);
+            Hero = active ?? DashboardPassFinder.FindNextPass(dashboard);
         }
         catch (HttpRequestException)
         {
@@ -135,89 +126,6 @@ public partial class OverviewViewModel : ObservableObject
     // startNew som webbens ?new=1: Starta och nytt löst pass börjar en ny session i stället för att återuppta.
     public Task OpenPassAsync(int splitId, int passId, bool startNew = false) =>
         _navigator.NavigateViewModelAsync<PassViewModel>(this, data: new PassArgs(splitId, passId, startNew));
-
-    private async Task<DashboardPass?> FindActivePassAsync(UserDashboardDto dashboard)
-    {
-        if (_session.IsActive && FindPass(dashboard, _session.ActiveSplitId, _session.ActivePassId) is { } sessionPass)
-            return sessionPass;
-
-        var now = DateTimeOffset.UtcNow;
-        DashboardPass? latestPass = null;
-        DateTimeOffset? latestStartedAt = null;
-
-        foreach (var key in await _storage.KeysAsync())
-        {
-            if (!TryParsePassKey(key, out var splitId, out var passId))
-                continue;
-
-            PassData? data;
-            try
-            {
-                data = await _storage.GetItemAsync<PassData>(key);
-            }
-            catch
-            {
-                continue;
-            }
-
-            if (!PassResumePolicy.ShouldResume(data, now))
-                continue;
-
-            var storedPass = FindPass(dashboard, splitId, passId);
-            var startedAt = data!.StartedAtUtc!.Value;
-            if (storedPass is null || latestStartedAt.HasValue && startedAt <= latestStartedAt.Value)
-                continue;
-
-            latestPass = storedPass;
-            latestStartedAt = startedAt;
-        }
-
-        return latestPass;
-    }
-
-    private static DashboardPass? FindNextPass(UserDashboardDto dashboard)
-    {
-        var firstPass = dashboard.ActiveSplits
-            .SelectMany(split => split.Passes.Select(pass => ToDashboardPass(split, pass)))
-            .FirstOrDefault();
-
-        if (dashboard.LastCompletedSession is not { } lastSession)
-            return firstPass;
-
-        var split = dashboard.ActiveSplits.FirstOrDefault(item => item.SplitId == lastSession.SplitId);
-        if (split is null || split.Passes.Count == 0)
-            return firstPass;
-
-        var lastPassIndex = split.Passes.FindIndex(pass => pass.PassId == lastSession.PassId);
-        if (lastPassIndex < 0)
-            return firstPass;
-
-        return ToDashboardPass(split, split.Passes[(lastPassIndex + 1) % split.Passes.Count]);
-    }
-
-    private static DashboardPass? FindPass(UserDashboardDto dashboard, int splitId, int passId)
-    {
-        var split = dashboard.ActiveSplits.Append(dashboard.RecentFreeSessions)
-            .FirstOrDefault(item => item?.SplitId == splitId);
-        var pass = split?.Passes.FirstOrDefault(item => item.PassId == passId);
-        return split is not null && pass is not null ? ToDashboardPass(split, pass) : null;
-    }
-
-    private static DashboardPass ToDashboardPass(TrainingSplit split, TrainingPass pass) =>
-        new(split.SplitId, split.SplitName, pass.PassId, pass.PassName);
-
-    private static bool TryParsePassKey(string key, out int splitId, out int passId)
-    {
-        splitId = 0;
-        passId = 0;
-        var parts = key.Split('-', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length == 3
-            && parts[0] == "pass"
-            && int.TryParse(parts[1], out splitId)
-            && int.TryParse(parts[2], out passId);
-    }
-
-    public sealed record DashboardPass(int SplitId, string SplitName, int PassId, string PassName);
 
     public sealed record WeekDay(string Label, bool Done, bool Today)
     {

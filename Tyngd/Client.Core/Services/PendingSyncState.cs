@@ -71,7 +71,7 @@ public class PendingSyncState
 
         foreach (var key in keysToSync)
         {
-            if (!TryGetPassId(key, out var passId))
+            if (!PassKey.TryParse(key, out _, out var passId))
                 continue;
 
             var data = await _localStorage.GetItemAsync<PassData>(key);
@@ -96,7 +96,7 @@ public class PendingSyncState
 
     public async Task FinalizeAsync(string passKey)
     {
-        if (!TryGetPassId(passKey, out var passId))
+        if (!PassKey.TryParse(passKey, out _, out var passId))
             throw new InvalidOperationException("Passnyckeln är ogiltig.");
 
         var data = await _localStorage.GetItemAsync<PassData>(passKey)
@@ -168,12 +168,5 @@ public class PendingSyncState
         {
             data.SavedExercises[exerciseId] = true;
         }
-    }
-
-    private static bool TryGetPassId(string key, out int passId)
-    {
-        passId = 0;
-        var parts = key.Split('-', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length == 3 && int.TryParse(parts[2], out passId);
     }
 }
