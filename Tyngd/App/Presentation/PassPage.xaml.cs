@@ -7,6 +7,8 @@ public sealed partial class PassPage : Page
     public PassPage()
     {
         this.InitializeComponent();
+        this.KeepFocusedInputVisible();
+        this.GoBackOnBackButton();
     }
 
     private PassViewModel? ViewModel => DataContext as PassViewModel;

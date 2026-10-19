@@ -8,6 +8,8 @@ public sealed partial class EditSplitPage : Page
     public EditSplitPage()
     {
         this.InitializeComponent();
+        this.KeepFocusedInputVisible();
+        this.GoBackOnBackButton();
     }
 
     private EditSplitViewModel? ViewModel => DataContext as EditSplitViewModel;

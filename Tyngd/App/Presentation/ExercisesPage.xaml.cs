@@ -5,6 +5,7 @@ public sealed partial class ExercisesPage : Page
     public ExercisesPage()
     {
         this.InitializeComponent();
+        this.KeepFocusedInputVisible();
         Loaded += (_, _) =>
         {
             ViewModel?.Attach();

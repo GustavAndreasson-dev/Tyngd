@@ -1,3 +1,5 @@
+using Windows.UI.Core;
+
 namespace Tyngd.App.Presentation;
 
 public sealed partial class MainPage : Page
@@ -12,6 +14,28 @@ public sealed partial class MainPage : Page
         this.InitializeComponent();
         _tabs = [OverviewTab, SplitsTab, TemplatesTab, ExercisesTab, SettingsTab];
         Loaded += (_, _) => ShowTab(Math.Max(0, Tabs.SelectedIndex));
+        Unloaded += (_, _) => SetBackToOverview(false);
+    }
+
+    // Bakåt från en annan flik går till Översikt; på Översikt lämnas bakåt till Android (stänger appen).
+    // Prenumerera bara när det behövs – se BackButton om Android 16.
+    private bool _backSubscribed;
+
+    private void SetBackToOverview(bool enabled)
+    {
+        if (enabled == _backSubscribed)
+            return;
+        if (enabled)
+            SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
+        else
+            SystemNavigationManager.GetForCurrentView().BackRequested -= OnBackRequested;
+        _backSubscribed = enabled;
+    }
+
+    private void OnBackRequested(object? sender, BackRequestedEventArgs e)
+    {
+        e.Handled = true;
+        Tabs.SelectedIndex = 0;
     }
 
     // Flikarna växlas här i stället för med Uno-navigeringens regioner: TabBar-navigatorn hittade inte flikarnas
@@ -36,5 +60,7 @@ public sealed partial class MainPage : Page
 
         for (var i = 0; i < _tabs.Length; i++)
             _tabs[i].Visibility = i == index ? Visibility.Visible : Visibility.Collapsed;
+
+        SetBackToOverview(IsLoaded && index != 0);
     }
 }
