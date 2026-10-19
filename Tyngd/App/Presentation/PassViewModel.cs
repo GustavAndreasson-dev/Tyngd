@@ -692,15 +692,10 @@ public partial class PassViewModel : ObservableObject
         if (!HasProgress)
             return;
 
-        var delta = points[^1].Weight - points[0].Weight;
-        ProgressSummary = $"{points[^1].Weight:0.##} kg" + (delta == 0 ? "" : $" ({(delta > 0 ? "+" : "")}{delta:0.##})");
-
-        // Punkter i en 300x80-yta, vikterna skalade mellan min och max (som SparkPoints i webbappen).
-        var min = points.Min(x => x.Weight);
-        var range = Math.Max(points.Max(x => x.Weight) - min, 1m);
+        ProgressSummary = WeightProgress.Summary(points);
         var collection = new PointCollection();
-        for (int i = 0; i < points.Count; i++)
-            collection.Add(new Point(8 + i * 284.0 / Math.Max(points.Count - 1, 1), 72 - (double)((points[i].Weight - min) / range) * 64));
+        foreach (var (x, y) in WeightProgress.SparkPoints(points))
+            collection.Add(new Point(x, y));
         ProgressPoints = collection;
     }
 

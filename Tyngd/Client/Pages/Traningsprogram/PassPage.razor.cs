@@ -238,14 +238,8 @@ public partial class PassPage : IDisposable
         pass is not null && activeIndex >= 0 && activeIndex < pass.Exercises.Count
         && _progress.TryGetValue(pass.Exercises[activeIndex].ExerciseId, out var p) ? p : new();
 
-    /// <summary>Punkter för en 300x80 SVG-polyline; vikter skalas mellan min och max.</summary>
-    private static string SparkPoints(List<Tyngd.Shared.DTOs.ExerciseProgressPointDto> pts)
-    {
-        var min = pts.Min(p => p.Weight);
-        var range = Math.Max(pts.Max(p => p.Weight) - min, 1m);
-        return string.Join(" ", pts.Select((p, i) => FormattableString.Invariant(
-            $"{8 + i * 284.0 / Math.Max(pts.Count - 1, 1):0.#},{72 - (double)((p.Weight - min) / range) * 64:0.#}")));
-    }
+    private static string SparkPoints(List<Tyngd.Shared.DTOs.ExerciseProgressPointDto> pts) =>
+        string.Join(" ", WeightProgress.SparkPoints(pts).Select(p => FormattableString.Invariant($"{p.X:0.#},{p.Y:0.#}")));
 
 
     private int TotalSets => pass?.Exercises.Sum(e => e.DefaultSets) ?? 0;
