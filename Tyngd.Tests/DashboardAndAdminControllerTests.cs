@@ -41,7 +41,7 @@ public class DashboardAndAdminControllerTests
         Assert.Equal(2, dto.CompletedSessionsLast30Days);
         Assert.Equal(2, dto.TotalCompletedSessions);
         Assert.Equal(2, dto.RecentCompletedAtUtc.Count);
-        Assert.All(dto.RecentActivity, activity => Assert.Equal("#23CE6B", activity.Color));
+        Assert.All(dto.RecentActivity, activity => Assert.Equal(("#23CE6B", split.Pass.Single().PassName), (activity.Color, activity.PassName)));
         Assert.Single(dto.ActiveSplits);
         Assert.Equal("Min split", dto.LastCompletedSession!.SplitName);
     }

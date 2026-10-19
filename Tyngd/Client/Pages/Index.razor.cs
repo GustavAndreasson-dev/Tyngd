@@ -80,12 +80,15 @@ public partial class Index : PageComponentBase, IDisposable
         return today.AddDays(-(((int)today.DayOfWeek + 6) % 7) - 7 * (ActivityWeeks - 1));
     }
 
-    /// <summary>Tränade dagar (lokalt datum) med färgen från dagens senaste pass; null = passet saknar färg.</summary>
-    private Dictionary<DateTime, string?> ActivityDays() =>
+    private static string PassInitial(string passName) =>
+        string.IsNullOrWhiteSpace(passName) ? "" : passName.Trim()[..1].ToUpperInvariant();
+
+    /// <summary>Tränade dagar (lokalt datum) med dagens senaste pass, vars färg och namn visas i rutan.</summary>
+    private Dictionary<DateTime, DashboardActivityDto> ActivityDays() =>
         dashboard!.RecentActivity
             .OrderBy(a => a.CompletedAtUtc)
             .GroupBy(a => a.CompletedAtUtc.ToLocalTime().Date)
-            .ToDictionary(g => g.Key, g => g.Last().Color);
+            .ToDictionary(g => g.Key, g => g.Last());
 
     /// <summary>Månadens kortnamn ovanför första veckan i en ny månad, som GitHubs bidragsgraf.</summary>
     private static string MonthLabel(DateTime monday, int week)

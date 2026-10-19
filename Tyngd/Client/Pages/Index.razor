@@ -84,16 +84,16 @@ else
                         @for (var w = 0; w < ActivityWeeks; w++)
                         {
                             var date = start.AddDays(7 * w + d);
-                            var trained = days.TryGetValue(date, out var color);
+                            var trained = days.TryGetValue(date, out var activity);
                             if (date > today)
                             {
                                 <i class="dash-cell dash-cell--future"></i>
                             }
                             else
                             {
-                                <i class="dash-cell @(trained ? "dash-cell--on" : "") @(date == today ? "dash-cell--today" : "")"
-                                   style="@(color is null ? null : $"background:{color}")"
-                                   title="@($"{date.Day} {MonthNames[date.Month - 1]}{(trained ? ", tränat" : "")}")"></i>
+                                <i class="dash-cell @(trained ? "dash-cell--on" : "") @(activity?.Color is null ? "" : "dash-cell--colored") @(date == today ? "dash-cell--today" : "")"
+                                   style="@(activity?.Color is null ? null : $"background:{activity.Color}")"
+                                   title="@($"{date.Day} {MonthNames[date.Month - 1]}{(trained ? $", {activity!.PassName}" : "")}")">@(trained ? PassInitial(activity!.PassName) : "")</i>
                             }
                         }
                     }

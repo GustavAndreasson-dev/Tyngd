@@ -45,7 +45,7 @@ public sealed class DashboardController : ApiControllerBase
             TotalCompletedSessions = await completed.CountAsync(),
             RecentActivity = await completed
                 .Where(session => session.CompletedAtUtc >= activityStart)
-                .Select(session => new DashboardActivityDto(session.CompletedAtUtc!.Value, session.Pass.Color))
+                .Select(session => new DashboardActivityDto(session.CompletedAtUtc!.Value, session.Pass.Color, session.Pass.PassName))
                 .ToListAsync(),
             LastCompletedSession = await completed
                 .OrderByDescending(session => session.CompletedAtUtc)

@@ -18,7 +18,7 @@ public sealed class UserDashboardDto
 }
 
 /// <summary>Ett slutfört pass i aktivitetsrutnätet. Color är null om passet saknar färg.</summary>
-public sealed record DashboardActivityDto(DateTimeOffset CompletedAtUtc, string? Color);
+public sealed record DashboardActivityDto(DateTimeOffset CompletedAtUtc, string? Color, string PassName);
 
 /// <summary>En punkt i viktutvecklingen för en övning.</summary>
 public sealed record ExerciseProgressPointDto(DateOnly Date, decimal Weight);
