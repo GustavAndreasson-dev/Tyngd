@@ -41,8 +41,8 @@ public sealed partial class PassPage : Page
         if (ViewModel is not { } vm)
             return;
 
-        var dialog = new AddFreeExerciseDialog(vm.Catalog, vm.Favorites, vm.TakenCatalogIds) { XamlRoot = XamlRoot };
-        await dialog.ShowAsync();
+        var dialog = new AddFreeExerciseDialog(vm.Catalog, vm.Favorites, vm.TakenCatalogIds);
+        await dialog.ShowOverAsync(this);
         if (dialog.Picked is { } picked)
             await vm.AddFreeExerciseAsync(picked);
     }
@@ -59,7 +59,7 @@ public sealed partial class PassPage : Page
                 return;
 
             if (vm.IsFreeSession)
-                await new FinishFreeSessionDialog(vm.FreeSessions, vm.UserSplits, vm.Args.PassId, vm.PassName) { XamlRoot = XamlRoot }.ShowAsync();
+                await new FinishFreeSessionDialog(vm.FreeSessions, vm.UserSplits, vm.Args.PassId, vm.PassName) .ShowOverAsync(this);
 
             await vm.GoBackCommand.ExecuteAsync(null);
         }

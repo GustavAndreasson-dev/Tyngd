@@ -1,4 +1,5 @@
 <ContentDialog x:Class="Tyngd.App.Presentation.Dialogs.ImportSplitDialog"
+               Style="{StaticResource MaterialContentDialogStyle}"
                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                Title="Välj split att importera"
@@ -15,9 +16,9 @@
     </DataTemplate>
   </ContentDialog.Resources>
 
-  <ScrollViewer>
-    <StackPanel Spacing="8"
-                MinWidth="280">
+  <ScrollViewer HorizontalScrollMode="Disabled"
+                HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="8">
       <StackPanel x:Name="MySplitsSection"
                   Spacing="8">
         <TextBlock Text="Mina egna splits"

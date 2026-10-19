@@ -16,6 +16,8 @@ public sealed partial class FinishFreeSessionDialog : ContentDialog
         _freeSessions = freeSessions;
         _passId = passId;
         this.InitializeComponent();
+        // Fokus på knappen, inte namnfältet: annars öppnas tangentbordet direkt fast de flesta bara väljer ett alternativ.
+        Opened += (_, _) => (GetTemplateChild("PrimaryButton") as Control)?.Focus(FocusState.Programmatic);
         PassNameBox.Text = passName;
         TargetBox.ItemsSource = new List<TrainingSplit> { _newSplit };
         TargetBox.SelectedIndex = 0;

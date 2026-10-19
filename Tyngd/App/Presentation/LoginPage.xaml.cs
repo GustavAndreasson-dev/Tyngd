@@ -15,8 +15,8 @@ public sealed partial class LoginPage : Page
         if (DataContext is not LoginViewModel vm)
             return;
 
-        var dialog = new RegisterDialog(vm.AuthService) { XamlRoot = this.XamlRoot };
-        await dialog.ShowAsync();
+        var dialog = new RegisterDialog(vm.AuthService);
+        await dialog.ShowOverAsync(this);
 
         if (dialog.User is not null)
             await vm.GoToMainAsync();

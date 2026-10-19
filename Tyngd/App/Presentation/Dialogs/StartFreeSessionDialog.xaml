@@ -1,12 +1,13 @@
 <ContentDialog x:Class="Tyngd.App.Presentation.Dialogs.StartFreeSessionDialog"
+               Style="{StaticResource MaterialContentDialogStyle}"
                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                xmlns:controls="using:Tyngd.App.Presentation.Controls"
                Title="Starta löst pass"
                CloseButtonText="Avbryt">
-  <ScrollViewer>
-    <StackPanel Spacing="12"
-                MinWidth="280">
+  <ScrollViewer HorizontalScrollMode="Disabled"
+                HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="12">
       <TextBlock Text="Välj första övningen. Passet startar direkt, och du lägger till nästa övning med &quot;+ Övning&quot; när du är klar."
                  Style="{StaticResource BodyMedium}"
                  Foreground="{ThemeResource OnSurfaceVariantBrush}"

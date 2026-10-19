@@ -29,8 +29,8 @@ public sealed partial class OverviewPage : Page
     {
         if (ViewModel is not { } vm)
             return;
-        var dialog = new StartFreeSessionDialog(vm.FreeSessions, vm.Catalog, vm.Favorites) { XamlRoot = XamlRoot };
-        await dialog.ShowAsync();
+        var dialog = new StartFreeSessionDialog(vm.FreeSessions, vm.Catalog, vm.Favorites);
+        await dialog.ShowOverAsync(this);
         if (dialog.Started is { } started)
             await vm.OpenPassAsync(started.SplitId, started.PassId, startNew: true);
     }

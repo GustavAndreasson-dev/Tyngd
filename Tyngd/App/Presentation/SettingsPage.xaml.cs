@@ -23,9 +23,8 @@ public sealed partial class SettingsPage : Page
                 PrimaryButtonText = "Logga ut ändå",
                 CloseButtonText = "Avbryt",
                 DefaultButton = ContentDialogButton.Close,
-                XamlRoot = XamlRoot,
             };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            if (await dialog.ShowOverAsync(this) != ContentDialogResult.Primary)
                 return;
         }
 

@@ -34,10 +34,9 @@ public sealed partial class MySplitsPage : Page
             PrimaryButtonText = "Arkivera",
             CloseButtonText = "Avbryt",
             DefaultButton = ContentDialogButton.Close,
-            XamlRoot = this.XamlRoot,
         };
 
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        if (await dialog.ShowOverAsync(this) == ContentDialogResult.Primary)
             await ViewModel.DeleteAsync(split);
     }
 }

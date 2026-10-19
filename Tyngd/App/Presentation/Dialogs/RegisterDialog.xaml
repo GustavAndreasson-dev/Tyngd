@@ -1,4 +1,5 @@
 <ContentDialog x:Class="Tyngd.App.Presentation.Dialogs.RegisterDialog"
+               Style="{StaticResource MaterialContentDialogStyle}"
                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                Title="Skapa konto"
@@ -6,9 +7,9 @@
                CloseButtonText="Avbryt"
                DefaultButton="Primary"
                PrimaryButtonClick="OnPrimaryButtonClick">
-  <ScrollViewer>
-    <StackPanel Spacing="16"
-                MinWidth="280">
+  <ScrollViewer HorizontalScrollMode="Disabled"
+                HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="16">
       <TextBox x:Name="UserNameBox"
                Header="Användarnamn"
                IsSpellCheckEnabled="False"

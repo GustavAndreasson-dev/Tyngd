@@ -20,8 +20,8 @@ public sealed partial class EditSplitPage : Page
         if (ViewModel is not { } viewModel || await viewModel.LoadImportSourcesAsync() is not { } sources)
             return;
 
-        var dialog = new ImportSplitDialog(sources.MySplits, sources.Templates) { XamlRoot = XamlRoot };
-        await dialog.ShowAsync();
+        var dialog = new ImportSplitDialog(sources.MySplits, sources.Templates);
+        await dialog.ShowOverAsync(this);
         var selected = (object?)dialog.Result?.MySplit ?? dialog.Result?.Template;
 
         if (selected is TrainingSplit mySplit)
