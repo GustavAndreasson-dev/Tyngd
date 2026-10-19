@@ -1,0 +1,478 @@
+<Page x:Class="Tyngd.App.Presentation.AdminPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      Background="{ThemeResource BackgroundBrush}">
+  <Page.Resources>
+    <Style x:Key="IconButtonStyle"
+           TargetType="Button"
+           BasedOn="{StaticResource TextButtonStyle}">
+      <Setter Property="Width" Value="44" />
+      <Setter Property="Height" Value="44" />
+      <Setter Property="MinWidth" Value="0" />
+      <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style x:Key="CardStyle"
+           TargetType="Border">
+      <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="16" />
+    </Style>
+    <Style x:Key="StatValueStyle"
+           TargetType="TextBlock"
+           BasedOn="{StaticResource HeadlineMedium}" />
+    <Style x:Key="StatLabelStyle"
+           TargetType="TextBlock"
+           BasedOn="{StaticResource BodyMedium}">
+      <Setter Property="Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+    </Style>
+    <Style x:Key="SecondaryTextStyle"
+           TargetType="TextBlock"
+           BasedOn="{StaticResource BodyMedium}">
+      <Setter Property="Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <!-- Rad i "Senaste användarna" / "Senaste träningspassen". -->
+    <DataTemplate x:Key="ListRowTemplate">
+      <Grid ColumnSpacing="12"
+            Padding="0,8"
+            BorderBrush="{ThemeResource OutlineVariantBrush}"
+            BorderThickness="0,0,0,1">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+          <TextBlock Text="{Binding Title}"
+                     Style="{StaticResource BodyLarge}"
+                     TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Detail}"
+                     Style="{StaticResource BodyMedium}"
+                     Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                     TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+        <StackPanel Grid.Column="1"
+                    HorizontalAlignment="Right">
+          <TextBlock Text="{Binding Meta}"
+                     Style="{StaticResource BodyMedium}"
+                     HorizontalAlignment="Right" />
+          <TextBlock Text="{Binding MetaDetail}"
+                     Style="{StaticResource BodySmall}"
+                     Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                     HorizontalAlignment="Right" />
+        </StackPanel>
+      </Grid>
+    </DataTemplate>
+  </Page.Resources>
+
+  <Grid utu:SafeArea.Insets="VisibleBounds,SoftInput">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <Grid Padding="4,8,16,8"
+          ColumnSpacing="4">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Button Style="{StaticResource IconButtonStyle}"
+              Command="{Binding BackCommand}"
+              AutomationProperties.Name="Tillbaka">
+        <PathIcon Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+      </Button>
+      <TextBlock Grid.Column="1"
+                 Text="Systemöversikt"
+                 Style="{StaticResource HeadlineSmall}"
+                 VerticalAlignment="Center" />
+    </Grid>
+
+    <ScrollViewer Grid.Row="1"
+                  Padding="16,0,16,8"
+                  HorizontalScrollBarVisibility="Hidden"
+                  HorizontalScrollMode="Enabled"
+                  VerticalScrollMode="Disabled"
+                  VerticalScrollBarVisibility="Disabled">
+      <utu:ChipGroup ItemsSource="{Binding Sections}"
+                     SelectedItem="{Binding Section, Mode=TwoWay}"
+                     SelectionMode="Single"
+                     Style="{StaticResource FilterChipGroupStyle}"
+                     AutomationProperties.Name="Adminsektioner" />
+    </ScrollViewer>
+
+    <ScrollViewer Grid.Row="2">
+      <StackPanel Padding="16,8,16,24"
+                  Spacing="16">
+        <ProgressBar IsIndeterminate="True"
+                     Visibility="{Binding IsLoading}" />
+        <TextBlock Text="{Binding ErrorMessage}"
+                   Foreground="{ThemeResource ErrorBrush}"
+                   TextWrapping="Wrap" />
+
+        <!-- Översikt -->
+        <StackPanel Spacing="16"
+                    Visibility="{Binding IsOverviewSection}">
+          <TextBlock Text="Följ användning och hantera användare och träningsmallar."
+                     Style="{StaticResource SecondaryTextStyle}" />
+          <Grid ColumnSpacing="12"
+                RowSpacing="12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Border Style="{StaticResource CardStyle}">
+              <StackPanel>
+                <TextBlock Text="{Binding Overview.TotalUsers}" Style="{StaticResource StatValueStyle}" />
+                <TextBlock Text="Användare" Style="{StaticResource StatLabelStyle}" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+              <StackPanel>
+                <TextBlock Text="{Binding Overview.NewUsersLast30Days}" Style="{StaticResource StatValueStyle}" />
+                <TextBlock Text="Nya 30 dagar" Style="{StaticResource StatLabelStyle}" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Row="1" Style="{StaticResource CardStyle}">
+              <StackPanel>
+                <TextBlock Text="{Binding Overview.ActiveUsersLast30Days}" Style="{StaticResource StatValueStyle}" />
+                <TextBlock Text="Aktiva 30 dagar" Style="{StaticResource StatLabelStyle}" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardStyle}">
+              <StackPanel>
+                <TextBlock Text="{Binding Overview.CompletedSessionsLast7Days}" Style="{StaticResource StatValueStyle}" />
+                <TextBlock Text="Pass 7 dagar" Style="{StaticResource StatLabelStyle}" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
+              <StackPanel>
+                <TextBlock Text="{Binding Overview.CompletedSessionsLast30Days}" Style="{StaticResource StatValueStyle}" />
+                <TextBlock Text="Pass 30 dagar" Style="{StaticResource StatLabelStyle}" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CardStyle}">
+              <StackPanel>
+                <TextBlock Text="{Binding Overview.VisibleTemplates}" Style="{StaticResource StatValueStyle}" />
+                <TextBlock Text="Aktiva mallar" Style="{StaticResource StatLabelStyle}" />
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <Border Style="{StaticResource CardStyle}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Senaste användarna"
+                         Style="{StaticResource TitleMedium}" />
+              <ItemsControl ItemsSource="{Binding RecentUsers}"
+                            ItemTemplate="{StaticResource ListRowTemplate}" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource CardStyle}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Senaste träningspassen"
+                         Style="{StaticResource TitleMedium}" />
+              <TextBlock Text="Inga genomförda pass ännu."
+                         Visibility="{Binding HasNoRecentSessions}"
+                         Style="{StaticResource SecondaryTextStyle}" />
+              <ItemsControl ItemsSource="{Binding RecentSessions}"
+                            ItemTemplate="{StaticResource ListRowTemplate}" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- Användare -->
+        <Border Style="{StaticResource CardStyle}"
+                Visibility="{Binding IsUsersSection}">
+          <StackPanel Spacing="12">
+            <Grid ColumnSpacing="8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <TextBox Text="{Binding UserSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       PlaceholderText="Sök användare eller e-post"
+                       AutomationProperties.Name="Sök användare eller e-post"
+                       InputScope="EmailNameOrAddress"
+                       IsSpellCheckEnabled="False"
+                       KeyDown="OnUserSearchKeyDown" />
+              <Button Grid.Column="1"
+                      Content="Sök"
+                      Command="{Binding SearchUsersCommand}"
+                      MinHeight="44" />
+            </Grid>
+            <TextBlock Text="Inga användare hittades."
+                       Visibility="{Binding HasNoUsers}"
+                       Style="{StaticResource SecondaryTextStyle}" />
+            <ItemsControl ItemsSource="{Binding Users}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnSpacing="12"
+                        Padding="0,8"
+                        BorderBrush="{ThemeResource OutlineVariantBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                      <TextBlock Text="{Binding UserName}"
+                                 Style="{StaticResource BodyLarge}"
+                                 TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding Email}"
+                                 Style="{StaticResource BodyMedium}"
+                                 Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                                 TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding Created}"
+                                 Style="{StaticResource BodySmall}"
+                                 Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1"
+                                VerticalAlignment="Center">
+                      <TextBlock Text="Admin"
+                                 Style="{StaticResource LabelLarge}"
+                                 HorizontalAlignment="Center" />
+                      <ToggleSwitch IsOn="{Binding IsAdmin}"
+                                    IsEnabled="{Binding CanToggle}"
+                                    Toggled="OnAdminToggled"
+                                    OnContent=""
+                                    OffContent=""
+                                    MinWidth="0"
+                                    AutomationProperties.Name="Admin" />
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Grid ColumnSpacing="8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <Button Content="Föregående"
+                      Command="{Binding PreviousUsersPageCommand}"
+                      IsEnabled="{Binding CanPreviousPage}"
+                      Style="{StaticResource TextButtonStyle}"
+                      MinHeight="44" />
+              <TextBlock Grid.Column="1"
+                         Text="{Binding PageText}"
+                         Style="{StaticResource BodyMedium}"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center" />
+              <Button Grid.Column="2"
+                      Content="Nästa"
+                      Command="{Binding NextUsersPageCommand}"
+                      IsEnabled="{Binding CanNextPage}"
+                      Style="{StaticResource TextButtonStyle}"
+                      MinHeight="44" />
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- Mallar -->
+        <StackPanel Spacing="16"
+                    Visibility="{Binding IsTemplatesSection}">
+          <TextBlock Text="Redigering behåller stabila id:n. Borttagning arkiverar."
+                     Style="{StaticResource SecondaryTextStyle}" />
+          <Button Command="{Binding NewTemplateCommand}"
+                  HorizontalAlignment="Left"
+                  MinHeight="44">
+            <StackPanel Orientation="Horizontal"
+                        Spacing="8">
+              <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+              <TextBlock Text="Ny mall" />
+            </StackPanel>
+          </Button>
+          <ItemsControl ItemsSource="{Binding Templates}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Style="{StaticResource CardStyle}"
+                        Opacity="{Binding CardOpacity}"
+                        Margin="0,0,0,12">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnSpacing="8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="{Binding Name}"
+                                   Style="{StaticResource TitleMedium}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Summary}"
+                                   Style="{StaticResource BodyMedium}"
+                                   Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+                      </StackPanel>
+                      <Border Grid.Column="1"
+                              Background="{ThemeResource SecondaryContainerBrush}"
+                              CornerRadius="8"
+                              Padding="8,4"
+                              VerticalAlignment="Top">
+                        <TextBlock Text="{Binding StatusText}"
+                                   Style="{StaticResource LabelLarge}"
+                                   Foreground="{ThemeResource OnSecondaryContainerBrush}" />
+                      </Border>
+                    </Grid>
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <Button Click="OnEditTemplateClick"
+                              Style="{StaticResource TextButtonStyle}"
+                              MinHeight="44">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                          <PathIcon Data="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+                          <TextBlock Text="Redigera" />
+                        </StackPanel>
+                      </Button>
+                      <Button Grid.Column="2"
+                              Content="{Binding ToggleText}"
+                              Click="OnToggleTemplateClick"
+                              Style="{StaticResource TextButtonStyle}"
+                              MinHeight="44" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <!-- Övningskatalog (som AdminCatalogPanel.razor) -->
+        <Grid Visibility="{Binding IsCatalogSection}">
+        <StackPanel Spacing="12"
+                    DataContext="{Binding Catalog}">
+          <Button Command="{Binding SyncCommand}"
+                  IsEnabled="{Binding CanSync}"
+                  HorizontalAlignment="Left"
+                  MinHeight="44">
+            <StackPanel Orientation="Horizontal"
+                        Spacing="8">
+              <PathIcon Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z" />
+              <TextBlock Text="{Binding SyncText}" />
+            </StackPanel>
+          </Button>
+          <TextBlock Text="{Binding InfoMessage}"
+                     Style="{StaticResource BodyMedium}"
+                     TextWrapping="Wrap" />
+          <TextBlock Text="{Binding ErrorMessage}"
+                     Style="{StaticResource BodyMedium}"
+                     Foreground="{ThemeResource ErrorBrush}"
+                     TextWrapping="Wrap" />
+          <ComboBox Header="Visa"
+                    ItemsSource="{Binding Filters}"
+                    SelectedItem="{Binding Filter, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Label}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <TextBox Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   PlaceholderText="Sök"
+                   AutomationProperties.Name="Sök"
+                   IsSpellCheckEnabled="False" />
+          <ProgressBar IsIndeterminate="True"
+                       Visibility="{Binding IsLoading}" />
+          <TextBlock Text="Katalogen är tom. Kör en synk för att hämta övningar från wger."
+                     Visibility="{Binding IsEmpty}"
+                     Style="{StaticResource SecondaryTextStyle}" />
+          <TextBlock Text="{Binding ShownText}"
+                     Visibility="{Binding HasRows}"
+                     Style="{StaticResource BodySmall}"
+                     Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+          <ItemsControl ItemsSource="{Binding Rows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Style="{StaticResource CardStyle}"
+                        Padding="4,4,12,4"
+                        Margin="0,0,0,8">
+                  <StackPanel>
+                    <Button Command="{Binding ToggleCommand}"
+                            Style="{StaticResource TextButtonStyle}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            MinHeight="44">
+                      <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                          <TextBlock Text="{Binding Title}"
+                                     Style="{StaticResource TitleSmall}"
+                                     Foreground="{ThemeResource OnSurfaceBrush}"
+                                     TextWrapping="Wrap" />
+                          <TextBlock Text="{Binding Subtitle}"
+                                     Style="{StaticResource BodySmall}"
+                                     Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                                     TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Border Grid.Column="1"
+                                Background="{ThemeResource SecondaryContainerBrush}"
+                                CornerRadius="8"
+                                Padding="8,4"
+                                VerticalAlignment="Center">
+                          <TextBlock Text="{Binding StatusText}"
+                                     Style="{StaticResource LabelMedium}"
+                                     Foreground="{ThemeResource OnSecondaryContainerBrush}" />
+                        </Border>
+                      </Grid>
+                    </Button>
+                    <StackPanel Spacing="8"
+                                Padding="12,8,0,12"
+                                Visibility="{Binding IsEditing}">
+                      <TextBox Header="Svenskt namn"
+                               Text="{Binding EditName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               MaxLength="50" />
+                      <TextBox Header="Svensk beskrivning"
+                               Text="{Binding EditDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               AcceptsReturn="True"
+                               TextWrapping="Wrap"
+                               MinHeight="160" />
+                      <TextBlock Text="Engelska (wger)"
+                                 Style="{StaticResource BodySmall}"
+                                 Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+                      <TextBlock Text="{Binding DescriptionEn}"
+                                 Style="{StaticResource BodyMedium}"
+                                 TextWrapping="Wrap"
+                                 IsTextSelectionEnabled="True" />
+                      <StackPanel Orientation="Horizontal"
+                                  Spacing="8">
+                        <Button Content="Spara som granskad"
+                                Command="{Binding SaveCommand}"
+                                IsEnabled="{Binding CanSave}"
+                                MinHeight="44" />
+                        <Button Content="Avbryt"
+                                Command="{Binding CancelCommand}"
+                                Style="{StaticResource TextButtonStyle}"
+                                MinHeight="44" />
+                      </StackPanel>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Button Content="Visa fler"
+                  Command="{Binding ShowMoreCommand}"
+                  Visibility="{Binding CanShowMore}"
+                  Style="{StaticResource TextButtonStyle}"
+                  MinHeight="44" />
+        </StackPanel>
+        </Grid>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</Page>
