@@ -52,14 +52,23 @@ public partial class ExercisesViewModel : ObservableObject
     private string _favoritesText = "★ Favoriter";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasEmptyText))]
     private string? _emptyText;
 
+    public bool HasEmptyText => !string.IsNullOrEmpty(EmptyText);
+
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError))]
     private string? _error;
+
+    public bool HasError => !string.IsNullOrEmpty(Error);
 
     /// <summary>Bekräftelse efter favoritändring (som webbappens snackbar).</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNotice))]
     private string? _notice;
+
+    public bool HasNotice => !string.IsNullOrEmpty(Notice);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(LoadingVisibility))]

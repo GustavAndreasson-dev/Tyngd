@@ -44,6 +44,7 @@
                       Spacing="8">
             <utu:Chip Content="{Binding FavoritesText}"
                       Style="{StaticResource FilterChipStyle}"
+                      CanRemove="False"
                       IsChecked="{Binding OnlyFavorites, Mode=TwoWay}" />
             <utu:ChipGroup ItemsSource="{Binding Categories}"
                            SelectedItem="{Binding Category, Mode=TwoWay}"
@@ -71,14 +72,18 @@
         </Grid>
         <ProgressBar IsIndeterminate="True"
                      Visibility="{Binding LoadingVisibility}" />
+        <!-- Dolda när de är tomma: tomma textrader tog annars plats ovanför listan. -->
         <TextBlock Text="{Binding Error}"
+                   Visibility="{Binding HasError}"
                    Foreground="{ThemeResource ErrorBrush}"
                    TextWrapping="Wrap" />
         <TextBlock Text="{Binding Notice}"
+                   Visibility="{Binding HasNotice}"
                    Foreground="{ThemeResource PrimaryBrush}"
                    TextWrapping="Wrap"
                    AutomationProperties.LiveSetting="Polite" />
         <TextBlock Text="{Binding EmptyText}"
+                   Visibility="{Binding HasEmptyText}"
                    Style="{StaticResource BodyMedium}"
                    Foreground="{ThemeResource OnSurfaceVariantBrush}"
                    TextWrapping="Wrap" />
