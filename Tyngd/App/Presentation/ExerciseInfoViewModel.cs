@@ -102,12 +102,8 @@ public partial class ExerciseInfoViewModel : ObservableObject
             var history = await _passLogService.GetCatalogHistoryAsync(Args.CatalogExerciseId);
             if (history.Count > 0)
             {
-                HistorySummary = $"Bästa vikt: {history.Max(entry => entry.MaxWeight):0.##} kg · {history.Count} senaste tillfällen från alla pass";
-                HistoryRows = Enumerable.Reverse(history).Take(5)
-                    .Select(entry => new HistoryRow(
-                        $"{SvDate.Short(entry.Date)} · {entry.PassName}",
-                        $"{entry.MaxWeight:0.##} kg · {entry.Sets} set · {entry.TotalReps} reps"))
-                    .ToList();
+                HistorySummary = ExerciseHistoryText.Summary(history);
+                HistoryRows = ExerciseHistoryText.Rows(history).Select(row => new HistoryRow(row.When, row.What)).ToList();
             }
         }
         catch (HttpRequestException)
