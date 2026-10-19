@@ -157,7 +157,9 @@ public partial class App : Application
             new ViewMap<MainPage, MainViewModel>(),
             new DataViewMap<PassPage, PassViewModel, PassArgs>(),
             new DataViewMap<EditSplitPage, EditSplitViewModel, EditSplitArgs>(),
-            new DataViewMap<ExerciseInfoPage, ExerciseInfoViewModel, ExerciseInfoArgs>()
+            new DataViewMap<ExerciseInfoPage, ExerciseInfoViewModel, ExerciseInfoArgs>(),
+            new ViewMap<AdminPage, AdminViewModel>(),
+            new DataViewMap<AdminTemplatePage, AdminTemplateViewModel, AdminTemplateArgs>()
         );
 
         routes.Register(
@@ -166,7 +168,9 @@ public partial class App : Application
             // Helskärmssidor utan bottenmeny (passidan döljer den även i webbappen).
             new RouteMap("Pass", View: views.FindByViewModel<PassViewModel>()),
             new RouteMap("EditSplit", View: views.FindByViewModel<EditSplitViewModel>()),
-            new RouteMap("ExerciseInfo", View: views.FindByViewModel<ExerciseInfoViewModel>())
+            new RouteMap("ExerciseInfo", View: views.FindByViewModel<ExerciseInfoViewModel>()),
+            new RouteMap("Admin", View: views.FindByViewModel<AdminViewModel>()),
+            new RouteMap("AdminTemplate", View: views.FindByViewModel<AdminTemplateViewModel>())
         );
     }
 }

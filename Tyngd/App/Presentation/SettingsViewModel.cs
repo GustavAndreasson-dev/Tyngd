@@ -11,14 +11,16 @@ public partial class SettingsViewModel : ObservableObject
     private readonly RestTimerState _restTimer;
     private readonly UserSettingsService _userSettingsService;
     private readonly PendingSyncState _pendingSync;
+    private readonly INavigator _navigator;
 
     // Sparar bara ovanpå inställningar som hämtats från servern: annars skulle standardvärden (t.ex. vilotiden)
     // skriva över användarens sparade inställningar om något ändras innan de laddats eller när appen är offline.
     private bool _settingsLoaded;
 
     public SettingsViewModel(LoginState loginState, ThemeState themeState, RestTimerState restTimer,
-        UserSettingsService userSettingsService, PendingSyncState pendingSync)
+        UserSettingsService userSettingsService, PendingSyncState pendingSync, INavigator navigator)
     {
+        _navigator = navigator;
         _loginState = loginState;
         _themeState = themeState;
         _restTimer = restTimer;
@@ -76,9 +78,11 @@ public partial class SettingsViewModel : ObservableObject
 
     public string? Email => _loginState.CurrentUser?.Email;
 
-    // Admin finns bara i webbappen; visa en hänvisning dit för administratörer.
     public Visibility AdminNoteVisibility =>
         _loginState.CurrentUser?.IsAdmin == true ? Visibility.Visible : Visibility.Collapsed;
+
+    [RelayCommand]
+    private Task OpenAdminAsync() => _navigator.NavigateViewModelAsync<AdminViewModel>(this);
 
     [ObservableProperty]
     private bool _isDarkMode;

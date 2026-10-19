@@ -11,3 +11,6 @@ public record EditSplitArgs(int? SplitId);
 
 /// <summary>En övning i katalogen (som ExerciseInfoDialog i webbappen).</summary>
 public record ExerciseInfoArgs(int CatalogExerciseId);
+
+/// <summary>Skapa en ny split-mall (TemplateId null) eller redigera en befintlig (som /admin/templates/new och /admin/templates/{TemplateId}).</summary>
+public record AdminTemplateArgs(int? TemplateId);

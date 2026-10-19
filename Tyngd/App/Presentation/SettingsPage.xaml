@@ -80,11 +80,11 @@
                        Style="{StaticResource BodyMedium}"
                        Foreground="{ThemeResource OnSurfaceVariantBrush}" />
           </StackPanel>
-          <TextBlock Text="Administration görs i webbappen."
-                     Visibility="{Binding AdminNoteVisibility}"
-                     Style="{StaticResource BodyMedium}"
-                     Foreground="{ThemeResource OnSurfaceVariantBrush}"
-                     TextWrapping="Wrap" />
+          <Button Content="Administration"
+                  Command="{Binding OpenAdminCommand}"
+                  Visibility="{Binding AdminNoteVisibility}"
+                  Style="{StaticResource OutlinedButtonStyle}"
+                  MinHeight="44" />
           <Button Content="Logga ut"
                   Click="OnLogoutClick"
                   Style="{StaticResource OutlinedButtonStyle}"
