@@ -106,7 +106,7 @@ public partial class MySplitsViewModel : ObservableObject
                 var item = split.Passes.FirstOrDefault(p => p.PassId == pass.PassId);
                 if (item is null)
                     continue;
-                item.Exercises = pass.Exercises.Select(e => new ExerciseLine(e.ExerciseName, FormatDefault(e))).ToList();
+                item.Exercises = pass.Exercises.Select(e => new ExerciseLine(e.ExerciseName, ExerciseFormat.Summary(e))).ToList();
                 item.MuscleLoad = CatalogService.MuscleLoadFor(catalog, pass.Exercises.Select(e => e.CatalogExerciseId));
             }
         }
@@ -139,19 +139,6 @@ public partial class MySplitsViewModel : ObservableObject
 
     private static bool IsNetworkError(Exception exception) =>
         exception is HttpRequestException or TaskCanceledException;
-
-    private static string FormatDefault(CreateExerciseDto exercise)
-    {
-        var reps = exercise.RepsMin == exercise.RepsMax
-            ? exercise.RepsMin.ToString()
-            : $"{exercise.RepsMin}-{exercise.RepsMax}";
-
-        var weight = exercise.DefaultWeight == 0
-            ? "kroppsvikt"
-            : $"{exercise.DefaultWeight:0.##} kg";
-
-        return $"{exercise.DefaultSets} x {reps} @ {weight}";
-    }
 }
 
 public partial class SplitItem : ObservableObject

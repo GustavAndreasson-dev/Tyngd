@@ -647,7 +647,7 @@ public partial class PassViewModel : ObservableObject
         _shownExerciseId = exercise.ExerciseId;
         ExerciseName = exercise.Exercise.ExerciseName;
         HasCatalogInfo = exercise.CatalogExerciseId is not null;
-        SetsReps = FormatSetsReps(exercise);
+        SetsReps = ExerciseFormat.SetsReps(exercise);
         _showing = true;
         WeightText = NumberInput.Format(_weights.TryGetValue(exercise.ExerciseId, out var w) ? w : 0);
         Note = _data.Notes.TryGetValue(exercise.ExerciseId, out var n) ? n : string.Empty;
@@ -702,14 +702,6 @@ public partial class PassViewModel : ObservableObject
         for (int i = 0; i < points.Count; i++)
             collection.Add(new Point(8 + i * 284.0 / Math.Max(points.Count - 1, 1), 72 - (double)((points[i].Weight - min) / range) * 64));
         ProgressPoints = collection;
-    }
-
-    private static string FormatSetsReps(TrainingExerciseTemplate exercise)
-    {
-        var reps = exercise.DefaultRepsMin == exercise.DefaultRepsMax
-            ? exercise.DefaultRepsMin.ToString()
-            : $"{exercise.DefaultRepsMin}-{exercise.DefaultRepsMax}";
-        return $"{exercise.DefaultSets}x{reps}";
     }
 
     private void OnRestTick() => _dispatcher?.TryEnqueue(UpdateRest);

@@ -74,7 +74,7 @@
                                                aria-label="Om övningen" OnClick="@(() => ShowExerciseInfo(catalogExerciseId))" />
                             }
                         </h2>
-                        <span class="ui-sub">@FormatSetsReps(exercise)</span>
+                        <span class="ui-sub">@ExerciseFormat.SetsReps(exercise)</span>
                     </div>
                     <MudNumericField T="decimal?" Label="Vikt" HideSpinButtons="true" Variant="Variant.Outlined" Format="0.##" Min="0" Max="400" Adornment="Adornment.End" AdornmentText="kg" Value="GetWeight(exercise.ExerciseId)" ValueChanged="v => SetWeight(exercise.ExerciseId, v)" OnBlur="OnWeightChanged" Class="weight-field pass-weight" />
                 </div>

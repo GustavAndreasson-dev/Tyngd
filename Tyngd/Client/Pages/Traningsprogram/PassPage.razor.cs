@@ -642,16 +642,6 @@ public partial class PassPage : IDisposable
         }
     }
 
-    /// <summary>Formaterar set och reps från en övningsmall som text, t.ex. "3x8-12".</summary>
-    private static string FormatSetsReps(TrainingExerciseTemplate exercise)
-    {
-        var reps = exercise.DefaultRepsMin == exercise.DefaultRepsMax
-            ? exercise.DefaultRepsMin.ToString()
-            : $"{exercise.DefaultRepsMin}-{exercise.DefaultRepsMax}";
-
-        return $"{exercise.DefaultSets}x{reps}";
-    }
-
     private string ChipClass(int idx) =>
         "pass-chip" + (activeIndex == idx ? " pass-chip--active" : "") + (ExerciseDone(idx) ? " pass-chip--done" : "");
 

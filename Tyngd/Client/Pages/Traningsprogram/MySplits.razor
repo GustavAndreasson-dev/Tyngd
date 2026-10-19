@@ -96,7 +96,7 @@ else
                         {
                             <MudListItem T="string">
                                 <MudText Typo="Typo.subtitle1">@exercise.ExerciseName</MudText>
-                                <MudText Typo="Typo.caption">@FormatDefault(exercise)</MudText>
+                                <MudText Typo="Typo.caption">@ExerciseFormat.Summary(exercise)</MudText>
                             </MudListItem>
                         }
                     </MudList>
