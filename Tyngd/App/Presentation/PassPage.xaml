@@ -187,17 +187,14 @@
                            Style="{StaticResource BodyMedium}"
                            Foreground="{ThemeResource OnSurfaceVariantBrush}" />
               </StackPanel>
-              <NumberBox Grid.Column="1"
-                         Header="Vikt (kg)"
-                         Value="{Binding Weight, Mode=TwoWay}"
-                         Minimum="0"
-                         Maximum="400"
-                         SpinButtonPlacementMode="Hidden"
-                         ValidationMode="InvalidInputOverwritten"
-                         InputScope="Number"
-                         Width="120"
-                         VerticalAlignment="Top"
-                         AutomationProperties.Name="Vikt i kilo" />
+              <!-- TextBox, inte NumberBox: värdet ska nå ViewModel vid varje tecken, och NumberBox saknar Material-stil. -->
+              <TextBox Grid.Column="1"
+                       Header="Vikt (kg)"
+                       Text="{Binding WeightText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       InputScope="Number"
+                       Width="140"
+                       VerticalAlignment="Top"
+                       AutomationProperties.Name="Vikt i kilo" />
             </Grid>
 
             <ItemsControl ItemsSource="{Binding Sets}">

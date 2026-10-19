@@ -36,8 +36,9 @@ public partial class PassViewModel : ObservableObject
 
     public PassViewModel(PassArgs args, IAppStorage storage, RestTimerState restTimer, SessionState session,
         UserSplitsService userSplits, PassLogService passLog, PendingSyncState pendingSync, FreeSessionService freeSessions,
-        CatalogService catalog, FavoritesService favorites, INavigator navigator)
+        CatalogService catalog, FavoritesService favorites, INavigator navigator, ILogger<PassViewModel> logger)
     {
+        _logger = logger;
         Args = args;
         _storage = storage;
         _restTimer = restTimer;
@@ -82,7 +83,7 @@ public partial class PassViewModel : ObservableObject
     [ObservableProperty] private string _exerciseName = string.Empty;
     [ObservableProperty] private string _setsReps = string.Empty;
     [ObservableProperty] private bool _hasCatalogInfo;
-    [ObservableProperty] private double _weight;
+    [ObservableProperty] private string _weightText = "0";
     [ObservableProperty] private string _note = string.Empty;
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(PreviousCommand))] private bool _canGoPrevious;
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(NextCommand))] private bool _canGoNext;
@@ -422,13 +423,14 @@ public partial class PassViewModel : ObservableObject
         Refresh();
     }
 
-    partial void OnWeightChanged(double value)
+    // Sparas vid varje tecken (inte när fältet tappar fokus), så att vikten är med när › eller "Avsluta pass"
+    // synkar direkt efter inmatningen. Tomt fält sparas som 0, som i webbappen; ogiltig text ignoreras.
+    partial void OnWeightTextChanged(string value)
     {
-        if (_showing || ActiveExercise is not { } exercise)
+        if (_showing || ActiveExercise is not { } exercise || !NumberInput.TryParse(value, out var parsed))
             return;
 
-        // Tomt fält (NaN) sparas som 0, som i webbappen.
-        var weight = double.IsNaN(value) ? 0m : (decimal)Math.Clamp(value, 0, 400);
+        var weight = Math.Clamp(parsed, 0, 400);
         _weights[exercise.ExerciseId] = weight;
         _data.Weights[exercise.ExerciseId] = weight;
         SaveLocalData(exercise.ExerciseId);
@@ -647,7 +649,7 @@ public partial class PassViewModel : ObservableObject
         HasCatalogInfo = exercise.CatalogExerciseId is not null;
         SetsReps = FormatSetsReps(exercise);
         _showing = true;
-        Weight = (double)(_weights.TryGetValue(exercise.ExerciseId, out var w) ? w : 0);
+        WeightText = NumberInput.Format(_weights.TryGetValue(exercise.ExerciseId, out var w) ? w : 0);
         Note = _data.Notes.TryGetValue(exercise.ExerciseId, out var n) ? n : string.Empty;
         _showing = false;
 
@@ -730,6 +732,8 @@ public partial class PassViewModel : ObservableObject
     }
 
     /// <summary>Som TryAsync i webbens PageComponentBase: fel visas som meddelande i stället för att kastas.</summary>
+    private readonly ILogger<PassViewModel> _logger;
+
     private async Task RunAsync(Func<Task> action, string errorPrefix)
     {
         ErrorMessage = null;
@@ -750,6 +754,7 @@ public partial class PassViewModel : ObservableObject
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "{ErrorPrefix}", errorPrefix);
             ErrorMessage = $"{errorPrefix}: {ex.Message}";
         }
     }
