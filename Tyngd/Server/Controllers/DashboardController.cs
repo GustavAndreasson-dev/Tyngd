@@ -43,9 +43,9 @@ public sealed class DashboardController : ApiControllerBase
             CompletedSessionsLast7Days = await completed.CountAsync(session => session.CompletedAtUtc >= sevenDaysAgo),
             CompletedSessionsLast30Days = await completed.CountAsync(session => session.CompletedAtUtc >= thirtyDaysAgo),
             TotalCompletedSessions = await completed.CountAsync(),
-            RecentCompletedAtUtc = await completed
+            RecentActivity = await completed
                 .Where(session => session.CompletedAtUtc >= activityStart)
-                .Select(session => session.CompletedAtUtc!.Value)
+                .Select(session => new DashboardActivityDto(session.CompletedAtUtc!.Value, session.Pass.Color))
                 .ToListAsync(),
             LastCompletedSession = await completed
                 .OrderByDescending(session => session.CompletedAtUtc)
@@ -62,6 +62,7 @@ public sealed class DashboardController : ApiControllerBase
                 .FirstOrDefaultAsync(),
         };
 
+        result.RecentCompletedAtUtc = result.RecentActivity.Select(a => a.CompletedAtUtc).ToList();
         return Ok(result);
     }
 }

@@ -127,6 +127,7 @@ public partial class ReorderSplitDialog
         {
             PassId = pass.PassId,
             PassName = pass.PassName,
+            Color = pass.Color,
             Exercises = pass.Exercises.Select(CloneExercise).ToList(),
         };
 

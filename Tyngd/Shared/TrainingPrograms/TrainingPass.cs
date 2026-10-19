@@ -14,6 +14,9 @@ public class TrainingPass
     /// <summary>Passens namn, t.ex. Push eller Pull.</summary>
     public string PassName { get; set; } = string.Empty;
 
+    /// <summary>Valfri färg ur <see cref="PassColors"/>, visas på översikten.</summary>
+    public string? Color { get; set; }
+
     /// <summary>Övningar som ingår i passet.</summary>
     public List<TrainingExercise> Exercises { get; set; } = new();
 }

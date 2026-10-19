@@ -96,6 +96,9 @@ public partial class TyngdContext : DbContext
         {
             entity.HasIndex(e => new { e.SplitId, e.Visability, e.Ordning }, "IX_Pass_SplitId_Visability_Ordning");
 
+            entity.Property(e => e.Color)
+                .HasMaxLength(7)
+                .IsUnicode(false);
             entity.Property(e => e.Ordning).HasDefaultValue(1, "DF_Pass_Ordning");
             entity.Property(e => e.PassName)
                 .IsRequired()

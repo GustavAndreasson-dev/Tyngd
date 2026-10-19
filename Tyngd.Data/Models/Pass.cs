@@ -19,6 +19,8 @@ public partial class Pass
 
     public int? PassTemplateId { get; set; }
 
+    public string Color { get; set; }
+
     public virtual ICollection<Exercise> Exercise { get; set; } = new List<Exercise>();
 
     public virtual ICollection<Session> Session { get; set; } = new List<Session>();

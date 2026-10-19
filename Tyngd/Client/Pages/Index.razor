@@ -67,10 +67,10 @@ else
             </section>
 
             <section class="ui-card" aria-label="Träning senaste @ActivityWeeks veckorna">
-                @{ var counts = ActivityCounts(); var start = ActivityStart(); var today = DateTime.Now.Date; }
+                @{ var days = ActivityDays(); var start = ActivityStart(); var today = DateTime.Now.Date; }
                 <div class="dash-row">
                     <span class="ui-label">Senaste @ActivityWeeks veckorna</span>
-                    <span class="ui-sub">@counts.Where(c => c.Key >= start).Sum(c => c.Value) pass</span>
+                    <span class="ui-sub">@dashboard.RecentActivity.Count(a => a.CompletedAtUtc.ToLocalTime().Date >= start) pass</span>
                 </div>
                 <div class="dash-grid">
                     <span></span>
@@ -84,19 +84,20 @@ else
                         @for (var w = 0; w < ActivityWeeks; w++)
                         {
                             var date = start.AddDays(7 * w + d);
-                            var n = counts.GetValueOrDefault(date);
+                            var trained = days.TryGetValue(date, out var color);
                             if (date > today)
                             {
                                 <i class="dash-cell dash-cell--future"></i>
                             }
                             else
                             {
-                                <i class="dash-cell dash-cell--@Math.Min(n, 3) @(date == today ? "dash-cell--today" : "")" title="@($"{date.Day} {MonthNames[date.Month - 1]}: {n} pass")"></i>
+                                <i class="dash-cell @(trained ? "dash-cell--on" : "") @(date == today ? "dash-cell--today" : "")"
+                                   style="@(color is null ? null : $"background:{color}")"
+                                   title="@($"{date.Day} {MonthNames[date.Month - 1]}{(trained ? ", tränat" : "")}")"></i>
                             }
                         }
                     }
                 </div>
-                <div class="dash-legend" aria-hidden="true">Mindre <i class="dash-cell dash-cell--0"></i><i class="dash-cell dash-cell--1"></i><i class="dash-cell dash-cell--2"></i><i class="dash-cell dash-cell--3"></i> Mer</div>
             </section>
 
             @if (dashboard.ActiveSplits.Count > 0)

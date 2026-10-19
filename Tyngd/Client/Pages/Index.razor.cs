@@ -80,9 +80,12 @@ public partial class Index : PageComponentBase, IDisposable
         return today.AddDays(-(((int)today.DayOfWeek + 6) % 7) - 7 * (ActivityWeeks - 1));
     }
 
-    /// <summary>Antal slutförda pass per lokalt datum.</summary>
-    private Dictionary<DateTime, int> ActivityCounts() =>
-        dashboard!.RecentCompletedAtUtc.GroupBy(d => d.ToLocalTime().Date).ToDictionary(g => g.Key, g => g.Count());
+    /// <summary>Tränade dagar (lokalt datum) med färgen från dagens senaste pass; null = passet saknar färg.</summary>
+    private Dictionary<DateTime, string?> ActivityDays() =>
+        dashboard!.RecentActivity
+            .OrderBy(a => a.CompletedAtUtc)
+            .GroupBy(a => a.CompletedAtUtc.ToLocalTime().Date)
+            .ToDictionary(g => g.Key, g => g.Last().Color);
 
     /// <summary>Månadens kortnamn ovanför första veckan i en ny månad, som GitHubs bidragsgraf.</summary>
     private static string MonthLabel(DateTime monday, int week)

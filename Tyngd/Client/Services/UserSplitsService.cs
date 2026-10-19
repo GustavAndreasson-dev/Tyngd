@@ -150,6 +150,7 @@ public class UserSplitsService
         Passes = source.Passes.Select(pass => new CreatePassDto
         {
             PassName = pass.PassName,
+            Color = pass.Color,
             Exercises = pass.Exercises.Select(exercise => new CreateExerciseDto
             {
                 ExerciseName = exercise.ExerciseName,
@@ -183,6 +184,7 @@ public class UserSplitsService
         {
             PassId = pass.PassId,
             PassName = pass.PassName,
+            Color = pass.Color,
             Exercises = pass.Exercises.Select(exercise => new CreateExerciseDto
             {
                 ExerciseId = exercise.ExerciseId,
