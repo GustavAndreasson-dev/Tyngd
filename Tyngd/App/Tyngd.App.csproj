@@ -17,7 +17,9 @@
     <!-- Versions -->
     <!-- Byggtid (UTC) som version, som webbappen; visas i Inställningar och som Androids versionsnamn. -->
     <Version>$([System.DateTime]::UtcNow.ToString("yyyy.M.d.HHmm"))</Version>
-    <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
+    <!-- Bara Android: desktopbyggets Resizetizer kräver en semver med tre delar. -->
+    <ApplicationDisplayVersion Condition="$(TargetFramework.Contains('-android'))">$(Version)</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion Condition="!$(TargetFramework.Contains('-android'))">1.0.0</ApplicationDisplayVersion>
     <!-- Måste ökas vid varje release till Play. -->
     <ApplicationVersion>1</ApplicationVersion>
     <!-- Package Publisher -->
