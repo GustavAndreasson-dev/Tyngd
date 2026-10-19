@@ -73,10 +73,12 @@ public partial class App : Application
                     services.AddSingleton<AdminCatalogService>();
                     services.AddSingleton<PassLogService>();
                     services.AddSingleton<UserSettingsService>();
+                    services.AddSingleton<ClientErrorService>();
                 })
                 .UseNavigation(RegisterRoutes)
             );
         MainWindow = builder.Window;
+        ReportUnhandledErrors();
 
 #if DEBUG
         MainWindow.UseStudio();
@@ -149,6 +151,27 @@ public partial class App : Application
     }
 
     private const string DarkModeKey = "tyngd-dark";
+
+    /// <summary>Skickar ohanterade fel till servern, som ClientErrorBoundary i webbappen.</summary>
+    private void ReportUnhandledErrors()
+    {
+        // Host finns först efter uppstarten; fel innan dess rapporteras inte.
+        void Report(Exception? exception)
+        {
+            try
+            {
+                if (exception is not null && Host?.Services.GetService<ClientErrorService>() is { } errors)
+                    _ = errors.ReportAsync(exception, "app");
+            }
+            catch
+            {
+                // Felrapporteringen får aldrig själv orsaka ett nytt fel.
+            }
+        }
+
+        UnhandledException += (_, e) => Report(e.Exception);
+        TaskScheduler.UnobservedTaskException += (_, e) => Report(e.Exception);
+    }
 
     private void ApplyTheme(bool dark)
     {
