@@ -40,6 +40,39 @@ public class CatalogService
             .Select(item => item.exercise);
     }
 
+    /// <summary>Katalogsidans filter och sökning; null betyder alla. Favoriter först, annars sökordningen.</summary>
+    public static IEnumerable<CatalogExerciseDto> Filter(
+        IEnumerable<CatalogExerciseDto> all,
+        IReadOnlySet<int> favorites,
+        bool onlyFavorites,
+        string? category,
+        string? muscle,
+        string? equipment,
+        string? search)
+    {
+        var rows = all;
+        if (onlyFavorites)
+            rows = rows.Where(e => favorites.Contains(e.CatalogExerciseId));
+        if (category is not null)
+            rows = rows.Where(e => e.Category == category);
+        if (muscle is not null)
+            rows = rows.Where(e => e.PrimaryMuscles.Contains(muscle) || e.SecondaryMuscles.Contains(muscle));
+        if (equipment is not null)
+            rows = rows.Where(e => e.Equipment.Contains(equipment));
+        return Search(rows, search).OrderByDescending(e => favorites.Contains(e.CatalogExerciseId));
+    }
+
+    /// <summary>Raden under övningsnamnet: kategori · utrustning · engelskt namn (om det skiljer sig).</summary>
+    public static string Meta(CatalogExerciseDto exercise)
+    {
+        var parts = new List<string> { exercise.Category };
+        if (exercise.Equipment.Count > 0)
+            parts.Add(string.Join(", ", exercise.Equipment));
+        if (!string.Equals(exercise.Name, exercise.NameEn, StringComparison.OrdinalIgnoreCase))
+            parts.Add(exercise.NameEn);
+        return string.Join(" · ", parts);
+    }
+
     /// <summary>Muskelbelastning för de övningar som är kopplade till katalogen; okopplade räknas inte.</summary>
     public static Dictionary<string, double> MuscleLoadFor(IEnumerable<CatalogExerciseDto> catalog, IEnumerable<int?> catalogExerciseIds)
     {

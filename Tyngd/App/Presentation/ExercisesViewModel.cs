@@ -119,20 +119,7 @@ public partial class ExercisesViewModel : ObservableObject
         if (_all is null)
             return;
 
-        IEnumerable<CatalogExerciseDto> rows = _all;
-        if (OnlyFavorites)
-            rows = rows.Where(e => _favorites.Contains(e.CatalogExerciseId));
-        if (Category is not null)
-            rows = rows.Where(e => e.Category == Category);
-        if (Muscle?.Value is { } muscle)
-            rows = rows.Where(e => e.PrimaryMuscles.Contains(muscle) || e.SecondaryMuscles.Contains(muscle));
-        if (Equipment?.Value is { } equipment)
-            rows = rows.Where(e => e.Equipment.Contains(equipment));
-        rows = CatalogService.Search(rows, Search);
-
-        // Favoriter först, annars sökordningen.
-        Visible = rows
-            .OrderByDescending(e => _favorites.Contains(e.CatalogExerciseId))
+        Visible = CatalogService.Filter(_all, _favorites, OnlyFavorites, Category, Muscle?.Value, Equipment?.Value, Search)
             .Select(e => new ExerciseItem(e, ToggleFavoriteCommand))
             .ToList();
         SyncFavorites();
@@ -185,18 +172,7 @@ public partial class ExerciseItem : ObservableObject
 
     public Visibility PlaceholderVisibility => Exercise.ImageUrl is null ? Visibility.Visible : Visibility.Collapsed;
 
-    public string Meta
-    {
-        get
-        {
-            var parts = new List<string> { Exercise.Category };
-            if (Exercise.Equipment.Count > 0)
-                parts.Add(string.Join(", ", Exercise.Equipment));
-            if (!string.Equals(Exercise.Name, Exercise.NameEn, StringComparison.OrdinalIgnoreCase))
-                parts.Add(Exercise.NameEn);
-            return string.Join(" · ", parts);
-        }
-    }
+    public string Meta => CatalogService.Meta(Exercise);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FavoriteVisibility), nameof(NotFavoriteVisibility), nameof(StarLabel))]
