@@ -1,4 +1,4 @@
-using Tyngd.Client.Pages;
+using Tyngd.Shared;
 
 namespace Tyngd.Tests;
 
@@ -9,5 +9,5 @@ public class AppVersionTests
     [InlineData("2026.10.17.1605", "2026.10.17.1605")]
     [InlineData(null, "okänd")]
     public void Shows_build_time_and_short_commit(string? informational, string expected) =>
-        Assert.Equal(expected, Installningar.FormatVersion(informational));
+        Assert.Equal(expected, AppVersion.Format(informational));
 }
