@@ -166,6 +166,7 @@ public partial class EditSplitViewModel : ObservableObject
             Passes[index].Number = index + 1;
             Passes[index].Renumber();
         }
+        RevalidateIfShown();
     }
 
     [RelayCommand]
@@ -176,26 +177,12 @@ public partial class EditSplitViewModel : ObservableObject
     {
         if (IsBusy) return;
 
-        var request = new CreateSplitRequest
+        if (!ShowValidation(out var request))
         {
-            SplitName = SplitName.Trim(),
-            Passes = Passes.Select(pass => pass.ToDto()).ToList(),
-        };
-
-        var errors = SplitRequestValidator.Validate(request)
-            .GroupBy(error => error.Key)
-            .ToDictionary(group => group.Key, group => group.First().Message);
-        ApplyErrors(errors);
-        if (errors.Count > 0)
-        {
-            ErrorMessage = errors.TryGetValue("Passes", out var passesError)
-                ? passesError
-                : "Kontrollera de markerade fälten innan du sparar.";
             ExpandFirstError();
             return;
         }
 
-        ErrorMessage = null;
         IsSaving = true;
         try
         {
@@ -219,6 +206,35 @@ public partial class EditSplitViewModel : ObservableObject
     }
 
     private void ClearErrors() => ApplyErrors(new Dictionary<string, string>());
+
+    // Efter ett misslyckat sparförsök valideras om när pass och övningar läggs till eller tas bort,
+    // så att t.ex. "minst en övning" försvinner när övningen läggs till (annars låg felet kvar till nästa sparning).
+    private bool _errorsShown;
+
+    private bool ShowValidation(out CreateSplitRequest request)
+    {
+        request = new CreateSplitRequest
+        {
+            SplitName = SplitName.Trim(),
+            Passes = Passes.Select(pass => pass.ToDto()).ToList(),
+        };
+
+        var errors = SplitRequestValidator.Validate(request)
+            .GroupBy(error => error.Key)
+            .ToDictionary(group => group.Key, group => group.First().Message);
+        ApplyErrors(errors);
+        _errorsShown = errors.Count > 0;
+        ErrorMessage = errors.Count == 0 ? null
+            : errors.TryGetValue("Passes", out var passesError) ? passesError
+            : "Kontrollera de markerade fälten innan du sparar.";
+        return errors.Count == 0;
+    }
+
+    internal void RevalidateIfShown()
+    {
+        if (_errorsShown)
+            ShowValidation(out _);
+    }
 
     private void ApplyErrors(Dictionary<string, string> errors)
     {
@@ -317,12 +333,14 @@ public partial class EditPassItem : ObservableObject
             exercise.IsExpanded = false;
         Exercises.Add(new EditExerciseItem(this, new CreateExerciseDto()) { IsExpanded = true });
         Renumber();
+        _owner.RevalidateIfShown();
     }
 
     internal void RemoveExercise(EditExerciseItem exercise)
     {
         Exercises.Remove(exercise);
         Renumber();
+        _owner.RevalidateIfShown();
     }
 
     internal void MoveExercise(EditExerciseItem exercise, int delta)

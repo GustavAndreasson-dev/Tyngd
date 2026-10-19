@@ -111,6 +111,19 @@ public partial class App : Application
             }
         );
 
+        // Vibrera när vilan är slut, oavsett vilken sida som visas (som webbappen när den är synlig).
+        Host.Services.GetRequiredService<RestTimerState>().Finished += () =>
+        {
+            try
+            {
+                Windows.Phone.Devices.Notification.VibrationDevice.GetDefault()?.Vibrate(TimeSpan.FromMilliseconds(600));
+            }
+            catch (Exception)
+            {
+                // Ingen vibrator (t.ex. desktop).
+            }
+        };
+
         var themeState = Host.Services.GetRequiredService<ThemeState>();
         var storage = Host.Services.GetRequiredService<IAppStorage>();
         ApplyTheme(themeState.IsDarkMode);

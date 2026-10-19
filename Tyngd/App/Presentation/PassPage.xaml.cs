@@ -13,9 +13,32 @@ public sealed partial class PassPage : Page
 
     private PassViewModel? ViewModel => DataContext as PassViewModel;
 
+    // Skärmen släcks inte under passet (som webbappens wake lock).
+    private readonly Windows.System.Display.DisplayRequest _keepScreenOn = new();
+    private bool _screenKeptOn;
+
+    private void KeepScreenOn(bool on)
+    {
+        if (on == _screenKeptOn)
+            return;
+        try
+        {
+            if (on)
+                _keepScreenOn.RequestActive();
+            else
+                _keepScreenOn.RequestRelease();
+            _screenKeptOn = on;
+        }
+        catch (Exception)
+        {
+            // Inte stöd på alla plattformar (t.ex. desktop); passet fungerar ändå.
+        }
+    }
+
     // DataContext kan sättas efter Loaded; ladda då när den kommer.
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
+        KeepScreenOn(true);
         if (ViewModel is { } vm)
             await vm.ActivateAsync();
         else
@@ -32,6 +55,7 @@ public sealed partial class PassPage : Page
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        KeepScreenOn(false);
         DataContextChanged -= OnDataContextChanged;
         ViewModel?.Deactivate();
     }
