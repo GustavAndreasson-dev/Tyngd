@@ -42,21 +42,8 @@ public sealed partial class RegisterDialog : ContentDialog
         var password = PasswordBox.Password;
         var confirmPassword = ConfirmPasswordBox.Password;
 
-        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(email) ||
-            string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(confirmPassword))
-            return "Fyll i alla fält.";
-
-        if (userName.Trim().Length < 3)
-            return "Användarnamnet måste vara minst 3 tecken.";
-
-        if (!IsValidEmail(email.Trim()))
-            return "Ange en giltig e-postadress.";
-
-        if (password.Length < 6)
-            return "Lösenordet måste vara minst 6 tecken.";
-
-        if (password != confirmPassword)
-            return "Lösenorden matchar inte.";
+        if (RegisterRequestValidator.Validate(userName, email, password, confirmPassword) is { } validationError)
+            return validationError;
 
         try
         {
@@ -74,13 +61,5 @@ public sealed partial class RegisterDialog : ContentDialog
         {
             return "Kunde inte nå servern. Kontrollera anslutningen.";
         }
-    }
-
-    private static bool IsValidEmail(string email)
-    {
-        var atIndex = email.IndexOf('@');
-        if (atIndex <= 0) return false;
-        var dotIndex = email.IndexOf('.', atIndex);
-        return dotIndex > atIndex + 1 && dotIndex < email.Length - 1;
     }
 }

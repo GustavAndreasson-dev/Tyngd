@@ -21,38 +21,9 @@ public partial class RegisterDialog : ComponentBase
 
     private async Task Submit()
     {
-        _errorMessage = null;
-
-        if (string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_email) ||
-            string.IsNullOrWhiteSpace(_password) || string.IsNullOrWhiteSpace(_confirmPassword))
-        {
-            _errorMessage = "Fyll i alla fält.";
+        _errorMessage = RegisterRequestValidator.Validate(_username, _email, _password, _confirmPassword);
+        if (_errorMessage is not null)
             return;
-        }
-
-        if (_username.Trim().Length < 3)
-        {
-            _errorMessage = "Användarnamnet måste vara minst 3 tecken.";
-            return;
-        }
-
-        if (!IsValidEmail(_email.Trim()))
-        {
-            _errorMessage = "Ange en giltig e-postadress.";
-            return;
-        }
-
-        if (_password.Length < 6)
-        {
-            _errorMessage = "Lösenordet måste vara minst 6 tecken.";
-            return;
-        }
-
-        if (_password != _confirmPassword)
-        {
-            _errorMessage = "Lösenorden matchar inte.";
-            return;
-        }
 
         var (user, error) = await AuthService.RegisterAsync(new RegisterRequest
         {
@@ -71,11 +42,4 @@ public partial class RegisterDialog : ComponentBase
     }
 
     private void Cancel() => MudDialog.Cancel();
-
-    private static bool IsValidEmail(string email)
-    {
-        var atIndex = email.IndexOf('@');
-        if (atIndex <= 0) return false;
-        var dotIndex = email.IndexOf('.', atIndex);
-        return dotIndex > atIndex + 1 && dotIndex < email.Length - 1;
-    }}
+}
