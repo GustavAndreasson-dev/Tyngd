@@ -89,7 +89,8 @@ public partial class MySplits : IDisposable
 
         await TryAsync(async () =>
         {
-            splits = await UserSplitsService.GetMySplitsAsync();
+            // Egna splits och aktiverade mallar; lösa pass ingår inte.
+            splits = await UserSplitsService.GetAllActiveSplitsAsync();
             passExercises = new();
             passMuscles = new();
             splitMuscles = new();
@@ -147,6 +148,25 @@ public partial class MySplits : IDisposable
 
             successMessage = "Splitten har tagits bort.";
         }, "Kunde inte ta bort split");
+    }
+
+    private async Task DeactivateTemplate(TrainingSplit split)
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Avaktivera mall",
+            $"{split.SplitName} försvinner från översikten, men träningshistoriken bevaras. Du kan aktivera mallen igen under Split-mallar.",
+            yesText: "Avaktivera",
+            cancelText: "Avbryt");
+
+        if (confirmed != true)
+            return;
+
+        await TryAsync(async () =>
+        {
+            await UserSplitsService.DeactivateSplitAsync(LoginState.CurrentUser!.UserId, split.SplitTemplateId!.Value);
+            splits.Remove(split);
+            successMessage = "Mallen har avaktiverats.";
+        }, "Kunde inte avaktivera mallen");
     }
 
     public void Dispose() => LoginState.OnChange -= OnLoginStateChanged;

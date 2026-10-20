@@ -12,6 +12,7 @@ public static class SplitMapping
             SplitId   = split.SplitId,
             SplitName = split.SplitName,
             UserId    = split.UserId.ToString(),
+            SplitTemplateId = split.SplitTemplateId,
             Passes    = split.Pass.Select(pass => new TrainingPass
             {
                 PassId   = pass.PassId,

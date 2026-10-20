@@ -31,7 +31,7 @@
 }
 else if (!splits.Any())
 {
-    <MudText Color="Color.Secondary">Du har inga egna splits ännu. <MudLink Href="create-split">Skapa en split</MudLink></MudText>
+    <MudText Color="Color.Secondary">Du har inga splits ännu. <MudLink Href="create-split">Skapa en split</MudLink> eller aktivera en <MudLink Href="TP/templates">mall</MudLink>.</MudText>
 }
 else
 {
@@ -40,21 +40,47 @@ else
         <MudCard Class="mb-4">
             <MudCardContent>
                 <div class="d-flex justify-space-between align-center">
-                    <MudText Typo="Typo.h5">@split.SplitName</MudText>
+                    <div class="d-flex align-center" style="gap:8px;">
+                        <MudText Typo="Typo.h5">@split.SplitName</MudText>
+                        @if (split.SplitTemplateId is not null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Mall</MudChip>
+                        }
+                    </div>
                     <div class="d-flex align-center" style="gap:4px;">
                         <MudIconButton Icon="@Icons.Material.Filled.AccessibilityNew"
                                        Color="@(splitMuscles.ContainsKey(split.SplitId) ? Color.Primary : Color.Default)"
                                        Size="Size.Small"
                                        aria-label="Visa muskler för splitten"
                                        OnClick="@(() => ToggleSplitMusclesAsync(split.SplitId))" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                       Color="Color.Primary"
-                                       Size="Size.Small"
-                                       Href="@($"/edit-split/{split.SplitId}")" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                       Color="Color.Error"
-                                       Size="Size.Small"
-                                       OnClick="@(async () => await DeleteSplit(split.SplitId))" />
+                        @if (split.SplitTemplateId is not null)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           aria-label="Kopiera och redigera"
+                                           title="Kopiera och redigera"
+                                           Href="@($"/create-split?copyFrom={split.SplitId}")" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           aria-label="Avaktivera mallen"
+                                           title="Avaktivera"
+                                           OnClick="@(() => DeactivateTemplate(split))" />
+                        }
+                        else
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           aria-label="Redigera splitten"
+                                           Href="@($"/edit-split/{split.SplitId}")" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           aria-label="Ta bort splitten"
+                                           OnClick="@(async () => await DeleteSplit(split.SplitId))" />
+                        }
                     </div>
                 </div>
                 @if (splitMuscles.TryGetValue(split.SplitId, out var splitLoad))

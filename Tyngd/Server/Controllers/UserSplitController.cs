@@ -357,7 +357,10 @@ public class UserSplitController : ApiControllerBase
         return NoContent();
     }
 
-    /// <summary>Returnerar en enskild egen split med alla pass och övningar – redo att redigera.</summary>
+    /// <summary>
+    /// Returnerar en av användarens splits med alla pass och övningar. Även aktiverade mallar, så att de kan
+    /// visas och kopieras; att spara ändringar (PUT) går fortfarande bara för egna splits.
+    /// </summary>
     [HttpGet("my/{splitId:int}/full")]
     public async Task<ActionResult<CreateSplitRequest>> GetMySplitFull(int splitId)
     {
@@ -366,7 +369,6 @@ public class UserSplitController : ApiControllerBase
             .Where(s => s.SplitId == splitId
                 && s.UserId == CurrentUserId
                 && s.Visability
-                && s.SplitTemplateId == null
                 && !s.IsFreeSessions)
             .AsSingleQuery()
             .Select(split => new CreateSplitRequest
