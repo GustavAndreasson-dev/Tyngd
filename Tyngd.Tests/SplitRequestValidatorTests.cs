@@ -28,6 +28,21 @@ public class SplitRequestValidatorTests
         Assert.Contains(errors, error => error.Key == "Passes[0].Exercises[0].DefaultWeight");
     }
 
+    [Theory]
+    [InlineData("#23CE6B", true)]
+    [InlineData(null, true)]
+    [InlineData("#000000", false)]
+    [InlineData("red;background:url(x)", false)]
+    public void Pass_color_must_be_one_of_the_offered_colors(string? color, bool valid)
+    {
+        var request = ValidRequest();
+        request.Passes[0].Color = color;
+
+        var errors = SplitRequestValidator.Validate(request);
+
+        Assert.Equal(valid, !errors.Any(error => error.Key == "Passes[0].Color"));
+    }
+
     [Fact]
     public void Split_requires_at_least_one_pass()
     {

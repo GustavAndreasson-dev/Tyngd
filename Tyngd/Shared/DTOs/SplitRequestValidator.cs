@@ -26,6 +26,8 @@ public static class SplitRequestValidator
             var pass = request.Passes[passIndex];
             var passKey = $"Passes[{passIndex}]";
             ValidateName(pass.PassName, $"{passKey}.PassName", "Passnamn", errors);
+            if (pass.Color is not null && !Tyngd.Shared.TrainingPrograms.PassColors.IsValid(pass.Color))
+                errors.Add(new($"{passKey}.Color", "Ogiltig färg."));
 
             if (pass.Exercises is null || pass.Exercises.Count == 0)
             {

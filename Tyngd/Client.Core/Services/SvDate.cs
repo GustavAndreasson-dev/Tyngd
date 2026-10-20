@@ -10,6 +10,9 @@ public static class SvDate
 
     public static string Short(DateOnly date) => Short(date.Day, date.Month);
 
+    /// <summary>T.ex. "okt".</summary>
+    public static string Month(int month) => Months[month - 1];
+
     private static readonly string[] DayNames = ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"];
     private static readonly string[] MonthNames = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 
