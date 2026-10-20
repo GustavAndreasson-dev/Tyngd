@@ -133,7 +133,7 @@ public partial class PassPage : IDisposable
     private Dictionary<int, Tyngd.Shared.DTOs.LastSessionExerciseDto> _previous = new();
     private DateOnly? _previousDate;
     private PassData data = new();
-    private string PassKey => $"pass-{SplitId}-{PassId}";
+    private string PassKey => Services.PassKey.Format(SplitId, PassId);
 
     // Används för att detektera PassId-byte vid navigering
     private bool _isInitialized;
@@ -243,14 +243,8 @@ public partial class PassPage : IDisposable
         pass is not null && activeIndex >= 0 && activeIndex < pass.Exercises.Count
         && _progress.TryGetValue(pass.Exercises[activeIndex].ExerciseId, out var p) ? p : new();
 
-    /// <summary>Punkter för en 300x80 SVG-polyline; vikter skalas mellan min och max.</summary>
-    private static string SparkPoints(List<Tyngd.Shared.DTOs.ExerciseProgressPointDto> pts)
-    {
-        var min = pts.Min(p => p.Weight);
-        var range = Math.Max(pts.Max(p => p.Weight) - min, 1m);
-        return string.Join(" ", pts.Select((p, i) => FormattableString.Invariant(
-            $"{8 + i * 284.0 / Math.Max(pts.Count - 1, 1):0.#},{72 - (double)((p.Weight - min) / range) * 64:0.#}")));
-    }
+    private static string SparkPoints(List<Tyngd.Shared.DTOs.ExerciseProgressPointDto> pts) =>
+        string.Join(" ", WeightProgress.SparkPoints(pts).Select(p => FormattableString.Invariant($"{p.X:0.#},{p.Y:0.#}")));
 
 
     private int TotalSets => pass?.Exercises.Sum(e => e.DefaultSets) ?? 0;
@@ -591,7 +585,7 @@ public partial class PassPage : IDisposable
     }
 
     /// <summary>Startar vilan. Den fortsätter även om man lämnar passidan (se RestTimerState).</summary>
-    private void StartRestTimer() => _ = RestTimer.StartAsync($"TP/split/{SplitId}/pass/{PassId}");
+    private void StartRestTimer() => _ = RestTimer.StartAsync(SplitId, PassId);
 
     /// <summary>Avbryter pågående vila.</summary>
     private void CancelRestTimer() => _ = RestTimer.CancelAsync();
@@ -666,16 +660,6 @@ public partial class PassPage : IDisposable
             SetSaveStatus("Övningen kunde inte sparas.", Severity.Error);
             throw;
         }
-    }
-
-    /// <summary>Formaterar set och reps från en övningsmall som text, t.ex. "3x8-12".</summary>
-    private static string FormatSetsReps(TrainingExerciseTemplate exercise)
-    {
-        var reps = exercise.DefaultRepsMin == exercise.DefaultRepsMax
-            ? exercise.DefaultRepsMin.ToString()
-            : $"{exercise.DefaultRepsMin}-{exercise.DefaultRepsMax}";
-
-        return $"{exercise.DefaultSets}x{reps}";
     }
 
     private string ChipClass(int idx) =>

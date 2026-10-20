@@ -57,7 +57,7 @@
                     {
                         <MudListItem T="TrainingExerciseTemplate">
                             <MudText Typo="Typo.subtitle1">@exercise.Exercise.ExerciseName</MudText>
-                            <MudText Typo="Typo.caption">@FormatDefault(exercise)</MudText>
+                            <MudText Typo="Typo.caption">@ExerciseFormat.Summary(exercise)</MudText>
                         </MudListItem>
                     }
                 </MudList>

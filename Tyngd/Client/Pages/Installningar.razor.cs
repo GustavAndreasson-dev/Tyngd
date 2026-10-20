@@ -11,16 +11,8 @@ namespace Tyngd.Client.Pages;
 /// </summary>
 public partial class Installningar : ComponentBase, IDisposable
 {
-    // "2026.10.17.1605+<hash>" från bygget blir "2026.10.17.1605 · 267123a".
-    private static readonly string AppVersion = FormatVersion(
+    private static readonly string AppVersion = Tyngd.Shared.AppVersion.Format(
         typeof(Installningar).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
-
-    public static string FormatVersion(string? informational)
-    {
-        if (string.IsNullOrEmpty(informational)) return "okänd";
-        var parts = informational.Split('+', 2);
-        return parts.Length == 2 ? $"{parts[0]} · {parts[1][..Math.Min(7, parts[1].Length)]}" : parts[0];
-    }
 
     /// <summary>Tjänst som håller temainställningarna globalt.</summary>
     [Inject]

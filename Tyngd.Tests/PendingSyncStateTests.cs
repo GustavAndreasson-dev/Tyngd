@@ -24,7 +24,7 @@ public class PendingSyncStateTests
             Notes = { [7] = "tungt" },
         });
         var server = new CapturingHandler();
-        var sync = new PendingSyncState(storage, new PassLogService(new HttpClient(server) { BaseAddress = new Uri("http://localhost/") }));
+        var sync = new PendingSyncState(new BlazoredAppStorage(storage), new PassLogService(new HttpClient(server) { BaseAddress = new Uri("http://localhost/") }));
 
         await sync.FinalizeAsync("pass-1-2");
 

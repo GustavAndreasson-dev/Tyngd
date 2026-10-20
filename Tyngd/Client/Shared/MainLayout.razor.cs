@@ -65,6 +65,7 @@ public partial class MainLayout : IDisposable
         LoginState.OnChange += OnLoginChanged;
         PendingSync.OnChange += StateHasChanged;
         await PendingSync.RefreshAsync();
+        RestTimer.Finished += OnRestFinished;
         await RestTimer.RestoreAsync();
 
         if (LoginState.IsLoggedIn)
@@ -156,8 +157,12 @@ public partial class MainLayout : IDisposable
     }
 
     /// <summary>Avslutar prenumerationerna.</summary>
+    // Larmet när vilan är slut (vibration, blink eller notis i bakgrunden) sköts av JS.
+    private void OnRestFinished() => _ = InvokeAsync(() => JSRuntime.InvokeVoidAsync("tyngd.restTimer.finished").AsTask());
+
     public void Dispose()
     {
+        RestTimer.Finished -= OnRestFinished;
         ThemeState.OnChange -= OnThemeChanged;
         Nav.LocationChanged -= OnLocationChanged;
         LoginState.OnChange -= OnLoginChanged;

@@ -1,0 +1,38 @@
+<ContentDialog x:Class="Tyngd.App.Presentation.Dialogs.ImportSplitDialog"
+               Style="{StaticResource MaterialContentDialogStyle}"
+               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+               Title="Välj split att importera"
+               CloseButtonText="Avbryt">
+  <ContentDialog.Resources>
+    <!-- Både TrainingSplit och TrainingSplitTemplate har SplitName. -->
+    <DataTemplate x:Key="SplitButtonTemplate">
+      <Button Content="{Binding SplitName}"
+              Style="{StaticResource OutlinedButtonStyle}"
+              HorizontalAlignment="Stretch"
+              MinHeight="44"
+              Margin="0,0,0,8"
+              Click="OnSplitClick" />
+    </DataTemplate>
+  </ContentDialog.Resources>
+
+  <ScrollViewer HorizontalScrollMode="Disabled"
+                HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="8">
+      <StackPanel x:Name="MySplitsSection"
+                  Spacing="8">
+        <TextBlock Text="Mina egna splits"
+                   Style="{StaticResource TitleMedium}" />
+        <ItemsControl x:Name="MySplitsList"
+                      ItemTemplate="{StaticResource SplitButtonTemplate}" />
+        <Border Height="1"
+                Margin="0,8"
+                Background="{ThemeResource OutlineVariantBrush}" />
+      </StackPanel>
+      <TextBlock Text="Splitmallar"
+                 Style="{StaticResource TitleMedium}" />
+      <ItemsControl x:Name="TemplatesList"
+                    ItemTemplate="{StaticResource SplitButtonTemplate}" />
+    </StackPanel>
+  </ScrollViewer>
+</ContentDialog>

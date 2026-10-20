@@ -1,0 +1,42 @@
+<Page x:Class="Tyngd.App.Presentation.LoginPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      Background="{ThemeResource BackgroundBrush}">
+  <ScrollViewer utu:SafeArea.Insets="VisibleBounds,SoftInput">
+    <StackPanel MaxWidth="400"
+                Padding="24"
+                Spacing="16"
+                VerticalAlignment="Center">
+      <TextBlock Text="Tyngd"
+                 Style="{StaticResource DisplaySmall}"
+                 HorizontalAlignment="Center" />
+      <TextBlock Text="Logga in"
+                 Style="{StaticResource TitleMedium}"
+                 HorizontalAlignment="Center" />
+      <TextBox Header="Användarnamn eller e-post"
+               Text="{Binding UserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+               AutomationProperties.AutomationId="LoginUserName"
+               IsSpellCheckEnabled="False"
+               InputScope="EmailNameOrAddress" />
+      <PasswordBox Header="Lösenord"
+                   Password="{Binding Password, Mode=TwoWay}"
+                   AutomationProperties.AutomationId="LoginPassword"
+                   utu:CommandExtensions.Command="{Binding LoginCommand}" />
+      <TextBlock Text="{Binding ErrorMessage}"
+                 Foreground="{ThemeResource ErrorBrush}"
+                 TextWrapping="Wrap"
+                 AutomationProperties.AutomationId="LoginError" />
+      <Button Content="Logga in"
+              Command="{Binding LoginCommand}"
+              AutomationProperties.AutomationId="LoginButton"
+              HorizontalAlignment="Stretch" />
+      <Button Content="Skapa konto"
+              Click="OnRegisterClick"
+              Style="{StaticResource TextButtonStyle}"
+              MinHeight="44"
+              AutomationProperties.AutomationId="RegisterButton"
+              HorizontalAlignment="Stretch" />
+    </StackPanel>
+  </ScrollViewer>
+</Page>

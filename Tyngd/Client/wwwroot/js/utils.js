@@ -103,14 +103,8 @@ window.tyngd.scrollActiveChip = function () {
     if (chip) chip.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
 };
 
-// Vilotimer: sluttiden lagras som JSON så att vilan överlever omladdning; larm när vilan är slut.
+// Vilotimer: larm när vilan är slut (sluttiden sparas av RestTimerState i Client.Core).
 window.tyngd.restTimer = {
-    save: function (key, value) {
-        try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { }
-    },
-    load: function (key) {
-        try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
-    },
     finished: async function () {
         if (navigator.vibrate) navigator.vibrate([250, 120, 250]);
         if (document.visibilityState === 'visible') {

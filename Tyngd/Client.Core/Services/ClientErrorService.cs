@@ -1,5 +1,4 @@
 using Tyngd.Shared.DTOs;
-using Microsoft.AspNetCore.Components;
 using System.Net.Http.Json;
 
 namespace Tyngd.Client.Services;
@@ -7,22 +6,21 @@ namespace Tyngd.Client.Services;
 public class ClientErrorService
 {
     private readonly HttpClient _http;
-    private readonly NavigationManager _navigationManager;
 
-    public ClientErrorService(HttpClient http, NavigationManager navigationManager)
+    public ClientErrorService(HttpClient http)
     {
         _http = http;
-        _navigationManager = navigationManager;
     }
 
-    public async Task ReportAsync(Exception exception)
+    /// <summary>Skickar felet till servern. <paramref name="location"/> är sidans adress i webben.</summary>
+    public async Task ReportAsync(Exception exception, string? location)
     {
         try
         {
             var report = new ClientErrorReportDto
             {
                 Exception = SerializableExceptionDto.FromException(exception),
-                Uri = _navigationManager.Uri,
+                Uri = location ?? string.Empty,
                 OccurredAt = DateTimeOffset.UtcNow,
             };
 

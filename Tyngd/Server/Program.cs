@@ -78,9 +78,10 @@ else
 {
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    // Inte i Development: Uno-appen på telefonen når servern via "adb reverse" på http://localhost:5123
+    // och kan inte följa en omdirigering till https-porten.
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
 
 app.UseMiddleware<ErrorNotificationMiddleware>();
 

@@ -1,0 +1,155 @@
+<Page x:Class="Tyngd.App.Presentation.ExercisesPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      Background="{ThemeResource BackgroundBrush}">
+  <!-- Hela sidan är en virtualiserande lista; sök och filter ligger i listhuvudet så att allt scrollar tillsammans. -->
+  <ListView ItemsSource="{Binding Visible}"
+            SelectionMode="None"
+            IsItemClickEnabled="True"
+            ItemClick="OnItemClick"
+            Padding="16,0,16,24">
+    <ListView.ItemContainerStyle>
+      <Style TargetType="ListViewItem">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinHeight" Value="64" />
+      </Style>
+    </ListView.ItemContainerStyle>
+    <ListView.Header>
+      <StackPanel Padding="0,24,0,8"
+                  Spacing="12">
+        <Grid ColumnSpacing="12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Text="Övningar"
+                     Style="{StaticResource HeadlineMedium}" />
+          <TextBlock Grid.Column="1"
+                     Text="{Binding CountText}"
+                     Style="{StaticResource BodyMedium}"
+                     Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                     VerticalAlignment="Bottom" />
+        </Grid>
+        <TextBox Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 PlaceholderText="Sök på svenska eller engelska"
+                 AutomationProperties.Name="Sök övning"
+                 IsSpellCheckEnabled="False" />
+        <ScrollViewer HorizontalScrollBarVisibility="Hidden"
+                      HorizontalScrollMode="Enabled"
+                      VerticalScrollMode="Disabled"
+                      VerticalScrollBarVisibility="Disabled">
+          <StackPanel Orientation="Horizontal"
+                      Spacing="8">
+            <utu:Chip Content="{Binding FavoritesText}"
+                      Style="{StaticResource FilterChipStyle}"
+                      CanRemove="False"
+                      IsChecked="{Binding OnlyFavorites, Mode=TwoWay}" />
+            <utu:ChipGroup ItemsSource="{Binding Categories}"
+                           SelectedItem="{Binding Category, Mode=TwoWay}"
+                           SelectionMode="SingleOrNone"
+                           Style="{StaticResource FilterChipGroupStyle}"
+                           AutomationProperties.Name="Kategori" />
+          </StackPanel>
+        </ScrollViewer>
+        <Grid ColumnSpacing="12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <ComboBox Header="Muskel"
+                    ItemsSource="{Binding MuscleOptions}"
+                    SelectedItem="{Binding Muscle, Mode=TwoWay}"
+                    PlaceholderText="Alla muskler"
+                    HorizontalAlignment="Stretch" />
+          <ComboBox Grid.Column="1"
+                    Header="Utrustning"
+                    ItemsSource="{Binding EquipmentOptions}"
+                    SelectedItem="{Binding Equipment, Mode=TwoWay}"
+                    PlaceholderText="All utrustning"
+                    HorizontalAlignment="Stretch" />
+        </Grid>
+        <ProgressBar IsIndeterminate="True"
+                     Visibility="{Binding LoadingVisibility}" />
+        <!-- Dolda när de är tomma: tomma textrader tog annars plats ovanför listan. -->
+        <TextBlock Text="{Binding Error}"
+                   Visibility="{Binding HasError}"
+                   Foreground="{ThemeResource ErrorBrush}"
+                   TextWrapping="Wrap" />
+        <TextBlock Text="{Binding Notice}"
+                   Visibility="{Binding HasNotice}"
+                   Foreground="{ThemeResource PrimaryBrush}"
+                   TextWrapping="Wrap"
+                   AutomationProperties.LiveSetting="Polite" />
+        <TextBlock Text="{Binding EmptyText}"
+                   Visibility="{Binding HasEmptyText}"
+                   Style="{StaticResource BodyMedium}"
+                   Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                   TextWrapping="Wrap" />
+      </StackPanel>
+    </ListView.Header>
+    <ListView.ItemTemplate>
+      <DataTemplate>
+        <Grid ColumnSpacing="12"
+              Padding="0,8"
+              BorderBrush="{ThemeResource OutlineVariantBrush}"
+              BorderThickness="0,0,0,1">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="48" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <!-- wgers bilder är mörka streck på genomskinlig botten och behöver vit bakgrund även i mörkt läge, som i webbappen. -->
+          <Border Width="48"
+                  Height="48"
+                  CornerRadius="8"
+                  Background="White"
+                  VerticalAlignment="Center">
+            <Image Source="{Binding ImageUrl}"
+                   Stretch="Uniform" />
+          </Border>
+          <Border Width="48"
+                  Height="48"
+                  CornerRadius="8"
+                  Background="{ThemeResource SurfaceVariantBrush}"
+                  Visibility="{Binding PlaceholderVisibility}"
+                  VerticalAlignment="Center">
+            <PathIcon Width="20"
+                      Height="20"
+                      Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                      Data="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z" />
+          </Border>
+          <StackPanel Grid.Column="1"
+                      VerticalAlignment="Center">
+            <TextBlock Text="{Binding Name}"
+                       Style="{StaticResource TitleSmall}"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Meta}"
+                       Style="{StaticResource BodySmall}"
+                       Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                       TextTrimming="CharacterEllipsis"
+                       MaxLines="1" />
+          </StackPanel>
+          <Button Grid.Column="2"
+                  Width="44"
+                  Height="44"
+                  Padding="0"
+                  Style="{StaticResource TextButtonStyle}"
+                  Command="{Binding ToggleFavoriteCommand}"
+                  CommandParameter="{Binding}"
+                  AutomationProperties.Name="{Binding StarLabel}">
+            <Grid>
+              <PathIcon Foreground="{ThemeResource SecondaryBrush}"
+                        Visibility="{Binding FavoriteVisibility}"
+                        Data="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+              <PathIcon Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                        Visibility="{Binding NotFavoriteVisibility}"
+                        Data="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z" />
+            </Grid>
+          </Button>
+        </Grid>
+      </DataTemplate>
+    </ListView.ItemTemplate>
+  </ListView>
+</Page>

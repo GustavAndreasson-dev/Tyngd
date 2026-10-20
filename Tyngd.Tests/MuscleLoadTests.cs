@@ -26,6 +26,26 @@ public class MuscleLoadTests
     }
 
     [Fact]
+    public void Scale_is_relative_to_max_and_drops_unknown_and_zero_muscles()
+    {
+        var shown = MuscleLoad.Scale(new Dictionary<string, double> { ["Chest"] = 2, ["Triceps"] = 1, ["Okänd"] = 1, ["Abs"] = 0 });
+
+        Assert.Equal([("Chest", 1.0), ("Triceps", 0.5)], shown.Select(m => (m.Muscle.Key, m.Share)));
+        Assert.True(shown[0].IsStrong);
+        Assert.Equal(1, shown[0].Opacity);
+        Assert.False(shown[1].IsStrong);
+        Assert.Equal(0.45 + 0.55 * 0.5 / 0.75, shown[1].Opacity, 9);
+        Assert.Empty(MuscleLoad.Scale(null));
+    }
+
+    [Fact]
+    public void Shows_the_side_with_most_load_first()
+    {
+        Assert.True(MuscleLoad.ShowBackFirst(MuscleLoad.Scale(new Dictionary<string, double> { ["Glutes"] = 1, ["Hamstrings"] = 1, ["Quads"] = 1 })));
+        Assert.False(MuscleLoad.ShowBackFirst(MuscleLoad.Scale(new Dictionary<string, double> { ["Glutes"] = 1, ["Quads"] = 1 })));
+    }
+
+    [Fact]
     public void Every_wger_muscle_has_a_picture_mapping() =>
         Assert.Equal(15, Muscles.All.Select(m => m.WgerId).Distinct().Count());
 

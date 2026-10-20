@@ -1,0 +1,153 @@
+<Page x:Class="Tyngd.App.Presentation.ExerciseInfoPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      xmlns:controls="using:Tyngd.App.Presentation.Controls"
+      Background="{ThemeResource BackgroundBrush}">
+  <Grid utu:SafeArea.Insets="VisibleBounds,SoftInput">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <Grid Padding="4,8,8,0"
+          ColumnSpacing="4">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <Button Width="44"
+              Height="44"
+              Padding="0"
+              Style="{StaticResource TextButtonStyle}"
+              Command="{Binding BackCommand}"
+              AutomationProperties.Name="Tillbaka">
+        <PathIcon Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+      </Button>
+      <TextBlock Grid.Column="1"
+                 Text="{Binding Title}"
+                 Style="{StaticResource TitleLarge}"
+                 TextWrapping="Wrap"
+                 VerticalAlignment="Center" />
+      <Button Grid.Column="2"
+              Width="44"
+              Height="44"
+              Padding="0"
+              Style="{StaticResource TextButtonStyle}"
+              Command="{Binding ToggleFavoriteCommand}"
+              AutomationProperties.Name="{Binding StarLabel}"
+              Visibility="{Binding ContentVisibility}">
+        <Grid>
+          <PathIcon Foreground="{ThemeResource SecondaryBrush}"
+                    Visibility="{Binding FavoriteVisibility}"
+                    Data="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+          <PathIcon Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                    Visibility="{Binding NotFavoriteVisibility}"
+                    Data="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z" />
+        </Grid>
+      </Button>
+    </Grid>
+
+    <ScrollViewer Grid.Row="1">
+      <StackPanel Padding="16,0,16,24"
+                  Spacing="12">
+        <TextBlock Text="{Binding NameEn}"
+                   Style="{StaticResource BodySmall}"
+                   Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                   Margin="48,0,0,0" />
+        <ProgressRing IsActive="True"
+                      Width="24"
+                      Height="24"
+                      HorizontalAlignment="Left"
+                      Visibility="{Binding LoadingVisibility}" />
+        <TextBlock Text="{Binding Error}"
+                   Foreground="{ThemeResource ErrorBrush}"
+                   TextWrapping="Wrap" />
+
+        <StackPanel Spacing="12"
+                    Visibility="{Binding ContentVisibility}">
+          <!-- wgers bilder är mörka streck på genomskinlig botten och behöver vit bakgrund även i mörkt läge, som i webbappen. -->
+          <Border Background="White"
+                  CornerRadius="8"
+                  HorizontalAlignment="Center"
+                  Visibility="{Binding ImageVisibility}">
+            <Image Source="{Binding Exercise.ImageUrl}"
+                   MaxHeight="220"
+                   Stretch="Uniform" />
+          </Border>
+
+          <ItemsControl ItemsSource="{Binding Tags}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="{ThemeResource SurfaceVariantBrush}"
+                        CornerRadius="8"
+                        Padding="10,4"
+                        Margin="0,0,4,4">
+                  <TextBlock Text="{Binding}"
+                             Style="{StaticResource LabelMedium}" />
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <controls:MuscleMap MuscleLoad="{Binding Load}"
+                              EmptyText="wger anger inga muskler för övningen." />
+
+          <StackPanel Spacing="4"
+                      Visibility="{Binding HistoryVisibility}">
+            <TextBlock Text="Din historik"
+                       Style="{StaticResource TitleSmall}" />
+            <TextBlock Text="{Binding HistorySummary}"
+                       Style="{StaticResource BodySmall}"
+                       Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                       TextWrapping="Wrap" />
+            <ItemsControl ItemsSource="{Binding HistoryRows}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnSpacing="8"
+                        Padding="0,2">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Left}"
+                               Style="{StaticResource BodyMedium}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding Right}"
+                               Style="{StaticResource BodyMedium}" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+
+          <TextBlock Text="{Binding Description}"
+                     Style="{StaticResource BodyMedium}"
+                     TextWrapping="Wrap"
+                     IsTextSelectionEnabled="True" />
+
+          <!-- Källa och licens krävs av wgers licens. -->
+          <StackPanel Opacity="0.75"
+                      Margin="0,12,0,0">
+            <TextBlock Style="{StaticResource BodySmall}"
+                       Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                       TextWrapping="Wrap">
+              <Run Text="Övningsdata från " /><Hyperlink NavigateUri="https://wger.de">wger.de</Hyperlink><Run Text="{Binding LicenseText}" />
+            </TextBlock>
+            <TextBlock Text="{Binding ImageCredit}"
+                       Style="{StaticResource BodySmall}"
+                       Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</Page>

@@ -57,14 +57,14 @@
             {
                 <MudText Typo="Typo.subtitle2" Class="mb-1">Din historik</MudText>
                 <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-1">
-                    Bästa vikt: @(_history.Max(entry => entry.MaxWeight).ToString("0.##")) kg · @_history.Count senaste tillfällen från alla pass
+                    @ExerciseHistoryText.Summary(_history)
                 </MudText>
                 <ul class="mb-3" style="list-style:none; padding:0; margin:0; font-size:.875rem;">
-                    @foreach (var entry in Enumerable.Reverse(_history).Take(5))
+                    @foreach (var row in ExerciseHistoryText.Rows(_history))
                     {
                         <li style="display:flex; justify-content:space-between; gap:8px; padding:2px 0;">
-                            <span>@SvDate.Short(entry.Date) · @entry.PassName</span>
-                            <span style="font-variant-numeric:tabular-nums;">@entry.MaxWeight.ToString("0.##") kg · @entry.Sets set · @entry.TotalReps reps</span>
+                            <span>@row.When</span>
+                            <span style="font-variant-numeric:tabular-nums;">@row.What</span>
                         </li>
                     }
                 </ul>

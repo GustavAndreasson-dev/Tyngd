@@ -1,0 +1,38 @@
+<ContentDialog x:Class="Tyngd.App.Presentation.Dialogs.FinishFreeSessionDialog"
+               Style="{StaticResource MaterialContentDialogStyle}"
+               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+               Title="Spara som pass?"
+               PrimaryButtonText="Spara som pass"
+               SecondaryButtonText="Släng passet"
+               DefaultButton="Primary"
+               PrimaryButtonClick="OnKeepClick"
+               SecondaryButtonClick="OnDiscardClick"
+               Closing="OnClosing">
+  <!-- Visas när ett löst pass avslutats: spara det som ett riktigt pass, eller släng det. Träningen finns kvar i historiken oavsett. -->
+  <ScrollViewer HorizontalScrollMode="Disabled"
+                HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="12">
+      <TextBlock Text="Det du tränat är sparat. Vill du kunna köra samma övningar igen? Spara dem som ett pass i en split."
+                 Style="{StaticResource BodyMedium}"
+                 Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                 TextWrapping="Wrap" />
+      <TextBox x:Name="PassNameBox"
+               Header="Passnamn"
+               MaxLength="50" />
+      <ComboBox x:Name="TargetBox"
+                Header="Spara i"
+                DisplayMemberPath="SplitName"
+                HorizontalAlignment="Stretch"
+                SelectionChanged="OnTargetChanged" />
+      <TextBox x:Name="NewSplitNameBox"
+               Header="Splittens namn"
+               Text="Mina pass"
+               MaxLength="50" />
+      <TextBlock x:Name="ErrorText"
+                 Foreground="{ThemeResource ErrorBrush}"
+                 TextWrapping="Wrap"
+                 AutomationProperties.LiveSetting="Assertive" />
+    </StackPanel>
+  </ScrollViewer>
+</ContentDialog>

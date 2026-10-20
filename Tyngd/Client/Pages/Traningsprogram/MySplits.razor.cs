@@ -149,19 +149,6 @@ public partial class MySplits : IDisposable
         }, "Kunde inte ta bort split");
     }
 
-    private static string FormatDefault(CreateExerciseDto exercise)
-    {
-        var reps = exercise.RepsMin == exercise.RepsMax
-            ? exercise.RepsMin.ToString()
-            : $"{exercise.RepsMin}-{exercise.RepsMax}";
-
-        var weight = exercise.DefaultWeight == 0
-            ? "kroppsvikt"
-            : $"{exercise.DefaultWeight:0.##} kg";
-
-        return $"{exercise.DefaultSets} x {reps} @ {weight}";
-    }
-
     public void Dispose() => LoginState.OnChange -= OnLoginStateChanged;
 
     private void ClearSuccess() => successMessage = null;

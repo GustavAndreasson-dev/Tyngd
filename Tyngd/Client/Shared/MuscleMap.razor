@@ -37,7 +37,7 @@ else
                 @foreach (var muscle in _muscles.Take(MaxLegend))
                 {
                     <li>
-                        <span class="muscle-map__dot @(IsStrong(muscle) ? "muscle-map__dot--strong" : "")"></span>
+                        <span class="muscle-map__dot @(muscle.IsStrong ? "muscle-map__dot--strong" : "")"></span>
                         @muscle.Muscle.NameSv
                     </li>
                 }
@@ -54,7 +54,7 @@ else
 
     [Parameter] public string EmptyText { get; set; } = "Inga muskeldata. Övningar måste vara kopplade till katalogen.";
 
-    private List<Item> _muscles = new();
+    private List<MuscleShare> _muscles = new();
     private bool _showBack;
     private IReadOnlyDictionary<string, double>? _shownLoad;
 
@@ -65,30 +65,15 @@ else
             return;
         _shownLoad = Load;
 
-        var max = Load?.Values.DefaultIfEmpty(0).Max() ?? 0;
-        _muscles = max <= 0
-            ? new()
-            : Load!
-                .Select(pair => (Muscle: Muscles.Find(pair.Key), Share: pair.Value / max))
-                .Where(item => item.Muscle is not null && item.Share > 0)
-                .Select(item => new Item(item.Muscle!, item.Share))
-                .OrderByDescending(item => item.Share)
-                .ToList();
-
-        // Börja på den sida där det mesta händer.
-        _showBack = _muscles.Where(m => !m.Muscle.IsFront).Sum(m => m.Share) > _muscles.Where(m => m.Muscle.IsFront).Sum(m => m.Share);
+        _muscles = MuscleLoad.Scale(Load);
+        _showBack = MuscleLoad.ShowBackFirst(_muscles);
     }
 
     private void Flip() => _showBack = !_showBack;
 
-    // Stark belastning ritas med wgers röda bild, lägre med den orange.
-    private static bool IsStrong(Item item) => item.Share >= 0.75;
+    private static string Src(MuscleShare item) =>
+        $"img/muscles/muscle-{item.Muscle.WgerId}-{(item.IsStrong ? "main" : "secondary")}.svg";
 
-    private static string Src(Item item) =>
-        $"img/muscles/muscle-{item.Muscle.WgerId}-{(IsStrong(item) ? "main" : "secondary")}.svg";
-
-    private static string Opacity(Item item) =>
-        (IsStrong(item) ? 1 : 0.45 + 0.55 * item.Share / 0.75).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
-
-    private sealed record Item(Muscles.Muscle Muscle, double Share);
+    private static string Opacity(MuscleShare item) =>
+        item.Opacity.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
 }

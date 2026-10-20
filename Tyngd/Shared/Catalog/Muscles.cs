@@ -51,4 +51,33 @@ public static class MuscleLoad
         }
         return load;
     }
+
+    /// <summary>Andel av max som räknas som stark belastning (wgers röda bild i stället för den orange).</summary>
+    public const double StrongShare = 0.75;
+
+    /// <summary>Kända muskler med belastning, skalade mot det högsta värdet (0–1) och sorterade störst först.</summary>
+    public static List<MuscleShare> Scale(IReadOnlyDictionary<string, double>? load)
+    {
+        var max = load?.Values.DefaultIfEmpty(0).Max() ?? 0;
+        if (max <= 0)
+            return [];
+        return load!
+            .Select(pair => (Muscle: Muscles.Find(pair.Key), Share: pair.Value / max))
+            .Where(item => item.Muscle is not null && item.Share > 0)
+            .Select(item => new MuscleShare(item.Muscle!, item.Share))
+            .OrderByDescending(item => item.Share)
+            .ToList();
+    }
+
+    /// <summary>Börja på den sida där det mesta händer.</summary>
+    public static bool ShowBackFirst(IEnumerable<MuscleShare> muscles) =>
+        muscles.Where(m => !m.Muscle.IsFront).Sum(m => m.Share) > muscles.Where(m => m.Muscle.IsFront).Sum(m => m.Share);
+}
+
+public sealed record MuscleShare(Muscles.Muscle Muscle, double Share)
+{
+    public bool IsStrong => Share >= MuscleLoad.StrongShare;
+
+    /// <summary>Svagare belastning tonas ner, men aldrig under 0,45 så att den syns.</summary>
+    public double Opacity => IsStrong ? 1 : 0.45 + 0.55 * Share / MuscleLoad.StrongShare;
 }

@@ -1,0 +1,13 @@
+<ContentDialog x:Class="Tyngd.App.Presentation.Dialogs.AddFreeExerciseDialog"
+               Style="{StaticResource MaterialContentDialogStyle}"
+               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+               xmlns:controls="using:Tyngd.App.Presentation.Controls"
+               Title="Lägg till övning"
+               CloseButtonText="Avbryt">
+  <ScrollViewer HorizontalScrollMode="Disabled"
+                HorizontalScrollBarVisibility="Disabled">
+    <controls:FreeSessionExercisePicker x:Name="Picker"
+                                        ExercisePicked="OnExercisePicked" />
+  </ScrollViewer>
+</ContentDialog>

@@ -1,6 +1,4 @@
 using System.Net;
-using Blazored.LocalStorage;
-using Microsoft.Extensions.DependencyInjection;
 using Tyngd.Client.Services;
 using Tyngd.Shared.Users;
 
@@ -36,8 +34,7 @@ public class LoginStateTests
     private static async Task<(FakeLocalStorage, LoginState)> LoggedInAsync()
     {
         var storage = new FakeLocalStorage();
-        var services = new ServiceCollection().AddSingleton<ILocalStorageService>(storage).BuildServiceProvider();
-        var loginState = new LoginState(services.GetRequiredService<IServiceScopeFactory>(), new SessionState());
+        var loginState = new LoginState(new BlazoredAppStorage(storage), new SessionState());
         await loginState.LoginAsync(new UserInfo { UserName = "anna" }, "token");
         return (storage, loginState);
     }

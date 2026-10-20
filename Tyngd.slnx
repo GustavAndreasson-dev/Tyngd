@@ -5,6 +5,8 @@
   </Project>
   <Project Path="Tyngd.Data/Tyngd.Data.csproj" Id="a9999eb1-63d9-435d-896b-5ab9fef27a57" />
   <Project Path="Tyngd/Client/Tyngd.Client.csproj" />
+  <Project Path="Tyngd/Client.Core/Tyngd.Client.Core.csproj" />
+  <Project Path="Tyngd/App/Tyngd.App.csproj" />
   <Project Path="Tyngd/Server/Tyngd.Server.csproj" />
   <Project Path="Tyngd/Shared/Tyngd.Shared.csproj" />
   <Project Path="Tyngd.Tests/Tyngd.Tests.csproj" />
