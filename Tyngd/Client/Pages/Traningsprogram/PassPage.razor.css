@@ -26,6 +26,7 @@
 .pass-bar__mid { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .25rem; min-width: 0; }
 .pass-bar__side { min-width: 48px; padding: 0 1rem; font-size: 1.5rem; background: var(--mud-palette-background-gray); color: var(--mud-palette-text-primary); }
 .pass-bar__main { width: 100%; background: var(--mud-palette-success); color: var(--mud-palette-success-text); }
+.pass-bar__main--early { background: transparent; color: var(--mud-palette-text-primary); border: 1px solid var(--mud-palette-lines-default); }
 .pass-rest { position: fixed; left: 1rem; right: 1rem; bottom: calc(5.5rem + env(safe-area-inset-bottom)); z-index: 1300; padding: .75rem 1rem; border-radius: 16px; background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); box-shadow: 0 8px 24px rgba(0,0,0,.25); }
 .pass-rest__row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
 .pass-rest .ui-label { color: inherit; opacity: .85; }

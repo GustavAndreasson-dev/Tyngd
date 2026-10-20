@@ -542,6 +542,16 @@ public partial class PassPage : IDisposable
     /// <summary>Avslutar passet: sparar till DB, tömmer sessionen, stoppar timer, frigör wake lock och navigerar till startsidan.</summary>
     private async Task EndPass()
     {
+        if (pass is not null && !AllSetsDone())
+        {
+            var left = TotalSets - DoneSets;
+            var confirmed = await DialogService.ShowMessageBoxAsync(
+                "Avsluta passet?",
+                $"{left} set är inte klara och sparas inte. Avsluta ändå?",
+                yesText: "Avsluta", cancelText: "Fortsätt träna");
+            if (confirmed != true) return;
+        }
+
         if (pass is not null)
         {
             var saved = false;
