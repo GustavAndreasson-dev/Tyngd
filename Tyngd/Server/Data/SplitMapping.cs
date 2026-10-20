@@ -17,6 +17,7 @@ public static class SplitMapping
                 PassId   = pass.PassId,
                 SplitId  = split.SplitId,
                 PassName = pass.PassName,
+                Color    = pass.Color,
             }).ToList(),
         };
 }

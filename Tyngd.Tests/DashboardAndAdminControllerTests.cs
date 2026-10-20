@@ -22,6 +22,7 @@ public class DashboardAndAdminControllerTests
         var otherUser = NewUser(AppRoles.User);
         var split = AddSplit(user, "Min split");
         var otherSplit = AddSplit(otherUser, "Annan split");
+        split.Pass.Single().Color = "#23CE6B";
         context.AddRange(user, otherUser);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -39,7 +40,8 @@ public class DashboardAndAdminControllerTests
         Assert.Equal(1, dto.CompletedSessionsLast7Days);
         Assert.Equal(2, dto.CompletedSessionsLast30Days);
         Assert.Equal(2, dto.TotalCompletedSessions);
-        Assert.Single(dto.RecentCompletedAtUtc);
+        Assert.Equal(2, dto.RecentCompletedAtUtc.Count);
+        Assert.All(dto.RecentActivity, activity => Assert.Equal(("#23CE6B", split.Pass.Single().PassName), (activity.Color, activity.PassName)));
         Assert.Single(dto.ActiveSplits);
         Assert.Equal("Min split", dto.LastCompletedSession!.SplitName);
     }

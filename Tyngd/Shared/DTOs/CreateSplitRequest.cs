@@ -10,6 +10,8 @@ public class CreatePassDto
 {
     public int? PassId { get; set; }
     public string PassName { get; set; } = string.Empty;
+    /// <summary>Valfri färg ur PassColors.</summary>
+    public string? Color { get; set; }
     public List<CreateExerciseDto> Exercises { get; set; } = new();
 }
 

@@ -227,6 +227,7 @@ public class UserSplitController : ApiControllerBase
             {
                 PassTemplateId = null,
                 PassName       = p.PassName.Trim(),
+                Color          = p.Color,
                 Visability     = 1,
                 Ordning        = pi + 1,
                 Exercise = p.Exercises.Select((e, ei) => new DbExercise
@@ -300,6 +301,7 @@ public class UserSplitController : ApiControllerBase
             }
 
             pass.PassName = passRequest.PassName.Trim();
+            pass.Color = passRequest.Color;
             pass.Ordning = passIndex + 1;
 
             var activeExercises = pass.Exercise.Where(e => e.Visability).ToDictionary(e => e.ExerciseId);
@@ -377,6 +379,7 @@ public class UserSplitController : ApiControllerBase
                     {
                         PassId = pass.PassId,
                         PassName = pass.PassName,
+                        Color = pass.Color,
                         Exercises = pass.Exercise
                             .Where(exercise => exercise.Visability)
                             .OrderBy(exercise => exercise.Ordning)

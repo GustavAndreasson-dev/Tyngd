@@ -6,6 +6,13 @@
 <PageTitle>@(IsEditMode ? "Redigera split" : "Skapa split")</PageTitle>
 
 <style>
+    /* Passfärg */
+    .cs-colors { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .cs-colors .ui-label { margin-right: 4px; }
+    .cs-color { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; outline-offset: 2px; }
+    .cs-color--none { background: transparent; border-color: var(--mud-palette-lines-inputs); background-image: linear-gradient(135deg, transparent 45%, var(--mud-palette-lines-inputs) 45% 55%, transparent 55%); }
+    .cs-color--on { box-shadow: 0 0 0 2px var(--mud-palette-surface), 0 0 0 4px var(--mud-palette-text-primary); }
+
     /* Pass-kort */
     .cs-pass-card {
         border-left: 3px solid var(--mud-palette-primary);
@@ -166,6 +173,17 @@
                               Error="@(FieldError($"Passes[{passIndex}].PassName") is not null)"
                               ErrorText="@FieldError($"Passes[{passIndex}].PassName")"
                               Required="true" />
+
+                <div class="cs-colors" role="radiogroup" aria-label="Färg på översikten">
+                    <span class="ui-label">Färg</span>
+                    <button type="button" role="radio" aria-checked="@(pass.Color is null)" aria-label="Ingen färg"
+                            class="cs-color cs-color--none @(pass.Color is null ? "cs-color--on" : "")" @onclick="() => pass.Color = null"></button>
+                    @foreach (var (hex, name) in PassColors.Options)
+                    {
+                        <button type="button" role="radio" aria-checked="@(pass.Color == hex)" aria-label="@name" title="@name"
+                                class="cs-color @(pass.Color == hex ? "cs-color--on" : "")" style="background:@hex" @onclick="() => pass.Color = hex"></button>
+                    }
+                </div>
 
                 @* Övningar *@
                 @for (int ei = 0; ei < pass.Exercises.Count; ei++)
