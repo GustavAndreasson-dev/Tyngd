@@ -270,7 +270,10 @@ public class SessionController : ApiControllerBase
             exercise.DefaultWeight = weight;
     }
 
-    /// <summary>Sparar. Om två anrop skapade samma övningslogg samtidigt vinner ett; det andra får 409 och klienten försöker igen.</summary>
+    /// <summary>
+    /// Sparar. Om två anrop sparar samma övning samtidigt vinner ett; det andra får 409 och klienten försöker igen.
+    /// Krocken syns antingen som unikt index (båda skapade loggen) eller som concurrency-fel (båda tog bort samma set).
+    /// </summary>
     private async Task<IActionResult> SaveOrConflictAsync()
     {
         try
@@ -278,7 +281,7 @@ public class SessionController : ApiControllerBase
             await _context.SaveChangesAsync();
             return Ok();
         }
-        catch (DbUpdateException ex) when (DbExceptions.IsUniqueViolation(ex))
+        catch (DbUpdateException ex) when (ex is DbUpdateConcurrencyException || DbExceptions.IsUniqueViolation(ex))
         {
             return Conflict("Samtidig sparning, försök igen.");
         }

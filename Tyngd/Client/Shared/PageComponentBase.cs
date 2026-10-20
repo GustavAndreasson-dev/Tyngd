@@ -27,13 +27,7 @@ public abstract class PageComponentBase : ComponentBase
         }
         catch (HttpRequestException ex)
         {
-            ErrorMessage = $"{errorPrefix}: {ex.StatusCode switch {
-                System.Net.HttpStatusCode.Unauthorized  => "Du är inte inloggad.",
-                System.Net.HttpStatusCode.Forbidden     => "Du har inte behörighet.",
-                System.Net.HttpStatusCode.NotFound      => "Resursen hittades inte.",
-                System.Net.HttpStatusCode.ServiceUnavailable => "Servern är inte tillgänglig.",
-                _ => ex.Message
-            }}";
+            ErrorMessage = $"{errorPrefix}: {Tyngd.Client.Services.HttpErrorText.For(ex)}";
         }
         catch (Exception ex)
         {

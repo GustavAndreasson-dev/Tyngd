@@ -730,14 +730,7 @@ public partial class PassViewModel : ObservableObject
         }
         catch (HttpRequestException ex)
         {
-            ErrorMessage = $"{errorPrefix}: {ex.StatusCode switch
-            {
-                System.Net.HttpStatusCode.Unauthorized => "Du är inte inloggad.",
-                System.Net.HttpStatusCode.Forbidden => "Du har inte behörighet.",
-                System.Net.HttpStatusCode.NotFound => "Resursen hittades inte.",
-                System.Net.HttpStatusCode.ServiceUnavailable => "Servern är inte tillgänglig.",
-                _ => ex.Message
-            }}";
+            ErrorMessage = $"{errorPrefix}: {HttpErrorText.For(ex)}";
         }
         catch (Exception ex)
         {
