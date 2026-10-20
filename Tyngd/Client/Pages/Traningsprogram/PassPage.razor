@@ -152,11 +152,8 @@
     <div class="pass-bar">
         <button type="button" class="ui-btn pass-bar__side" disabled="@(activeIndex <= 0)" @onclick="() => NavigateToExercise(activeIndex - 1)" aria-label="Föregående övning">‹</button>
         <div class="pass-bar__mid">
-            @if (AllSetsDone())
-            {
-                <button type="button" class="ui-btn pass-bar__main" @onclick="EndPass">Avsluta pass</button>
-            }
-            else
+            <button type="button" class="ui-btn pass-bar__main @(AllSetsDone() ? "" : "pass-bar__main--early")" @onclick="EndPass">Avsluta pass</button>
+            @if (!AllSetsDone())
             {
                 <span class="ui-sub">@DoneSets av @TotalSets set klara</span>
             }
