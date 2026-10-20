@@ -73,6 +73,33 @@ public sealed class FreeSessionController(TyngdContext context) : ApiControllerB
     }
 
     /// <summary>
+    /// Tar bort en övning ur ett löst pass (t.ex. vald av misstag): övningen döljs och det som loggats på den
+    /// i ännu inte avslutade sessioner tas bort. Avslutade pass behåller sin historik.
+    /// </summary>
+    [HttpDelete("{passId:int}/exercises/{exerciseId:int}")]
+    public async Task<IActionResult> RemoveExercise(int passId, int exerciseId)
+    {
+        var pass = await context.Pass
+            .Include(p => p.Exercise)
+            .FirstOrDefaultAsync(p => p.PassId == passId && p.Split.UserId == CurrentUserId && p.Split.IsFreeSessions);
+        var exercise = pass?.Exercise.FirstOrDefault(e => e.ExerciseId == exerciseId && e.Visability);
+        if (exercise is null)
+            return NotFound();
+        if (pass!.Exercise.Count(e => e.Visability) == 1)
+            return BadRequest("Ett löst pass måste ha minst en övning.");
+
+        exercise.Visability = false;
+        var logs = await context.ExerciseLog
+            .Include(l => l.SetLog)
+            .Where(l => l.ExerciseId == exerciseId && l.Session.CompletedAtUtc == null)
+            .ToListAsync();
+        context.SetLog.RemoveRange(logs.SelectMany(l => l.SetLog));
+        context.ExerciseLog.RemoveRange(logs);
+        await context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    /// <summary>
     /// Sparar ett löst pass som ett riktigt pass genom att flytta det till en egen split (befintlig eller ny).
     /// Passet behåller sina övningar och sessioner, så förra passets vikter följer med nästa gång.
     /// </summary>
