@@ -74,6 +74,11 @@
                                 <MudIconButton Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Class="pass-exercise__info"
                                                aria-label="Om övningen" OnClick="@(() => ShowExerciseInfo(catalogExerciseId))" />
                             }
+                            @if (pass.IsFreeSession && count > 1)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Class="pass-exercise__info"
+                                               aria-label="Ta bort övningen" OnClick="@(() => RemoveFreeExercise(exercise.ExerciseId, exercise.Exercise.ExerciseName))" />
+                            }
                         </h2>
                         <span class="ui-sub">@ExerciseFormat.SetsReps(exercise)@PreviousWeight(exercise.ExerciseId)</span>
                     </div>

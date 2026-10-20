@@ -80,6 +80,31 @@ public class FreeSessionTests
     }
 
     [Fact]
+    public async Task Removing_an_exercise_hides_it_and_drops_its_unfinished_logs()
+    {
+        await using var context = CreateContext();
+        var userId = Guid.NewGuid();
+        var free = With(new FreeSessionController(context), userId);
+        var started = Ok(await free.Start(Request("Löst", ("Knäböj", null), ("Dips", null))));
+        var exercises = await context.Exercise.Where(e => e.PassId == started.PassId).OrderBy(e => e.Ordning).ToListAsync(TestContext.Current.CancellationToken);
+        var dips = exercises[1];
+        context.Add(new Session
+        {
+            PassId = started.PassId, SessionKey = Guid.NewGuid(), Date = new DateOnly(2026, 10, 20), StartedAtUtc = DateTimeOffset.UtcNow,
+            ExerciseLog = [new ExerciseLog { ExerciseId = dips.ExerciseId, SetLog = [new SetLog { SetIndex = 0, Reps = 8, IsDone = true, Weight = 10 }] }],
+        });
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        Assert.IsType<NotFoundResult>(await With(new FreeSessionController(context), Guid.NewGuid()).RemoveExercise(started.PassId, dips.ExerciseId));
+        Assert.IsType<NoContentResult>(await free.RemoveExercise(started.PassId, dips.ExerciseId));
+
+        Assert.False((await context.Exercise.SingleAsync(e => e.ExerciseId == dips.ExerciseId, TestContext.Current.CancellationToken)).Visability);
+        Assert.False(await context.ExerciseLog.AnyAsync(l => l.ExerciseId == dips.ExerciseId, TestContext.Current.CancellationToken));
+        Assert.Empty(context.SetLog);
+        Assert.IsType<BadRequestObjectResult>(await free.RemoveExercise(started.PassId, exercises[0].ExerciseId));
+    }
+
+    [Fact]
     public async Task Keeping_moves_the_pass_into_a_new_or_own_split_and_discard_hides_it()
     {
         await using var context = CreateContext();

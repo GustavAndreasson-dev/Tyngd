@@ -98,6 +98,38 @@ public partial class PassPage : IDisposable
         addingExercise = false;
     }
 
+    /// <summary>Löst pass: tar bort en övning (t.ex. vald av misstag) med det som loggats på den i passet.</summary>
+    private async Task RemoveFreeExercise(int exerciseId, string name)
+    {
+        if (pass is null)
+            return;
+
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Ta bort övningen?",
+            $"{name} tas bort ur passet, med set och anteckning som du har loggat på den.",
+            yesText: "Ta bort", cancelText: "Avbryt");
+        if (confirmed != true)
+            return;
+
+        await TryAsync(async () =>
+        {
+            await FreeSessionService.RemoveExerciseAsync(PassId, exerciseId);
+            // Annars skickas övningen med igen när passet synkas eller avslutas.
+            data.Weights.Remove(exerciseId);
+            data.Reps.Remove(exerciseId);
+            data.Notes.Remove(exerciseId);
+            data.CompletedSets.Remove(exerciseId);
+            data.SavedExercises.Remove(exerciseId);
+            _weights.Remove(exerciseId);
+            pass = await UserSplitsService.GetPassAsync(SplitId, PassId) ?? pass;
+            await LocalStorage.SetItemAsync(PassKey, data);
+            await PendingSync.RefreshAsync();
+            passMuscleLoad = null;
+            showMuscles = false;
+            activeIndex = Math.Clamp(activeIndex, 0, pass.Exercises.Count - 1);
+        }, "Kunde inte ta bort övningen");
+    }
+
     private bool showMuscles;
     private Dictionary<string, double>? passMuscleLoad;
 

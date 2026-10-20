@@ -23,6 +23,12 @@ public sealed class FreeSessionService
         return await response.Content.ReadFromJsonAsync<int>();
     }
 
+    public async Task RemoveExerciseAsync(int passId, int exerciseId)
+    {
+        var response = await _http.DeleteAsync($"api/free-session/{passId}/exercises/{exerciseId}");
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task<StartFreeSessionResponse> KeepAsync(int passId, KeepFreeSessionRequest request)
     {
         var response = await _http.PostAsJsonAsync($"api/free-session/{passId}/keep", request);
