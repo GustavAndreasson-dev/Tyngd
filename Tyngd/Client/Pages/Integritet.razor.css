@@ -1,0 +1,6 @@
+.policy { max-width: 720px; }
+.policy h2 { font-size: 1.125rem; font-weight: 700; margin: 1.5rem 0 .5rem; }
+.policy p, .policy li { line-height: 1.6; }
+.policy ul { padding-left: 1.25rem; margin: 0 0 .75rem; }
+.policy li { margin-bottom: .375rem; }
+.policy a { color: var(--mud-palette-primary); text-decoration: underline; }
