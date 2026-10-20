@@ -14,6 +14,9 @@ public class TrainingSplit
     /// <summary>FK till användaren (IdentityUser GUID).</summary>
     public string UserId { get; set; } = string.Empty;
 
+    /// <summary>Mallen splitten är aktiverad från, eller null för en egen split. Mallsplits kan inte redigeras.</summary>
+    public int? SplitTemplateId { get; set; }
+
     /// <summary>Pass som ingår i splitten.</summary>
     public List<TrainingPass> Passes { get; set; } = new();
 }

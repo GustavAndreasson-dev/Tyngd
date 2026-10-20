@@ -31,6 +31,10 @@ public partial class CreateSplit : PageComponentBase
     [Parameter]
     public int? SplitId { get; set; }
 
+    /// <summary>"Kopiera och redigera" från Mina splits: förifyll formuläret med en kopia av en aktiverad mall.</summary>
+    [SupplyParameterFromQuery(Name = "copyFrom")]
+    public int? CopyFromSplitId { get; set; }
+
     private bool IsEditMode => SplitId.HasValue;
 
     private string splitName = string.Empty;
@@ -66,10 +70,9 @@ public partial class CreateSplit : PageComponentBase
             return;
         }
 
-        await TryAsync(async () =>
-        {
-            await LoadImportDataAsync();
-        }, "Failed to load splits");
+        await TryAsync(LoadImportDataAsync, "Kunde inte ladda splits");
+        if (CopyFromSplitId is { } copyFrom)
+            await ImportFromMySplitAsync(copyFrom);
     }
 
     private async Task LoadImportDataAsync()
@@ -161,7 +164,7 @@ public partial class CreateSplit : PageComponentBase
         try
         {
             if (import.MySplit is not null)
-                await ImportFromMySplitAsync(import.MySplit);
+                await ImportFromMySplitAsync(import.MySplit.SplitId);
             else if (import.Template is not null)
                 ImportFromTemplate(import.Template);
         }
@@ -179,17 +182,17 @@ public partial class CreateSplit : PageComponentBase
         ResetExpandedState();
     }
 
-    private async Task ImportFromMySplitAsync(TrainingSplit split)
+    private async Task ImportFromMySplitAsync(int splitId)
     {
         await TryAsync(async () =>
         {
-            var imported = await UserSplitsService.GetMySplitFullAsync(split.SplitId);
+            var imported = await UserSplitsService.GetMySplitFullAsync(splitId);
             if (imported is null) return;
             var copy = UserSplitsService.AsNewCopy(imported);
             splitName    = copy.SplitName;
             passes       = copy.Passes;
             ResetExpandedState();
-        }, "Failed to fetch split");
+        }, "Kunde inte hämta splitten");
     }
 
     private async Task LoadSplitForEditAsync(int splitId)

@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Tyngd.Server.Controllers;
 using Tyngd.Shared.DTOs;
+using Tyngd.Shared.TrainingPrograms;
 using Tyngd.Data.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -133,6 +134,24 @@ public class SplitAndSessionControllerTests
         Assert.Equal(["Pass först", "Pass A"], dto.Passes.Select(pass => pass.PassName));
         Assert.Single(dto.Passes.Last().Exercises);
         Assert.DoesNotContain(dto.Passes.SelectMany(pass => pass.Exercises), exercise => exercise.ExerciseName == "Flyes");
+    }
+
+    [Fact]
+    public async Task Activated_template_split_can_be_read_and_listed_but_not_updated()
+    {
+        await using var context = CreateContext();
+        var userId = Guid.NewGuid();
+        var split = CreateSplit(userId);
+        split.SplitTemplateId = 7;
+        context.Add(split);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var controller = WithUser(new UserSplitController(context), userId);
+
+        var full = Assert.IsType<OkObjectResult>((await controller.GetMySplitFull(split.SplitId)).Result).Value as CreateSplitRequest;
+        Assert.NotNull(full);
+        var active = Assert.IsType<List<TrainingSplit>>(Assert.IsType<OkObjectResult>((await controller.GetActiveSplits()).Result).Value);
+        Assert.Equal(7, Assert.Single(active).SplitTemplateId);
+        Assert.IsType<NotFoundResult>(await controller.UpdateMySplit(split.SplitId, full));
     }
 
     [Fact]
