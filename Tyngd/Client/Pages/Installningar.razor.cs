@@ -116,6 +116,28 @@ public partial class Installningar : ComponentBase, IDisposable
 
     private void ClearSuccess() => successMessage = null;
 
+    private bool _exporting;
+    private string? _exportError;
+
+    private async Task ExportMyData()
+    {
+        _exporting = true;
+        _exportError = null;
+        try
+        {
+            var (fileName, content) = await AuthService.ExportMyDataAsync();
+            await JS.InvokeVoidAsync("tyngd.downloadFile", fileName, "application/json", content);
+        }
+        catch (HttpRequestException ex)
+        {
+            _exportError = $"Kunde inte hämta din data: {HttpErrorText.For(ex)}";
+        }
+        finally
+        {
+            _exporting = false;
+        }
+    }
+
     private async Task DeleteAccount()
     {
         _deleting = true;
