@@ -32,6 +32,19 @@ public class AuthService
         return (null, error);
     }
 
+    /// <summary>Raderar (avidentifierar) kontot och loggar ut. Returnerar ett felmeddelande, eller null om det gick.</summary>
+    public async Task<string?> DeleteAccountAsync(string password)
+    {
+        var response = await _http.PostAsJsonAsync("api/auth/delete-account", new DeleteAccountRequest { Password = password });
+        if (!response.IsSuccessStatusCode)
+            return response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                ? await response.Content.ReadAsStringAsync()
+                : HttpErrorText.For(new HttpRequestException(null, null, response.StatusCode));
+
+        await _loginState.LogoutAsync();
+        return null;
+    }
+
     public async Task<(UserInfo? User, string? Error)> RegisterAsync(RegisterRequest request)
     {
         var response = await _http.PostAsJsonAsync("api/auth/register", request);

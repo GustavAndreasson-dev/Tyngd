@@ -17,6 +17,12 @@ public partial class Index : PageComponentBase, IDisposable
     [Inject] private IAppStorage Storage { get; set; } = default!;
     [Inject] private SessionState Session { get; set; } = default!;
 
+    // Sträng, inte bool: en bool-parameter kastar för allt utom "true"/"false" i adressen.
+    [SupplyParameterFromQuery(Name = "deleted")]
+    public string? DeletedParam { get; set; }
+
+    private bool Deleted => DeletedParam == "1";
+
     private UserDashboardDto? dashboard;
     private DashboardPass? activePass;
     private DashboardPass? nextPass;

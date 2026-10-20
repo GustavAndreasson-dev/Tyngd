@@ -73,6 +73,38 @@
     </MudPaper>
 }
 
+@if (LoginState.IsLoggedIn)
+{
+    <MudPaper Class="pa-4 mt-4" Elevation="2">
+        <MudText Typo="Typo.subtitle1" Class="mb-2">Konto</MudText>
+        <MudText Typo="Typo.body2" Class="mb-3">
+            Inloggad som @LoginState.CurrentUser?.UserName. Läs hur vi hanterar dina uppgifter i
+            <MudLink Href="/integritet">integritetspolicyn</MudLink>.
+        </MudText>
+        @if (!_showDeleteAccount)
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => _showDeleteAccount = true">Radera konto</MudButton>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Class="mb-2">
+                Ditt användarnamn, din e-post, ditt lösenord, dina inställningar, favoriter och anteckningar raderas.
+                Träningssiffrorna (set, reps, vikter och datum) sparas utan koppling till dig. Det går inte att ångra.
+            </MudText>
+            <MudTextField @bind-Value="_deletePassword" Label="Bekräfta med ditt lösenord" InputType="InputType.Password"
+                          Variant="Variant.Outlined" Immediate="true" Class="mb-2" Style="max-width:320px;" />
+            @if (_deleteError is not null)
+            {
+                <MudText Color="Color.Error" Typo="Typo.body2" Class="mb-2">@_deleteError</MudText>
+            }
+            <div class="d-flex" style="gap:8px;">
+                <MudButton Variant="Variant.Filled" Color="Color.Error" Disabled="@(_deleting || _deletePassword.Length == 0)" OnClick="DeleteAccount">Radera kontot</MudButton>
+                <MudButton Variant="Variant.Text" OnClick="() => { _showDeleteAccount = false; _deletePassword = string.Empty; _deleteError = null; }">Avbryt</MudButton>
+            </div>
+        }
+    </MudPaper>
+}
+
 @* Licenskrav för wgers övningsdata (CC-BY-SA). Diskret, längst ner. *@
 <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-6" Style="opacity:.7;">
     Övningar och beskrivningar kommer från <a href="https://wger.de" target="_blank" rel="noopener">wger.de</a>
