@@ -85,6 +85,11 @@ else
 
 app.UseMiddleware<ErrorNotificationMiddleware>();
 
+// Okänd sidadress: rendera appen så att routern visar "Sidan finns inte" i stället för en tom 404.
+// Inte för API:t, där klienterna läser statuskoden.
+app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/api"),
+    branch => branch.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
+
 app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();
