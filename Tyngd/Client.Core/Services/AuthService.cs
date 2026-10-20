@@ -45,6 +45,17 @@ public class AuthService
         return null;
     }
 
+    /// <summary>Allt som sparats om användaren, som JSON-fil (filnamn och innehåll).</summary>
+    public async Task<(string FileName, byte[] Content)> ExportMyDataAsync()
+    {
+        var response = await _http.GetAsync("api/account/export");
+        response.EnsureSuccessStatusCode();
+        var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+            ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+            ?? "tyngd-data.json";
+        return (fileName, await response.Content.ReadAsByteArrayAsync());
+    }
+
     public async Task<(UserInfo? User, string? Error)> RegisterAsync(RegisterRequest request)
     {
         var response = await _http.PostAsJsonAsync("api/auth/register", request);

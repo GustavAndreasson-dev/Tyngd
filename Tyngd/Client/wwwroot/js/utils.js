@@ -132,3 +132,13 @@ window.tyngd.restTimer = {
         try { return await Notification.requestPermission(); } catch (e) { return Notification.permission; }
     }
 };
+
+// Sparar en fil som laddats ner med inloggningen (en vanlig länk skickar inte med token).
+window.tyngd.downloadFile = function (fileName, contentType, bytes) {
+    const url = URL.createObjectURL(new Blob([bytes], { type: contentType }));
+    const link = Object.assign(document.createElement('a'), { href: url, download: fileName });
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+};

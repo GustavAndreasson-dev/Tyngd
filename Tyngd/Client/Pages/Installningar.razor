@@ -81,9 +81,15 @@
             Inloggad som @LoginState.CurrentUser?.UserName. Läs hur vi hanterar dina uppgifter i
             <MudLink Href="/integritet">integritetspolicyn</MudLink>.
         </MudText>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download"
+                   Disabled="_exporting" OnClick="ExportMyData" Class="mb-3 mr-2">Ladda ner min data</MudButton>
+        @if (_exportError is not null)
+        {
+            <MudText Color="Color.Error" Typo="Typo.body2" Class="mb-2">@_exportError</MudText>
+        }
         @if (!_showDeleteAccount)
         {
-            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => _showDeleteAccount = true">Radera konto</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" Class="mb-3" OnClick="() => _showDeleteAccount = true">Radera konto</MudButton>
         }
         else
         {
