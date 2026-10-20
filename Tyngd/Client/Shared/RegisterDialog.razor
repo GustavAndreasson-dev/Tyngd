@@ -33,6 +33,10 @@
                       Immediate="true"
                       UserAttributes="@(new() { ["autocomplete"] = "new-password" })" />
         </form>
+        @* Ny flik, så att det ifyllda formuläret finns kvar. *@
+        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-3">
+            Läs hur vi hanterar dina uppgifter i <a href="/integritet" target="_blank" rel="noopener">integritetspolicyn</a>.
+        </MudText>
         @if (_errorMessage is not null)
         {
             <MudText Color="Color.Error" Class="mt-2">@_errorMessage</MudText>
