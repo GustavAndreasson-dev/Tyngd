@@ -1,6 +1,7 @@
 ﻿using Tyngd.Shared.DTOs;
 using Tyngd.Shared.Users;
 using Tyngd.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
@@ -93,6 +94,37 @@ public class AuthController : ControllerBase
         }
 
         return Ok(new LoginResponse { User = MapToDto(user), Token = GenerateToken(user) });
+    }
+
+    /// <summary>
+    /// Raderar kontot genom att avidentifiera det: namn, e-post, lösenord, roller, inställningar, favoriter och
+    /// fritextanteckningar tas bort och splitsen döljs. Träningsdata (set, reps, vikter, datum) blir kvar utan
+    /// koppling till en person. Gamla token slutar gälla, se JwtBearerEvents i Program.cs.
+    /// </summary>
+    [Authorize]
+    [HttpPost("delete-account")]
+    public async Task<IActionResult> DeleteAccount(DeleteAccountRequest request)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub")!);
+        var user = await _context.UserInfo.FirstOrDefaultAsync(u => u.UserId == userId);
+        if (user is null || !VerifyPassword(request.Password, user.PasswordHash))
+            return BadRequest("Fel lösenord.");
+
+        // Unika och inom VARCHAR(50); utan '@' i namnet och med en adress som aldrig kan få post.
+        user.UserName = $"raderad-{userId:N}";
+        user.Email = $"{userId:N}@raderad.invalid";
+        user.PasswordHash = string.Empty;
+        user.Roles = string.Empty;
+
+        _context.UserSettings.RemoveRange(_context.UserSettings.Where(s => s.UserId == userId));
+        _context.UserFavoriteExercise.RemoveRange(_context.UserFavoriteExercise.Where(f => f.UserId == userId));
+        foreach (var log in await _context.ExerciseLog.Where(l => l.Session.Pass.Split.UserId == userId && l.NoteText != "").ToListAsync())
+            log.NoteText = string.Empty;
+        foreach (var split in await _context.Split.Where(s => s.UserId == userId && s.Visability).ToListAsync())
+            split.Visability = false;
+
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 
     private string GenerateToken(Tyngd.Data.Models.UserInfo user)

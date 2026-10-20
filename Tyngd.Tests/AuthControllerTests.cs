@@ -1,6 +1,8 @@
 ﻿using Tyngd.Server.Controllers;
 using Tyngd.Shared.DTOs;
 using Tyngd.Data.Models;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -84,6 +86,43 @@ public class AuthControllerTests
         var upgraded = (await context.UserInfo.SingleAsync(TestContext.Current.CancellationToken)).PasswordHash;
         Assert.StartsWith("600000:", upgraded);
         Assert.IsType<OkObjectResult>((await controller.Login(new LoginRequest { UserName = "old", Password = "secret1" })).Result);
+    }
+
+    [Fact]
+    public async Task Delete_account_anonymises_the_user_and_keeps_workout_numbers()
+    {
+        var (controller, context) = Create();
+        var registered = Assert.IsType<OkObjectResult>((await controller.Register(
+            new RegisterRequest { UserName = "bob", Email = "bob@example.com", Password = "secret1" })).Result).Value as LoginResponse;
+        var userId = Guid.Parse(registered!.User.UserId);
+        var exercise = new Exercise { ExerciseName = "Knäböj", Visability = true, Ordning = 1 };
+        var pass = new Pass { PassName = "A", Visability = 1, Ordning = 1, Exercise = [exercise] };
+        context.Add(new Split { UserId = userId, SplitName = "S", Visability = true, Pass = [pass] });
+        context.Add(new Session
+        {
+            Pass = pass, SessionKey = Guid.NewGuid(), Date = new DateOnly(2026, 10, 20), StartedAtUtc = DateTimeOffset.UtcNow,
+            ExerciseLog = [new ExerciseLog { Exercise = exercise, NoteText = "ont i knät", SetLog = [new SetLog { SetIndex = 0, Reps = 5, IsDone = true, Weight = 100 }] }],
+        });
+        context.Add(new UserSettings { UserId = userId });
+        context.Add(new UserFavoriteExercise { UserId = userId, CatalogExerciseId = 1 });
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("sub", userId.ToString())], "test")) },
+        };
+
+        Assert.IsType<BadRequestObjectResult>(await controller.DeleteAccount(new DeleteAccountRequest { Password = "wrong" }));
+        Assert.IsType<NoContentResult>(await controller.DeleteAccount(new DeleteAccountRequest { Password = "secret1" }));
+
+        var user = await context.UserInfo.SingleAsync(TestContext.Current.CancellationToken);
+        Assert.DoesNotContain("bob", user.UserName + user.Email);
+        Assert.Equal("", user.Roles);
+        Assert.Empty(context.UserSettings);
+        Assert.Empty(context.UserFavoriteExercise);
+        Assert.Equal("", (await context.ExerciseLog.SingleAsync(TestContext.Current.CancellationToken)).NoteText);
+        Assert.False((await context.Split.SingleAsync(TestContext.Current.CancellationToken)).Visability);
+        Assert.Equal(100, (await context.SetLog.SingleAsync(TestContext.Current.CancellationToken)).Weight);
+        Assert.IsType<UnauthorizedObjectResult>((await controller.Login(new LoginRequest { UserName = "bob", Password = "secret1" })).Result);
     }
 
     private static (AuthController, TyngdContext) Create()

@@ -32,6 +32,20 @@ public partial class Installningar : ComponentBase, IDisposable
     [Inject]
     private IJSRuntime JS { get; set; } = default!;
 
+    [Inject]
+    private LoginState LoginState { get; set; } = default!;
+
+    [Inject]
+    private AuthService AuthService { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager Nav { get; set; } = default!;
+
+    private bool _showDeleteAccount;
+    private string _deletePassword = string.Empty;
+    private string? _deleteError;
+    private bool _deleting;
+
     private int _restTimerMinutes;
     private string? _notificationPermission;
     private string? successMessage;
@@ -101,6 +115,15 @@ public partial class Installningar : ComponentBase, IDisposable
     }
 
     private void ClearSuccess() => successMessage = null;
+
+    private async Task DeleteAccount()
+    {
+        _deleting = true;
+        _deleteError = await AuthService.DeleteAccountAsync(_deletePassword);
+        _deleting = false;
+        if (_deleteError is null)
+            Nav.NavigateTo("/?deleted=1");
+    }
 
     private async Task InstallTyngd()
     {

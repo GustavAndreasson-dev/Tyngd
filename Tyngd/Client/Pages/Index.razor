@@ -7,6 +7,10 @@
 
 @if (!LoginState.IsLoggedIn)
 {
+    @if (Deleted)
+    {
+        <MudAlert Severity="Severity.Success" Dense="true" Class="mb-4">Ditt konto har raderats.</MudAlert>
+    }
     <GuestHome OnLogin="OpenLoginDialog" OnRegister="OpenRegisterDialog" />
 }
 else

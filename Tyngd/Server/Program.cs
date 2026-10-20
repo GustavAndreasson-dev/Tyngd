@@ -7,6 +7,7 @@ using Tyngd.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -44,6 +45,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer              = builder.Configuration["Jwt:Issuer"],
             ValidAudience            = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        };
+        // En raderad (avidentifierad) användare har inga roller kvar: underkänn token som utfärdades före raderingen.
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var sub = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.Principal?.FindFirstValue("sub");
+                var db = context.HttpContext.RequestServices.GetRequiredService<TyngdContext>();
+                if (!Guid.TryParse(sub, out var userId)
+                    || !await db.UserInfo.AnyAsync(u => u.UserId == userId && u.Roles != ""))
+                    context.Fail("Kontot finns inte längre.");
+            },
         };
     });
 builder.Services.AddAuthorization();
