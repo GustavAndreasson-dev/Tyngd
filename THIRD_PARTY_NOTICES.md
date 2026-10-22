@@ -27,10 +27,10 @@ adaptation under a later version of the license with the same license elements, 
 were CC BY-SA 3.0 originally. CC0 text carries no restriction. The translations were machine-generated and are not
 reviewed by wger. Check the license of an individual exercise at wger.de before reusing it elsewhere.
 
-## Exercise photos and illustrations: wger contributors (loaded from wger.de)
+## Exercise photos and illustrations: wger contributors (fetched from wger.de)
 
-The photos and illustrations shown next to exercises are **not** stored in this repository. The app loads them from
-wger.de at run time and shows the author and license next to each image (`ImageAuthor`, `ImageLicense`). At the time
+The photos and illustrations shown next to exercises are **not** stored in this repository. The server fetches them
+from wger.de at run time (`api/catalog/{id}/image`, so visitors never contact wger.de) and the app shows the author and license next to each image (`ImageAuthor`, `ImageLicense`). At the time
 of writing the images were licensed CC BY-SA 4.0 (291) or CC BY-SA 3.0 (88).
 
 The screenshots in `docs/screenshots` show three of these images, used here under their licenses:
@@ -71,4 +71,6 @@ Used through NuGet and not redistributed here. The license of each package was c
 | Entity Framework Core, ASP.NET Core (Authentication.JwtBearer, Components.WebAssembly) | MIT |
 | xunit.v3 | Apache-2.0 |
 
-The web font Plus Jakarta Sans (SIL Open Font License 1.1) is loaded from Google Fonts at run time.
+The web font Plus Jakarta Sans (Latin subset, variable weight, from the `@fontsource-variable/plus-jakarta-sans` 5.3.0
+package) is redistributed in `Tyngd/Client/wwwroot/fonts` under the SIL Open Font License 1.1, whose text is in
+`Tyngd/Client/wwwroot/fonts/OFL.txt`.
