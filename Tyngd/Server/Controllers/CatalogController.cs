@@ -33,7 +33,7 @@ public sealed class CatalogController(TyngdContext context) : ApiControllerBase
                 PrimaryMuscles = Muscles.ParseKeys(row.Muscles),
                 SecondaryMuscles = Muscles.ParseKeys(row.MusclesSecondary),
                 Equipment = CatalogNames.SvList(row.Equipment),
-                ImageUrl = row.ImageUrl,
+                ImageUrl = ImagePath(row.CatalogExerciseId, row.ImageUrl),
             })
             .OrderBy(row => row.Name, StringComparer.Create(new System.Globalization.CultureInfo("sv-SE"), true))
             .ToList());
@@ -60,7 +60,7 @@ public sealed class CatalogController(TyngdContext context) : ApiControllerBase
             PrimaryMuscles = Muscles.ParseKeys(row.Muscles),
             SecondaryMuscles = Muscles.ParseKeys(row.MusclesSecondary),
             Equipment = CatalogNames.SvList(row.Equipment),
-            ImageUrl = row.ImageUrl,
+            ImageUrl = ImagePath(row.CatalogExerciseId, row.ImageUrl),
             ImageAuthor = row.ImageAuthor,
             ImageLicense = row.ImageLicense,
             License = row.License,
@@ -68,4 +68,32 @@ public sealed class CatalogController(TyngdContext context) : ApiControllerBase
             WgerUuid = row.WgerUuid,
         });
     }
+
+    /// <summary>
+    /// Övningsbilden via den här servern, så att besökarens webbläsare aldrig kontaktar wger.de (och inte lämnar sin
+    /// IP-adress där). Bara adresser ur katalogen hämtas, aldrig en adress som klienten skickar.
+    /// </summary>
+    // shortcut: ingen servercache; varje webbläsare som inte har bilden cachad ger en hämtning från wger. Lägg bilderna i blob/disk vid synk om trafiken växer.
+    [HttpGet("{catalogExerciseId:int}/image")]
+    public async Task<IActionResult> Image(int catalogExerciseId, [FromServices] IHttpClientFactory httpClientFactory)
+    {
+        var url = await context.ExerciseCatalog.AsNoTracking()
+            .Where(row => row.CatalogExerciseId == catalogExerciseId)
+            .Select(row => row.ImageUrl)
+            .SingleOrDefaultAsync();
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps || uri.Host != "wger.de")
+            return NotFound();
+
+        using var response = await httpClientFactory.CreateClient().GetAsync(uri, HttpContext.RequestAborted);
+        var contentType = response.Content.Headers.ContentType?.MediaType;
+        if (!response.IsSuccessStatusCode || contentType?.StartsWith("image/") != true)
+            return NotFound();
+
+        // Bara lyckade svar cachas, så att en bild som läggs till vid nästa synk syns direkt.
+        Response.Headers.CacheControl = "public,max-age=604800";
+        return File(await response.Content.ReadAsByteArrayAsync(HttpContext.RequestAborted), contentType);
+    }
+
+    private static string? ImagePath(int catalogExerciseId, string? imageUrl) =>
+        imageUrl is null ? null : $"api/catalog/{catalogExerciseId}/image";
 }

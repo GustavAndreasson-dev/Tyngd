@@ -21,8 +21,17 @@ public class CatalogService
         return _all;
     }
 
-    public Task<CatalogExerciseDetailDto?> GetAsync(int catalogExerciseId) =>
-        _http.GetFromJsonAsync<CatalogExerciseDetailDto>($"api/catalog/{catalogExerciseId}");
+    public async Task<CatalogExerciseDetailDto?> GetAsync(int catalogExerciseId)
+    {
+        var exercise = await _http.GetFromJsonAsync<CatalogExerciseDetailDto>($"api/catalog/{catalogExerciseId}");
+        if (exercise is not null)
+            exercise.ImageUrl = AbsoluteUrl(exercise.ImageUrl);
+        return exercise;
+    }
+
+    // Servern skickar bildens adress relativt sig själv; appen behöver en hel adress för att visa bilden.
+    private string? AbsoluteUrl(string? url) =>
+        url is null || _http.BaseAddress is null ? url : new Uri(_http.BaseAddress, url).ToString();
 
     /// <summary>Söker i svenskt och engelskt namn och alias. Alla ord i söktexten måste finnas; namn som börjar med söktexten kommer först.</summary>
     public static IEnumerable<CatalogExerciseDto> Search(IEnumerable<CatalogExerciseDto> all, string? text)
@@ -86,6 +95,11 @@ public class CatalogService
     public async Task<Dictionary<string, double>> MuscleLoadForAsync(IEnumerable<int?> catalogExerciseIds) =>
         MuscleLoadFor(await GetAllAsync(), catalogExerciseIds);
 
-    private async Task<List<CatalogExerciseDto>> LoadAsync() =>
-        await _http.GetFromJsonAsync<List<CatalogExerciseDto>>("api/catalog") ?? new List<CatalogExerciseDto>();
+    private async Task<List<CatalogExerciseDto>> LoadAsync()
+    {
+        var all = await _http.GetFromJsonAsync<List<CatalogExerciseDto>>("api/catalog") ?? new List<CatalogExerciseDto>();
+        foreach (var exercise in all)
+            exercise.ImageUrl = AbsoluteUrl(exercise.ImageUrl);
+        return all;
+    }
 }
